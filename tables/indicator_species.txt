@@ -1,0 +1,29 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 202
+ Selected number of species: 8 
+ Number of species associated to 1 group: 8 
+ Number of species associated to 2 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group Ficus leaves  #sps.  7 
+                                         A   B  stat p.value   
+Pseudocercospora aff. basitruncata     1.0 0.7 0.837   0.011 * 
+Colletotrichum arboricola              1.0 0.7 0.837   0.009 **
+Diaporthe aff. araucanorum 4           1.0 0.7 0.837   0.013 * 
+Diaporthe aff. passiflorae 1           1.0 0.6 0.775   0.006 **
+Colletotrichum colombiense, C. beeveri 1.0 0.6 0.775   0.004 **
+Xylariales sp. 2 (Xylaria enteroleuca) 1.0 0.5 0.707   0.006 **
+Colletotrichum godetiae                1.0 0.5 0.707   0.040 * 
+
+ Group Host wood  #sps.  1 
+               A B stat p.value   
+NO (not grown) 1 1    1   0.002 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

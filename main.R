@@ -1,0 +1,11 @@
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+source("parse_LOT2.R")
+source("plot_abundance.R")
+source("plot_abundance_pooled.R")
+source("plot_pie.R")
+source("community_analysis.R")
+source("generate_readme.R")
