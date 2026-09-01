@@ -1,7 +1,9 @@
-xlsx <- "LOT2_for_Livio.xlsx"
+# =============================================================
+# Parse LOT2 input data
+# =============================================================
 
-# --- Sheet: ALL isolates ---
-all_isolates <- read_excel(xlsx, sheet = "ALL isolates") %>%
+# --- Pooled genotype counts (first sheet only) ---
+pooled <- read_excel("LOT2_pooled_counts.xlsx", sheet = 1) %>%
   rename(
     culture_code      = `Hofstetter-culture code (CTAB 1x)`,
     its_taxon         = `ITS sequences named after GenBank BLAST top score(s) result(s) and taxon current names (Mycobank/Index Fungorum)`,
@@ -19,54 +21,29 @@ all_isolates <- read_excel(xlsx, sheet = "ALL isolates") %>%
     species           = Species
   )
 
-# --- Sheet: 67. Fungi-Endo leaf (Ficus) ---
-endo_leaf_ficus <- read_excel(xlsx, sheet = "67. Fungi-Endo leaf (Ficus)") %>%
-  rename(
-    sample_code      = `LOT-SampleCode`,
-    culture_code     = `Hofstetter-culture code (CTAB 1x)`,
-    tree             = Tree,
-    tree_orient      = `Tree orientation`,
-    its_taxon        = `ITS sequences named after GenBank BLAST top score(s) result(s) and taxon current names (Mycobank/Index Fungorum)`,
-    n_species        = `Number of species`,
-    n_genotypes      = `Number of genotypes`,
-    genbank_blast_acc = `GenBank BLAST top score sequence(s) accession(s); sequence similarity/sequence query coverage both expressed in %`,
-    seq_code         = `Hofstetter-sequence code`,
-    its_seq          = `LOT2  ITS sequences`
+# --- Sample-level isolate records (first sheet only) ---
+samples_raw <- read_excel("LOT2_samples.xlsx", sheet = 1)
+names(samples_raw) <- c("substrate", "zone", "unit", "orientation",
+                         "culture_code1", "its_taxon", "genbank",
+                         "culture_code2")
+
+# Standardise substrate labels
+samples_raw <- samples_raw %>%
+  mutate(
+    substrate = case_when(
+      substrate == "Ficus leaves" ~ "Ficus leaves",
+      substrate == "Ficus wood"   ~ "Ficus wood",
+      substrate == "Lauraceae"    ~ "Lauraceae leaves",
+      TRUE                        ~ substrate
+    ),
+    zone = as.integer(zone),
+    position = ifelse(zone <= 5, "Trunk", "Branch"),
+    sample_id = paste(substrate, paste0("Z", zone), unit, sep = "__")
   )
 
-# --- Sheet: 65. Fungi-Endo wood (Ficus) ---
-endo_wood_ficus <- read_excel(xlsx, sheet = "65. Fungi-Endo wood (Ficus)") %>%
-  rename(
-    sample_code      = `LOT-SampleCode`,
-    culture_code     = `Hofstetter-culture code (CTAB 1x)`,
-    tree_zone        = `Tree zone`,
-    tree_branch      = `Tree branch/trunk`,
-    its_taxon        = `ITS sequences named after GenBank BLAST top score(s) result(s) and taxon current names (Mycobank/Index Fungorum)`,
-    n_species        = `Number of species`,
-    n_genotypes      = `Number of genotypes`,
-    genbank_blast_acc = `GenBank BLAST top score sequence(s) accession(s); sequence similarity/sequence query coverage both expressed in %`,
-    its_seq          = `ITS sequences`
-  )
-
-# --- Sheet: 66. Fungi-Endo wood (Host) ---
-endo_wood_host <- read_excel(xlsx, sheet = "66. Fungi-Endo wood (Host)") %>%
-  rename(
-    sample_code      = `LOT-SampleCode`,
-    culture_code     = `Hofstetter-Code`,
-    tree_zone        = `Tree Zone`,
-    tree_branch      = `Tree branch`,
-    its_taxon        = `ITS sequences named after GenBank BLAST top score(s) result(s) and taxon current names (Mycobank/Index Fungorum)`,
-    n_species        = `Number of species`,
-    n_genotypes      = `Number of genotypes`,
-    genbank_acc      = `GenBank accessions for ITS sequences`,
-    genbank_blast_acc = `GenBank BLAST top score sequence(s) accession(s); sequence similarity/sequence query coverage both expressed in %`,
-    classif_genbank  = `Classification after GenBank`,
-    seq_code         = `Hofstetter-sequence code`,
-    its_seq          = `ITS sequences`
-  )
-
-# --- Sheet: Feuil2 (sequence data) ---
-seq_data <- read_excel(xlsx, sheet = "Feuil2") %>%
-  setNames(c("lot_prefix", "culture_code", "its_taxon", "its_seq"))
+cat("Pooled counts:", nrow(pooled), "genotypes\n")
+cat("Sample records:", nrow(samples_raw), "isolates\n")
+cat("Substrates:", paste(sort(unique(samples_raw$substrate)), collapse = ", "), "\n")
+cat("Zones:", paste(sort(unique(samples_raw$zone)), collapse = ", "), "\n")
 
 

@@ -1,0 +1,48 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 211
+ Selected number of species: 8 
+ Number of species associated to 1 group: 8 
+
+ List of species associated to each combination: 
+
+ Group Ficus leaves  #sps.  4 
+                                        A   B  stat p.value   
+Pseudocercospora aff. quetri          1.0 0.7 0.837   0.005 **
+Colletotrichum cf. brassicicola gen 2 1.0 0.6 0.775   0.015 * 
+Xylaria sp. 3                         1.0 0.5 0.707   0.036 * 
+Colletotrichum cf. godetiae           1.0 0.5 0.707   0.027 * 
+
+ Group Lauraceae leaves  #sps.  4 
+                                                                                                   A
+Nigrospora cf. gorlenkoana                                                                    1.0000
+Diaporthe sp. 20                                                                              0.9497
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 1.0000
+Diaporthe sp. 23                                                                              1.0000
+                                                                                                   B
+Nigrospora cf. gorlenkoana                                                                    0.7778
+Diaporthe sp. 20                                                                              0.7778
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.6667
+Diaporthe sp. 23                                                                              0.4444
+                                                                                               stat
+Nigrospora cf. gorlenkoana                                                                    0.882
+Diaporthe sp. 20                                                                              0.859
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.816
+Diaporthe sp. 23                                                                              0.667
+                                                                                              p.value
+Nigrospora cf. gorlenkoana                                                                      0.003
+Diaporthe sp. 20                                                                                0.004
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2   0.004
+Diaporthe sp. 23                                                                                0.033
+                                                                                                
+Nigrospora cf. gorlenkoana                                                                    **
+Diaporthe sp. 20                                                                              **
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 **
+Diaporthe sp. 23                                                                              * 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

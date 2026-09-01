@@ -1,0 +1,30 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 82
+ Selected number of species: 3 
+ Number of species associated to 1 group: 0 
+ Number of species associated to 2 groups: 0 
+ Number of species associated to 3 groups: 0 
+ Number of species associated to 4 groups: 2 
+ Number of species associated to 5 groups: 1 
+
+ List of species associated to each combination: 
+
+ Group 1+2+3+5  #sps.  1 
+                                                 A B stat p.value   
+Aspergillus cvjetkovicii or A. jensenii (3 spp.) 1 1    1   0.005 **
+
+ Group 2+3+4+5  #sps.  1 
+                       A B stat p.value   
+Aspergillus versicolor 1 1    1   0.006 **
+
+ Group 1+2+3+4+5  #sps.  1 
+                                   A     B  stat p.value  
+Penicillium goetzii, P. rubens 0.967 1.000 0.983   0.036 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

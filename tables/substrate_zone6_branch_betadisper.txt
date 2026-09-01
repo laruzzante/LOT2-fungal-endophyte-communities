@@ -1,0 +1,19 @@
+Beta-dispersion test (betadisper + permutest)
+
+
+Permutation test for homogeneity of multivariate dispersions
+Permutation: free
+Number of permutations: 999
+
+Response: Distances
+          Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)   
+Groups     2 0.046901 0.0234505 7.1752    999  0.009 **
+Residuals 23 0.075170 0.0032683                        
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Group mean distances to centroid:
+                            group mean_dist
+Ficus leaves         Ficus leaves    0.5575
+Ficus wood             Ficus wood    0.6245
+Lauraceae leaves Lauraceae leaves    0.5176

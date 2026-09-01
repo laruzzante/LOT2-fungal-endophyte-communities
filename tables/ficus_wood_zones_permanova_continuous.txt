@@ -1,0 +1,13 @@
+PERMANOVA — Ficus wood community vs zone height (continuous)
+
+Permutation test for adonis under reduced model
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = comm_fw ~ zone_num, data = meta_fw_num, permutations = 999, method = "bray")
+         Df SumOfSqs      R2      F Pr(>F)   
+Model     1   0.6790 0.13039 1.6493  0.009 **
+Residual 11   4.5284 0.86961                 
+Total    12   5.2074 1.00000                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

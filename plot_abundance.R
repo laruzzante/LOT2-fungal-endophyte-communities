@@ -3,13 +3,12 @@ dir.create("plots/abundance", recursive = TRUE, showWarnings = FALSE)
 tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
                    "subclass", "order", "family", "genus", "species")
 
-dat <- all_isolates %>%
+dat <- pooled %>%
   mutate(across(all_of(tax_hierarchy), ~ replace_na(., "Unknown")),
          its_taxon = replace_na(its_taxon, "Unknown"),
          across(c(n_fungi_laur_leaf, n_fungi_fic_leaf, n_fungi_fic_wood),
                 ~ replace_na(., 0)))
 
-# Progressively prepend parent ranks until all labels are unique
 make_unique_labels <- function(df, target_col, parent_cols) {
   labels <- df[[target_col]]
   for (pcol in rev(parent_cols)) {

@@ -7,7 +7,7 @@ tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
 uncertain_values <- c("?", "NO", "incertae sedis")
 incertae_label   <- "Incertae sedis"
 
-dat <- all_isolates %>%
+dat <- pooled %>%
   mutate(across(all_of(tax_hierarchy),
                 ~ ifelse(is.na(.) | . %in% uncertain_values,
                          incertae_label, .)),
@@ -54,13 +54,11 @@ for (level in levels_to_plot) {
                 Ficus_wood       = sum(n_fungi_fic_wood),
                 .groups = "drop")
 
-    # Collapse rows where the target level is "Incertae sedis"
     is_uncertain <- agg[[level]] == incertae_label
     if (any(is_uncertain)) {
       certain   <- agg[!is_uncertain, ]
       uncertain <- agg[is_uncertain, ] %>%
         summarise(across(c(Lauraceae_leaves, Ficus_leaves, Ficus_wood), sum))
-      # Fill taxonomy columns with the label so make_unique_labels works
       for (gc in group_cols) uncertain[[gc]] <- incertae_label
       agg <- bind_rows(certain, uncertain)
     }

@@ -10,7 +10,12 @@ tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
 uncertain_values <- c("?", "NO", "incertae sedis")
 incertae_label   <- "Incertae sedis"
 
-dat_agg <- all_isolates %>%
+substrate_colours_3 <- c("Ficus leaves"     = "#A23B72",
+                          "Ficus wood"       = "#F18F01",
+                          "Lauraceae leaves" = "#2E86AB")
+
+# Clean pooled data
+dat_agg <- pooled %>%
   mutate(across(all_of(tax_hierarchy),
                 ~ ifelse(is.na(.) | . %in% uncertain_values, incertae_label, .)),
          its_taxon = ifelse(is.na(its_taxon) | its_taxon %in% uncertain_values,
@@ -19,7 +24,7 @@ dat_agg <- all_isolates %>%
                 ~ replace_na(., 0)))
 
 # ============================================================
-# A. ALPHA DIVERSITY (aggregate, per substrate)
+# A. ALPHA DIVERSITY (from pooled data, per substrate)
 # ============================================================
 cat("\n====== A. Alpha diversity ======\n")
 
@@ -42,7 +47,7 @@ for (level in c("its_taxon", tax_hierarchy)) {
   }
 
   mat <- as.matrix(agg[, c("Lauraceae_leaves", "Ficus_leaves", "Ficus_wood")])
-  comm <- t(mat)  # substrates as rows, taxa as columns
+  comm <- t(mat)
 
   S     <- specnumber(comm)
   N     <- rowSums(comm)
@@ -69,15 +74,11 @@ diversity_table <- bind_rows(diversity_results)
 write.csv(diversity_table, "tables/alpha_diversity.csv", row.names = FALSE)
 cat("Saved: tables/alpha_diversity.csv\n")
 
-# Plot diversity indices
 for (idx_name in c("shannon_H", "simpson_1mD", "inv_simpson", "pielou_J")) {
   p <- ggplot(diversity_table,
-              aes(x = taxonomic_level, y = .data[[idx_name]],
-                  fill = substrate)) +
+              aes(x = taxonomic_level, y = .data[[idx_name]], fill = substrate)) +
     geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-    scale_fill_manual(values = c("Lauraceae leaves" = "#2E86AB",
-                                 "Ficus leaves"     = "#A23B72",
-                                 "Ficus wood"       = "#F18F01")) +
+    scale_fill_manual(values = substrate_colours_3) +
     scale_x_discrete(limits = c("its_taxon", tax_hierarchy)) +
     labs(title = paste(idx_name, "across substrates"),
          x = "Taxonomic level", y = idx_name, fill = "Substrate") +
@@ -91,7 +92,7 @@ for (idx_name in c("shannon_H", "simpson_1mD", "inv_simpson", "pielou_J")) {
 cat("Saved: alpha diversity plots\n")
 
 # ============================================================
-# B1. RANK-ABUNDANCE CURVES (genus level)
+# B1. RANK-ABUNDANCE CURVES
 # ============================================================
 cat("\n====== B1. Rank-abundance curves ======\n")
 
@@ -126,9 +127,7 @@ for (level in c("genus", "species", "its_taxon")) {
   p <- ggplot(ra_data, aes(x = rank, y = rel_abund, colour = substrate)) +
     geom_line(linewidth = 0.8) +
     geom_point(size = 1.5) +
-    scale_colour_manual(values = c("Lauraceae leaves" = "#2E86AB",
-                                   "Ficus leaves"     = "#A23B72",
-                                   "Ficus wood"       = "#F18F01")) +
+    scale_colour_manual(values = substrate_colours_3) +
     scale_y_log10() +
     labs(title = paste("Rank-abundance curve —", level),
          x = "Rank", y = "Relative abundance (log scale)",
@@ -165,7 +164,6 @@ for (level in c("phylum", "class", "order", "family", "genus")) {
     mutate(rel = count / sum(count)) %>%
     ungroup()
 
-  # Order taxa by total abundance
   tax_order <- plot_data %>%
     group_by(label) %>% summarise(tot = sum(count), .groups = "drop") %>%
     arrange(desc(tot)) %>% pull(label)
@@ -199,7 +197,7 @@ for (level in c("phylum", "class", "order", "family", "genus")) {
 cat("Saved: relative abundance stacked bar plots\n")
 
 # ============================================================
-# B3. VENN DIAGRAMS (genus & species)
+# B3. VENN DIAGRAMS
 # ============================================================
 cat("\n====== B3. Venn diagrams ======\n")
 
@@ -230,245 +228,465 @@ for (level in c("genus", "species", "its_taxon")) {
   p <- ggVennDiagram(taxa_lists, label_alpha = 0) +
     scale_fill_gradient(low = "#F4FAFE", high = "#2E86AB") +
     labs(title = paste("Shared taxa —", level)) +
-    theme(plot.title = element_text(face = "bold", hjust = 0.5))
+    theme(plot.title = element_text(face = "bold", hjust = 0.5),
+          plot.margin = margin(15, 25, 15, 25))
 
   ggsave(file.path("plots/community", paste0("venn_", level, ".pdf")),
-         plot = p, width = 8, height = 7)
+         plot = p, width = 10, height = 7)
 }
 cat("Saved: Venn diagrams\n")
 
 # ============================================================
-# C. SAMPLE-LEVEL MULTIVARIATE ANALYSES
+# HELPER: Build community matrix from sample-level data
 # ============================================================
-cat("\n====== C. Building sample × taxon matrix ======\n")
+build_comm_matrix <- function(data, group_col = "sample_id") {
+  comm_wide <- data %>%
+    count(.data[[group_col]], its_taxon) %>%
+    pivot_wider(names_from = its_taxon, values_from = n, values_fill = 0) %>%
+    as.data.frame()
+  rownames(comm_wide) <- comm_wide[[group_col]]
+  as.matrix(comm_wide[, -1])
+}
 
-# Build sample-level community matrix from individual sheets
-# Ficus leaves: replicate = tree_orient (S1-S10)
-fl <- endo_leaf_ficus %>%
-  mutate(substrate = "Ficus leaves", sample_id = tree_orient) %>%
-  select(substrate, sample_id, its_taxon)
+# ============================================================
+# HELPER: Run full multivariate analysis suite
+# ============================================================
+run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
+                             colours = NULL, do_indval = TRUE) {
+  dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+  prefix <- file.path(outdir, label)
 
-# Ficus wood: replicate = sample prefix
-fw <- endo_wood_ficus %>%
-  mutate(substrate = "Ficus wood",
-         sample_id = sub("/.*", "", sample_code)) %>%
-  select(substrate, sample_id, its_taxon)
+  groups <- meta[[group_var]]
+  n_groups <- length(unique(groups))
+  n_samples <- nrow(comm_mat)
 
-# Host wood (Lauraceae): replicate = tree_zone
-hw <- endo_wood_host %>%
-  mutate(substrate = "Host wood",
-         sample_id = paste0("zone_", tree_zone)) %>%
-  select(substrate, sample_id, its_taxon)
+  cat("\n--- ", label, ": ", n_samples, " samples, ", ncol(comm_mat),
+      " taxa, ", n_groups, " groups ---\n", sep = "")
 
-all_samples <- bind_rows(fl, fw, hw) %>%
-  mutate(uid = paste(substrate, sample_id, sep = "__"))
+  if (n_samples < 3 || n_groups < 2) {
+    cat("  Skipping: insufficient samples or groups\n")
+    return(NULL)
+  }
 
-# Community matrix: samples × taxa
-comm_wide <- all_samples %>%
-  count(uid, its_taxon) %>%
-  pivot_wider(names_from = its_taxon, values_from = n, values_fill = 0) %>%
-  as.data.frame()
-rownames(comm_wide) <- comm_wide$uid
-comm_mat <- as.matrix(comm_wide[, -1])
+  # Remove empty taxa columns
+  comm_mat <- comm_mat[, colSums(comm_mat) > 0, drop = FALSE]
 
-# Metadata
-meta <- all_samples %>%
-  distinct(uid, substrate, sample_id) %>%
-  arrange(match(uid, rownames(comm_mat)))
+  # Remove samples with zero total abundance
+  keep <- rowSums(comm_mat) > 0
+  if (sum(keep) < 3) {
+    cat("  Skipping: too few non-empty samples\n")
+    return(NULL)
+  }
+  comm_mat <- comm_mat[keep, , drop = FALSE]
+  meta <- meta[keep, , drop = FALSE]
+  groups <- meta[[group_var]]
 
-cat("Community matrix:", nrow(comm_mat), "samples x", ncol(comm_mat), "taxa\n")
-cat("Substrates:", paste(table(meta$substrate), names(table(meta$substrate)),
-                         sep = "×", collapse = ", "), "\n")
+  results <- list(n_samples = nrow(comm_mat), n_taxa = ncol(comm_mat),
+                  n_groups = length(unique(groups)))
 
-# ---- C1. NMDS ----
-cat("\n====== C1. NMDS ======\n")
-set.seed(42)
-nmds <- metaMDS(comm_mat, distance = "bray", k = 2, trymax = 200)
-cat("Stress:", round(nmds$stress, 4), "\n")
+  if (is.null(colours)) {
+    n <- length(unique(groups))
+    colours <- setNames(scales::hue_pal()(n), sort(unique(groups)))
+  }
 
-nmds_scores <- as.data.frame(scores(nmds, display = "sites"))
-nmds_scores$substrate <- meta$substrate
-nmds_scores$sample_id <- meta$sample_id
-
-substrate_colours_3 <- c("Ficus leaves" = "#A23B72",
-                          "Ficus wood"   = "#F18F01",
-                          "Host wood"    = "#2E86AB")
-
-# Compute centroids
-centroids <- nmds_scores %>%
-  group_by(substrate) %>%
-  summarise(NMDS1 = mean(NMDS1), NMDS2 = mean(NMDS2), .groups = "drop")
-
-p_nmds <- ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2, colour = substrate)) +
-  stat_ellipse(aes(fill = substrate), geom = "polygon",
-               alpha = 0.15, level = 0.95, linetype = 2) +
-  geom_point(size = 3) +
-  geom_point(data = centroids, shape = 4, size = 5, stroke = 1.5) +
-  scale_colour_manual(values = substrate_colours_3) +
-  scale_fill_manual(values = substrate_colours_3) +
-  labs(title = "NMDS ordination of fungal communities",
-       subtitle = paste("Bray-Curtis | Stress =", round(nmds$stress, 3)),
-       colour = "Substrate", fill = "Substrate") +
-  theme_minimal(base_size = 12) +
-  theme(plot.title    = element_text(face = "bold"),
-        legend.position = "top")
-
-ggsave("plots/community/nmds_ordination.pdf", plot = p_nmds, width = 9, height = 7)
-cat("Saved: NMDS ordination plot\n")
-
-# Also plot with species scores (top taxa)
-sp_scores <- as.data.frame(scores(nmds, display = "species"))
-sp_scores$taxon <- rownames(sp_scores)
-# Show only most abundant taxa
-taxon_totals <- colSums(comm_mat)
-top_taxa <- names(sort(taxon_totals, decreasing = TRUE))[1:min(15, ncol(comm_mat))]
-sp_top <- sp_scores[sp_scores$taxon %in% top_taxa, ]
-
-p_nmds_sp <- p_nmds +
-  geom_text(data = sp_top, aes(x = NMDS1, y = NMDS2, label = taxon),
-            inherit.aes = FALSE, size = 2.5, alpha = 0.7, fontface = "italic") +
-  labs(title = "NMDS with top 15 taxa overlaid")
-
-ggsave("plots/community/nmds_with_species.pdf", plot = p_nmds_sp, width = 11, height = 8)
-cat("Saved: NMDS with species overlay\n")
-
-# ---- C2. PERMANOVA ----
-cat("\n====== C2. PERMANOVA (adonis2) ======\n")
-set.seed(42)
-perm <- adonis2(comm_mat ~ substrate, data = meta, method = "bray",
-                permutations = 999)
-print(perm)
-
-sink("tables/permanova_results.txt")
-cat("PERMANOVA — Bray-Curtis distance\n")
-cat("Formula: community ~ substrate\n")
-cat("Permutations: 999\n\n")
-print(perm)
-sink()
-cat("Saved: tables/permanova_results.txt\n")
-
-# ---- C3. ANOSIM ----
-cat("\n====== C3. ANOSIM ======\n")
-set.seed(42)
-anos <- anosim(comm_mat, grouping = meta$substrate, distance = "bray",
-               permutations = 999)
-cat("ANOSIM R:", round(anos$statistic, 4),
-    "  p-value:", anos$signif, "\n")
-
-sink("tables/anosim_results.txt", append = FALSE)
-cat("ANOSIM — Bray-Curtis distance\n")
-cat("Permutations: 999\n\n")
-cat("R statistic:", round(anos$statistic, 4), "\n")
-cat("p-value:", anos$signif, "\n\n")
-print(summary(anos))
-sink()
-cat("Saved: tables/anosim_results.txt\n")
-
-# ---- C4. Beta-dispersion ----
-cat("\n====== C4. Beta-dispersion (betadisper) ======\n")
-bc_dist <- vegdist(comm_mat, method = "bray")
-bd <- betadisper(bc_dist, meta$substrate)
-bd_perm <- permutest(bd, permutations = 999)
-cat("Betadisper F:", round(bd_perm$tab$F[1], 4),
-    "  p-value:", round(bd_perm$tab$`Pr(>F)`[1], 4), "\n")
-
-sink("tables/betadisper_results.txt", append = FALSE)
-cat("Beta-dispersion test (betadisper + permutest)\n")
-cat("Tests homogeneity of multivariate dispersions\n\n")
-print(bd_perm)
-cat("\nGroup mean distances to centroid:\n")
-print(data.frame(substrate = levels(bd$group),
-                 mean_dist = round(tapply(bd$distances, bd$group, mean), 4)))
-sink()
-cat("Saved: tables/betadisper_results.txt\n")
-
-# ---- C5. Pairwise PERMANOVA ----
-cat("\n====== C5. Pairwise PERMANOVA ======\n")
-substrates <- unique(meta$substrate)
-pairs <- combn(substrates, 2, simplify = FALSE)
-pw_results <- list()
-for (pr in pairs) {
-  sel <- meta$substrate %in% pr
+  # ---- NMDS ----
   set.seed(42)
-  pw <- adonis2(comm_mat[sel, ] ~ substrate, data = meta[sel, ],
-                method = "bray", permutations = 999)
-  pw_results[[paste(pr, collapse = " vs ")]] <- data.frame(
-    pair     = paste(pr, collapse = " vs "),
-    F_stat   = round(pw$F[1], 4),
-    R2       = round(pw$R2[1], 4),
-    p_value  = pw$`Pr(>F)`[1]
+  nmds <- tryCatch(
+    metaMDS(comm_mat, distance = "bray", k = 2, trymax = 200, trace = 0),
+    error = function(e) { cat("  NMDS failed:", e$message, "\n"); NULL }
   )
-}
-pw_table <- bind_rows(pw_results)
-pw_table$p_adj <- p.adjust(pw_table$p_value, method = "holm")
-print(pw_table)
 
-write.csv(pw_table, "tables/pairwise_permanova.csv", row.names = FALSE)
-cat("Saved: tables/pairwise_permanova.csv\n")
+  if (!is.null(nmds)) {
+    results$nmds_stress <- round(nmds$stress, 4)
+    cat("  NMDS stress:", results$nmds_stress, "\n")
 
-# ============================================================
-# D1. RAREFACTION CURVES
-# ============================================================
-cat("\n====== D1. Rarefaction curves ======\n")
+    nmds_scores <- as.data.frame(scores(nmds, display = "sites"))
+    nmds_scores[[group_var]] <- groups
 
-# Per-substrate rarefaction (pool samples within substrate)
-comm_by_sub <- list()
-for (sub in substrates) {
-  rows <- meta$substrate == sub
-  comm_by_sub[[sub]] <- colSums(comm_mat[rows, , drop = FALSE])
-}
-comm_sub_mat <- do.call(rbind, comm_by_sub)
+    centroids <- nmds_scores %>%
+      group_by(.data[[group_var]]) %>%
+      summarise(NMDS1 = mean(NMDS1), NMDS2 = mean(NMDS2), .groups = "drop")
 
-min_n <- min(rowSums(comm_sub_mat))
-rarefy_data <- list()
-for (sub in substrates) {
-  n_total <- sum(comm_sub_mat[sub, ])
-  steps <- unique(c(seq(1, n_total, length.out = 50), n_total))
-  rare <- rarefy(comm_sub_mat[sub, , drop = FALSE],
-                 sample = floor(steps))
-  rarefy_data[[sub]] <- data.frame(
-    substrate = sub,
-    n_individuals = floor(steps),
-    expected_species = as.numeric(rare)
+    p_nmds <- ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2,
+                                       colour = .data[[group_var]])) +
+      geom_point(size = 3) +
+      geom_point(data = centroids, shape = 4, size = 5, stroke = 1.5) +
+      scale_colour_manual(values = colours) +
+      labs(title = paste("NMDS —", label),
+           subtitle = paste("Bray-Curtis | Stress =", round(nmds$stress, 3)),
+           colour = group_var) +
+      theme_minimal(base_size = 12) +
+      theme(plot.title = element_text(face = "bold"),
+            legend.position = "top",
+            legend.margin = margin(0, 0, 5, 0),
+            plot.margin = margin(10, 15, 10, 15)) +
+      guides(colour = guide_legend(nrow = 2))
+
+    grp_n <- table(groups)
+    if (any(grp_n >= 3)) {
+      ellipse_data <- nmds_scores[groups %in% names(grp_n[grp_n >= 3]), ]
+      p_nmds <- p_nmds +
+        stat_ellipse(data = ellipse_data,
+                     aes(fill = .data[[group_var]]),
+                     geom = "polygon", alpha = 0.15, level = 0.95, linetype = 2) +
+        scale_fill_manual(values = colours) +
+        guides(fill = guide_legend(nrow = 2))
+    }
+
+    ggsave(paste0(prefix, "_nmds.pdf"), plot = p_nmds, width = 10, height = 7.5)
+
+    sp_scores <- as.data.frame(scores(nmds, display = "species"))
+    sp_scores$taxon <- rownames(sp_scores)
+    top_n <- min(15, ncol(comm_mat))
+    top_taxa <- names(sort(colSums(comm_mat), decreasing = TRUE))[1:top_n]
+    sp_top <- sp_scores[sp_scores$taxon %in% top_taxa, ]
+
+    p_nmds_sp <- p_nmds +
+      geom_text(data = sp_top, aes(x = NMDS1, y = NMDS2, label = taxon),
+                inherit.aes = FALSE, size = 2.5, alpha = 0.7, fontface = "italic") +
+      labs(title = paste("NMDS with top", top_n, "taxa —", label))
+    ggsave(paste0(prefix, "_nmds_species.pdf"), plot = p_nmds_sp, width = 12, height = 8.5)
+  }
+
+  # ---- PERMANOVA ----
+  set.seed(42)
+  form <- as.formula(paste("comm_mat ~", group_var))
+  perm <- tryCatch(
+    adonis2(form, data = meta, method = "bray", permutations = 999),
+    error = function(e) { cat("  PERMANOVA failed:", e$message, "\n"); NULL }
   )
+
+  if (!is.null(perm)) {
+    results$permanova <- perm
+    cat("  PERMANOVA F:", round(perm$F[1], 4), " R2:", round(perm$R2[1], 4),
+        " p:", perm$`Pr(>F)`[1], "\n")
+
+    sink(paste0(prefix, "_permanova.txt"))
+    cat("PERMANOVA — Bray-Curtis distance\n")
+    cat("Formula: community ~", group_var, "\n")
+    cat("Permutations: 999\n\n")
+    print(perm)
+    sink()
+  }
+
+  # ---- ANOSIM ----
+  set.seed(42)
+  anos <- tryCatch(
+    anosim(comm_mat, grouping = groups, distance = "bray", permutations = 999),
+    error = function(e) { cat("  ANOSIM failed:", e$message, "\n"); NULL }
+  )
+
+  if (!is.null(anos)) {
+    results$anosim_R <- round(anos$statistic, 4)
+    results$anosim_p <- anos$signif
+    cat("  ANOSIM R:", results$anosim_R, " p:", results$anosim_p, "\n")
+
+    sink(paste0(prefix, "_anosim.txt"))
+    cat("ANOSIM — Bray-Curtis distance\n")
+    cat("Permutations: 999\n\n")
+    cat("R statistic:", round(anos$statistic, 4), "\n")
+    cat("p-value:", anos$signif, "\n\n")
+    print(summary(anos))
+    sink()
+  }
+
+  # ---- Beta-dispersion ----
+  bc_dist <- vegdist(comm_mat, method = "bray")
+  bd <- tryCatch(
+    betadisper(bc_dist, groups),
+    error = function(e) { cat("  betadisper failed:", e$message, "\n"); NULL }
+  )
+
+  if (!is.null(bd)) {
+    bd_perm <- permutest(bd, permutations = 999)
+    results$betadisper_F <- round(bd_perm$tab$F[1], 4)
+    results$betadisper_p <- round(bd_perm$tab$`Pr(>F)`[1], 4)
+    cat("  Betadisper F:", results$betadisper_F, " p:", results$betadisper_p, "\n")
+
+    sink(paste0(prefix, "_betadisper.txt"))
+    cat("Beta-dispersion test (betadisper + permutest)\n\n")
+    print(bd_perm)
+    cat("\nGroup mean distances to centroid:\n")
+    print(data.frame(group = levels(bd$group),
+                     mean_dist = round(tapply(bd$distances, bd$group, mean), 4)))
+    sink()
+  }
+
+  # ---- Pairwise PERMANOVA ----
+  grp_levels <- unique(groups)
+  if (length(grp_levels) >= 2) {
+    pairs <- combn(grp_levels, 2, simplify = FALSE)
+    pw_results <- list()
+    for (pr in pairs) {
+      sel <- groups %in% pr
+      if (sum(sel) >= 3) {
+        set.seed(42)
+        pw <- tryCatch(
+          adonis2(comm_mat[sel, ] ~ grp, data = data.frame(grp = groups[sel]),
+                  method = "bray", permutations = 999),
+          error = function(e) NULL
+        )
+        if (!is.null(pw)) {
+          pw_results[[paste(pr, collapse = " vs ")]] <- data.frame(
+            pair    = paste(pr, collapse = " vs "),
+            F_stat  = round(pw$F[1], 4),
+            R2      = round(pw$R2[1], 4),
+            p_value = pw$`Pr(>F)`[1]
+          )
+        }
+      }
+    }
+    if (length(pw_results) > 0) {
+      pw_table <- bind_rows(pw_results)
+      pw_table$p_adj <- p.adjust(pw_table$p_value, method = "holm")
+      results$pairwise <- pw_table
+      write.csv(pw_table, paste0(prefix, "_pairwise_permanova.csv"), row.names = FALSE)
+      cat("  Pairwise PERMANOVA saved\n")
+    }
+  }
+
+  # ---- Rarefaction ----
+  grp_levels <- unique(groups)
+  comm_by_grp <- list()
+  for (g in grp_levels) {
+    rows <- groups == g
+    comm_by_grp[[g]] <- colSums(comm_mat[rows, , drop = FALSE])
+  }
+  comm_grp_mat <- do.call(rbind, comm_by_grp)
+
+  rarefy_data <- list()
+  for (g in grp_levels) {
+    n_total <- sum(comm_grp_mat[g, ])
+    if (n_total < 2) next
+    steps <- unique(c(seq(1, n_total, length.out = 50), n_total))
+    rare <- rarefy(comm_grp_mat[g, , drop = FALSE], sample = floor(steps))
+    rarefy_data[[g]] <- data.frame(
+      group = g,
+      n_individuals = floor(steps),
+      expected_species = as.numeric(rare)
+    )
+  }
+  if (length(rarefy_data) > 0) {
+    rare_df <- bind_rows(rarefy_data)
+    p_rare <- ggplot(rare_df, aes(x = n_individuals, y = expected_species,
+                                   colour = group)) +
+      geom_line(linewidth = 1) +
+      scale_colour_manual(values = colours) +
+      labs(title = paste("Rarefaction curves —", label),
+           x = "Number of individuals", y = "Expected number of taxa (ITS)",
+           colour = group_var) +
+      theme_minimal(base_size = 12) +
+      theme(plot.title = element_text(face = "bold"), legend.position = "top")
+    ggsave(paste0(prefix, "_rarefaction.pdf"), plot = p_rare, width = 9, height = 6)
+    cat("  Rarefaction curves saved\n")
+  }
+
+  # ---- Indicator species ----
+  if (do_indval && n_groups >= 2 && n_samples >= 5) {
+    set.seed(42)
+    indval <- tryCatch(
+      multipatt(comm_mat, cluster = groups, func = "IndVal.g",
+                control = how(nperm = 999)),
+      error = function(e) { cat("  IndVal failed:", e$message, "\n"); NULL }
+    )
+
+    if (!is.null(indval)) {
+      indval_summary <- capture.output(summary(indval, indvalcomp = TRUE))
+      writeLines(indval_summary, paste0(prefix, "_indicator_species.txt"))
+
+      sig <- indval$sign[indval$sign$p.value <= 0.05, , drop = FALSE]
+      if (nrow(sig) > 0) {
+        sig$taxon <- rownames(sig)
+        sig <- sig %>% arrange(p.value)
+        write.csv(sig, paste0(prefix, "_indicator_species_significant.csv"),
+                  row.names = FALSE)
+        results$n_indicators <- nrow(sig)
+        cat("  Significant indicators:", nrow(sig), "\n")
+      } else {
+        results$n_indicators <- 0
+        cat("  No significant indicators\n")
+      }
+    }
+  }
+
+  results
 }
-rare_df <- bind_rows(rarefy_data)
-
-p_rare <- ggplot(rare_df, aes(x = n_individuals, y = expected_species,
-                               colour = substrate)) +
-  geom_line(linewidth = 1) +
-  scale_colour_manual(values = substrate_colours_3) +
-  labs(title = "Rarefaction curves",
-       x = "Number of individuals", y = "Expected number of taxa (ITS)",
-       colour = "Substrate") +
-  theme_minimal(base_size = 12) +
-  theme(plot.title = element_text(face = "bold"), legend.position = "top")
-
-ggsave("plots/community/rarefaction_curves.pdf", plot = p_rare, width = 9, height = 6)
-cat("Saved: rarefaction curves\n")
 
 # ============================================================
-# D2. INDICATOR SPECIES ANALYSIS
+# C. BUILD COMMUNITY MATRIX FROM SAMPLES DATA
 # ============================================================
-cat("\n====== D2. Indicator species analysis ======\n")
-set.seed(42)
-indval <- multipatt(comm_mat, cluster = meta$substrate,
-                    func = "IndVal.g", control = how(nperm = 999))
+cat("\n====== C. Building sample-level community matrix ======\n")
 
-indval_summary <- capture.output(summary(indval, indvalcomp = TRUE))
-writeLines(indval_summary, "tables/indicator_species.txt")
-cat("Saved: tables/indicator_species.txt\n")
+comm_mat_full <- build_comm_matrix(samples_raw, "sample_id")
 
-# Extract significant indicators
-sig <- indval$sign[indval$sign$p.value <= 0.05, , drop = FALSE]
-if (nrow(sig) > 0) {
-  sig$taxon <- rownames(sig)
-  sig <- sig %>% arrange(p.value)
-  write.csv(sig, "tables/indicator_species_significant.csv", row.names = FALSE)
-  cat("Significant indicators (p<=0.05):", nrow(sig), "\n")
-  cat("Saved: tables/indicator_species_significant.csv\n")
-} else {
-  cat("No significant indicator species found (p<=0.05)\n")
+meta_full <- samples_raw %>%
+  distinct(sample_id, substrate, zone, unit, position) %>%
+  as.data.frame()
+rownames(meta_full) <- meta_full$sample_id
+meta_full <- meta_full[rownames(comm_mat_full), ]
+
+cat("Full community matrix:", nrow(comm_mat_full), "samples x",
+    ncol(comm_mat_full), "taxa\n")
+
+# ============================================================
+# C1. SUBSTRATE COMPARISON: All 3 substrates
+# ============================================================
+cat("\n====== C1. All substrates comparison ======\n")
+
+results_substrate <- run_multivariate(
+  comm_mat_full, meta_full, "substrate",
+  label = "substrate_all",
+  outdir = "tables",
+  colours = substrate_colours_3
+)
+
+# Copy key results to standard table locations
+if (!is.null(results_substrate$permanova)) {
+  sink("tables/permanova_results.txt")
+  cat("PERMANOVA — Bray-Curtis distance\n")
+  cat("Formula: community ~ substrate\nPermutations: 999\n\n")
+  print(results_substrate$permanova)
+  sink()
+}
+
+# ============================================================
+# C2. SUBSTRATE SUBANALYSIS: Ficus leaves vs Lauraceae leaves
+# ============================================================
+cat("\n====== C2. Ficus leaves vs Lauraceae leaves ======\n")
+
+sel_leaves <- meta_full$substrate %in% c("Ficus leaves", "Lauraceae leaves")
+results_leaves <- run_multivariate(
+  comm_mat_full[sel_leaves, ], meta_full[sel_leaves, ], "substrate",
+  label = "substrate_leaves",
+  outdir = "tables",
+  colours = substrate_colours_3[c("Ficus leaves", "Lauraceae leaves")]
+)
+
+# ============================================================
+# E. ZONE-BASED ANALYSES
+# ============================================================
+cat("\n====== E. Zone-based analyses ======\n")
+
+zone_colours <- c("1" = "#440154", "2" = "#3B528B", "3" = "#21918C",
+                   "4" = "#5EC962", "5" = "#ADDC30", "6" = "#FDE725")
+position_colours <- c("Trunk" = "#8B4513", "Branch" = "#228B22")
+
+# ---- E1. Ficus wood: all zones ----
+cat("\n--- E1. Ficus wood across zones ---\n")
+sel_fw <- meta_full$substrate == "Ficus wood"
+meta_fw <- meta_full[sel_fw, ]
+meta_fw$zone_f <- as.character(meta_fw$zone)
+comm_fw <- comm_mat_full[sel_fw, ]
+
+results_fw_zones <- run_multivariate(
+  comm_fw, meta_fw, "zone_f",
+  label = "ficus_wood_zones",
+  outdir = "tables",
+  colours = zone_colours
+)
+
+# ---- E2. Ficus wood: trunk (zones 1-5) vs branch (zone 6) ----
+cat("\n--- E2. Ficus wood trunk vs branch ---\n")
+
+results_fw_trunkbranch <- run_multivariate(
+  comm_fw, meta_fw, "position",
+  label = "ficus_wood_trunk_vs_branch",
+  outdir = "tables",
+  colours = position_colours
+)
+
+# ---- E3. Trunk vs branch per substrate (where data permits) ----
+cat("\n--- E3. Trunk vs branch per substrate ---\n")
+
+subst_with_both <- meta_full %>%
+  group_by(substrate) %>%
+  summarise(has_trunk = any(position == "Trunk"),
+            has_branch = any(position == "Branch"), .groups = "drop") %>%
+  filter(has_trunk & has_branch) %>%
+  pull(substrate)
+
+results_trunk_branch_per_sub <- list()
+if (length(subst_with_both) > 0) {
+  for (sub in subst_with_both) {
+    sel_sub <- meta_full$substrate == sub
+    cat("\n  Trunk vs branch for:", sub, "\n")
+    results_trunk_branch_per_sub[[sub]] <- run_multivariate(
+      comm_mat_full[sel_sub, ], meta_full[sel_sub, ], "position",
+      label = paste0(gsub(" ", "_", tolower(sub)), "_trunk_vs_branch"),
+      outdir = "tables",
+      colours = position_colours
+    )
+  }
+}
+
+# ---- E4. All substrates at zone 6 (branch level only) ----
+cat("\n--- E4. Substrate comparison at zone 6 (branch level) ---\n")
+sel_z6 <- meta_full$zone == 6
+results_z6 <- run_multivariate(
+  comm_mat_full[sel_z6, ], meta_full[sel_z6, ], "substrate",
+  label = "substrate_zone6_branch",
+  outdir = "tables",
+  colours = substrate_colours_3
+)
+
+# ---- E5. Substrate x position interaction (combined factor) ----
+cat("\n--- E5. Substrate x position interaction ---\n")
+meta_full$sub_pos <- paste(meta_full$substrate, meta_full$position, sep = " - ")
+n_combos <- length(unique(meta_full$sub_pos))
+combo_colours <- setNames(
+  scales::hue_pal()(n_combos),
+  sort(unique(meta_full$sub_pos))
+)
+
+results_subpos <- run_multivariate(
+  comm_mat_full, meta_full, "sub_pos",
+  label = "substrate_x_position",
+  outdir = "tables",
+  colours = combo_colours
+)
+
+# ============================================================
+# F. ZONE GRADIENT — FICUS WOOD
+# ============================================================
+cat("\n====== F. Ficus wood zone gradient test ======\n")
+
+if (!is.null(results_fw_zones)) {
+  meta_fw_num <- meta_fw
+  meta_fw_num$zone_num <- meta_fw_num$zone
+  set.seed(42)
+  perm_zone_ord <- tryCatch(
+    adonis2(comm_fw ~ zone_num, data = meta_fw_num, method = "bray",
+            permutations = 999),
+    error = function(e) NULL
+  )
+  if (!is.null(perm_zone_ord)) {
+    sink("tables/ficus_wood_zones_permanova_continuous.txt")
+    cat("PERMANOVA — Ficus wood community vs zone height (continuous)\n\n")
+    print(perm_zone_ord)
+    sink()
+    cat("  Zone gradient PERMANOVA saved\n")
+  }
+}
+
+# ============================================================
+# Copy key files for backward compatibility
+# ============================================================
+for (src_dest in list(
+  c("tables/substrate_all_pairwise_permanova.csv", "tables/pairwise_permanova.csv"),
+  c("tables/substrate_all_indicator_species.txt",  "tables/indicator_species.txt"),
+  c("tables/substrate_all_indicator_species_significant.csv",
+    "tables/indicator_species_significant.csv"),
+  c("tables/substrate_all_anosim.txt",     "tables/anosim_results.txt"),
+  c("tables/substrate_all_betadisper.txt",  "tables/betadisper_results.txt")
+)) {
+  if (file.exists(src_dest[1]))
+    file.copy(src_dest[1], src_dest[2], overwrite = TRUE)
+}
+
+# Move plot PDFs from tables/ to plots/community/
+for (f in list.files("tables", pattern = "\\.(pdf|png)$", full.names = TRUE)) {
+  file.copy(f, file.path("plots/community", basename(f)), overwrite = TRUE)
+  file.remove(f)
 }
 
 cat("\n====== All community analyses complete ======\n")

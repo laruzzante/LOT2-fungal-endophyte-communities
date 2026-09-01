@@ -1,46 +1,57 @@
-# Fungal Community Analysis of LOT2 Endophytic Fungi
+# Fungal Endophyte Community Analysis — LOT2 (Peru)
 
-> **Analysis environment:** R 4.6.1 | Generated on 2026-08-28
+> **Analysis environment:** R 4.6.1 | Generated on 2026-09-01
 
 ## Overview
 
-This project analyses the fungal endophyte communities isolated from three substrates collected on Ile de La Reunion (LOT2 sampling campaign):
+This project analyses the fungal endophyte communities isolated from three substrates collected in **Peru** (LOT2 sampling campaign):
 
-| Substrate | Source sheet | Isolates | Sample-level replicates |
-|-----------|-------------|----------|------------------------|
-| **Lauraceae leaves** | ALL isolates (aggregate only) | 219 | Not available |
-| **Ficus leaves** | 67. Fungi-Endo leaf (Ficus) | 264 | 10 (leaf orientations S1-S10) |
-| **Ficus wood** | 65. Fungi-Endo wood (Ficus) | 167 | 13 (sample collection units) |
-| **Host wood** (Lauraceae) | 66. Fungi-Endo wood (Host) | 20 | 3 (tree zones) |
+| Substrate | Isolates (pooled) | Sample-level replicates (units) |
+|-----------|:-:|:-:|
+| **Ficus leaves** | 264 | 10 |
+| **Ficus wood** | 167 | 12 |
+| **Lauraceae leaves** | 219 | 8 |
 
-**Important note on substrates:** The aggregate data ("ALL isolates" sheet) records counts for Lauraceae *leaves*, Ficus leaves, and Ficus wood. However, there is no individual sample sheet for Lauraceae leaves -- only for Lauraceae (Host) *wood* (20 isolates). Therefore, aggregate-level analyses (alpha diversity, Venn diagrams, rank-abundance) use the three aggregate substrates, while sample-level multivariate analyses (NMDS, PERMANOVA, etc.) use Ficus leaves, Ficus wood, and Host wood.
+### Sampling design
+
+Samples were collected at different **tree zones** (heights):
+
+- **Zones 1-5**: Tree trunk (zone 1 = lowest, zone 5 = highest)
+- **Zone 6**: Canopy branches (highest zone)
+
+Wood collected from zone 6 corresponds to **branch wood** (no trunk present). Wood from zones 1-5 is **trunk wood**.
+
+| Substrate | Zones sampled | Notes |
+|-----------|:---:|---|
+| Ficus leaves | 6 only | All leaf samples from canopy |
+| Ficus wood | 1-6 | Trunk (zones 1-5) and branch (zone 6) |
+| Lauraceae leaves | 5-6 | Predominantly zone 6 |
 
 ### Handling of uncertain taxonomy
 
-Across all taxonomic levels, entries with missing or unresolved identifiers (`NA`, `"?"`, `"NO"`, `"incertae sedis"`) are pooled into a single **"Incertae sedis"** category before aggregation.
+Entries with `NA`, `"?"`, `"NO"`, or `"incertae sedis"` are pooled into **"Incertae sedis"** before aggregation.
 
 ---
 
 ## Input Data
 
-- **`LOT2_for_Livio.xlsx`** -- Source Excel workbook containing all isolate data across multiple sheets.
+- **`LOT2_pooled_counts.xlsx`** (first sheet) — Pooled genotype counts per substrate with full taxonomy (284 genotypes)
+- **`LOT2_samples.xlsx`** (first sheet) — Individual isolate records with sampling zone and unit (650 isolates)
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `main.R` | Master script -- loads libraries, sources all other scripts in order |
-| `parse_LOT2.R` | Reads and renames columns from all Excel sheets |
+| `main.R` | Master script — loads libraries, sources all other scripts in order |
+| `parse_LOT2.R` | Reads both Excel files (first sheet only), standardises column names |
 | `plot_abundance.R` | Horizontal bar charts of isolate counts by taxonomic level |
-| `plot_abundance_pooled.R` | Same bar charts, but with uncertain taxa pooled as "Incertae sedis" |
-| `plot_pie.R` | Pie charts of community composition (3 pies per level, one per substrate) |
-| `community_analysis.R` | Full community ecology analysis: diversity, ordination, statistical tests |
+| `plot_abundance_pooled.R` | Bar charts with uncertain taxa pooled as "Incertae sedis" |
+| `plot_pie.R` | Pie charts of community composition (3 pies per level) |
+| `community_analysis.R` | Full community ecology analyses across all comparisons |
 | `generate_readme.R` | Generates this README dynamically from analysis results |
 
-### How to run
-
 ```r
-# From the project directory, run everything:
+# From the project directory:
 source("main.R")
 ```
 
@@ -53,7 +64,7 @@ source("main.R")
 | tidyr | 1.3.2 | Data reshaping |
 | ggplot2 | 4.0.3 | Plotting |
 | scales | 1.4.0 | Axis formatting |
-| vegan | 2.7.5 | Diversity indices, NMDS, PERMANOVA, ANOSIM, betadisper, rarefaction |
+| vegan | 2.7.5 | Diversity, NMDS, PERMANOVA, ANOSIM, betadisper |
 | indicspecies | 1.8.0 | Indicator species analysis (IndVal) |
 | ggVennDiagram | 1.5.7 | Venn diagrams |
 
@@ -66,181 +77,77 @@ plots/
   abundance/                        # Bar charts (raw)
   abundance_pooled_incertae_sedis/  # Bar charts (uncertain taxa pooled)
   pie_charts/                       # Pie charts
-  community/                        # Community ecology plots
+  community/                        # Community ecology plots (NMDS, rarefaction, etc.)
+  png/                              # PNG versions for README embedding
 
 tables/                             # Statistical results and summary tables
 ```
 
 ---
 
-## Abundance Plots
-
-### `plots/abundance/`
-
-Horizontal grouped bar charts showing the **absolute number of isolates** per taxonomic identifier, broken down by substrate (colour-coded). One plot per taxonomic level: culture code, ITS taxon, phylum, subphylum, superclass, class, subclass, order, family, genus, species.
-
-Taxa are sorted by total abundance (lowest at top, highest at bottom). When labels are ambiguous at a given level, parent ranks are prepended to disambiguate.
-
-![Abundance by genus (pooled)](plots/png/abundance_by_genus.png)
-
-### `plots/abundance_pooled_incertae_sedis/`
-
-Same as above, but all unknown/missing taxonomic identifiers are first collapsed into a single "Incertae sedis" group at each level.
-
-### `plots/pie_charts/`
-
-For each taxonomic level, three pie charts side by side -- one per substrate -- showing the **proportional composition** of the community. All three pies share the same colour palette and taxon ordering. Slices >= 3% are labelled with their percentage.
-
-![Pie chart by phylum](plots/png/pie_by_phylum.png)
-
-![Pie chart by genus](plots/png/pie_by_genus.png)
-
----
-
 # Results
 
-## A. Alpha Diversity
+## A. Alpha Diversity (from pooled counts)
 
-Alpha diversity measures the richness and evenness of a community *within* a single substrate.
+| Index | What it measures | Higher means |
+|-------|-----------------|--------------|
+| **Richness (S)** | Number of distinct taxa | More taxa present |
+| **Shannon (H')** | Combines richness and evenness | More diverse |
+| **Simpson (1-D)** | Probability two random individuals differ | More diverse |
+| **Inverse Simpson** | Effective number of equally-common species | More even |
+| **Pielou (J')** | How evenly individuals are distributed | More even |
 
-### How to interpret
+### At ITS taxon level
 
-| Index | What it measures | Range | Higher means |
-|-------|-----------------|-------|--------------|
-| **Richness (S)** | Number of distinct taxa | 0 to infinity | More taxa present |
-| **Shannon (H')** | Combines richness and evenness; sensitive to rare species | Typically 0-5 | More diverse |
-| **Simpson (1-D)** | Probability that two random individuals differ | 0 to 1 | More diverse |
-| **Inverse Simpson** | Effective number of equally-common species | 1 to S | More even |
-| **Pielou's evenness (J')** | How evenly individuals are distributed | 0 to 1 | More even |
-
-### Results at ITS taxon level
-
-| Substrate | Richness (S) | Abundance (N) | Shannon (H') | Simpson (1-D) | Inv. Simpson | Pielou (J') |
-|-----------|:---:|:---:|:---:|:---:|:---:|:---:|
+| Substrate | S | N | H' | 1-D | Inv. Simp. | J' |
+|-----------|:-:|:-:|:-:|:-:|:-:|:-:|
 | Lauraceae leaves | 106 | 219 | 4.2745 | 0.9779 | 45.289 | 0.9166 |
 | Ficus leaves | 135 | 264 | 4.4705 | 0.9791 | 47.8681 | 0.9114 |
 | Ficus wood | 81 | 167 | 4.0073 | 0.9722 | 35.9858 | 0.9119 |
 
-Ficus leaves harbour the most ITS taxa (**135**), followed by Lauraceae leaves (**106**) and Ficus wood (**81**). Shannon diversity is broadly similar across substrates (H' = 4.0073-4.4705), and Pielou's evenness values above 0.91 indicate that no single taxon strongly dominates any substrate.
+Full data: `tables/alpha_diversity.csv`
 
-### Results at genus level
-
-| Substrate | Richness (S) | Shannon (H') | Simpson (1-D) | Pielou (J') |
-|-----------|:---:|:---:|:---:|:---:|
-| Lauraceae leaves | 19 | 1.7576 | 0.7162 | 0.5969 |
-| Ficus leaves | 28 | 2.6053 | 0.8895 | 0.7819 |
-| Ficus wood | 46 | 3.0202 | 0.9086 | 0.7888 |
-
-Full diversity data across all taxonomic levels is in `tables/alpha_diversity.csv`.
-
-**Plots:** `plots/community/alpha_shannon_H.pdf`, `alpha_simpson_1mD.pdf`, `alpha_inv_simpson.pdf`, `alpha_pielou_J.pdf`
-
-![Shannon diversity across taxonomic levels](plots/png/alpha_shannon_H.png)
+![Shannon diversity](plots/png/alpha_shannon_H.png)
 
 ---
 
-## B. Community Composition Comparisons
+## B. Community Composition
 
-### B1. Rank-Abundance Curves (Whittaker Plots)
+### B1. Rank-Abundance Curves
 
-Each taxon is ranked from most to least abundant (x-axis) and its relative abundance is plotted on a log scale (y-axis). One curve per substrate.
+![Rank-abundance at genus level](plots/png/rank_abundance_genus.png)
 
-**How to interpret:** A steep curve indicates a community dominated by a few taxa with many rare ones. A flat curve indicates an even community. Comparing curves across substrates reveals differences in dominance structure.
-
-**Plots:** `plots/community/rank_abundance_genus.pdf`, `rank_abundance_species.pdf`, `rank_abundance_its_taxon.pdf`
-
-![Rank-abundance curve at genus level](plots/png/rank_abundance_genus.png)
-
-### B2. Relative Abundance Stacked Bar Charts
-
-Stacked bars showing the proportional composition of each substrate at a given taxonomic level. The y-axis shows percentage, making substrates with different total isolate numbers directly comparable.
-
-**Plots:** `plots/community/rel_abundance_phylum.pdf`, `rel_abundance_class.pdf`, `rel_abundance_order.pdf`, `rel_abundance_family.pdf`, `rel_abundance_genus.pdf`
+### B2. Relative Abundance
 
 ![Relative abundance by phylum](plots/png/rel_abundance_phylum.png)
 
 ![Relative abundance by genus](plots/png/rel_abundance_genus.png)
 
-### B3. Venn Diagrams -- Shared and Unique Taxa
+### B3. Venn Diagrams — Shared Taxa
 
-Shows the number of taxa shared between substrates and unique to each.
+At **genus level** (44 total genera): **7** shared across all 3 substrates, **2** unique to Lauraceae leaves, **10** unique to Ficus leaves, **20** unique to Ficus wood.
 
-**At genus level** (44 total genera):
-
-- Shared across all 3 substrates: **7**
-- Lauraceae leaves only: **2**
-- Ficus leaves only: **10**
-- Ficus wood only: **20**
-- Lauraceae + Ficus leaves only: **2**
-- Lauraceae + Ficus wood only: **2**
-- Ficus leaves + Ficus wood only: **1**
-
-**At species level** (150 total species):
-
-- Shared across all 3 substrates: **9**
-- Lauraceae leaves only: **37**
-- Ficus leaves only: **42**
-- Ficus wood only: **31**
-
-**Plots:** `plots/community/venn_genus.pdf`, `venn_species.pdf`, `venn_its_taxon.pdf`
-
-![Venn diagram at genus level](plots/png/venn_genus.png)
+![Venn diagram — genus](plots/png/venn_genus.png)
 
 ---
 
 # Multivariate Statistical Analyses
 
-These analyses use sample-level data (26 samples total, 202 ITS taxa) and **Bray-Curtis dissimilarity** to compare community composition across substrates.
-
-**Substrates used:** Ficus leaves (10 samples by leaf orientation), Ficus wood (13 samples by collection unit), Host wood (3 samples by tree zone).
-
-### Parameters common to all tests
-
-| Parameter | Value |
-|-----------|-------|
-| Distance metric | Bray-Curtis (`method = "bray"`) |
-| Number of permutations | 999 |
-| Random seed | 42 (`set.seed(42)`) |
-| Community matrix dimensions | 26 samples x 202 taxa |
+Sample-level analyses use **32 samples** and **284 ITS taxa**, with **Bray-Curtis dissimilarity** and **999 permutations**.
 
 ---
 
-## C1. NMDS Ordination
+## C1. Substrate Comparison: Ficus Leaves vs Ficus Wood vs Lauraceae Leaves
 
-Non-metric Multidimensional Scaling reduces the high-dimensional community data into a 2D plot where each point represents one sample. Points close together have similar community composition.
+### NMDS Ordination
 
-**Parameters:** `vegan::metaMDS(comm, distance = "bray", k = 2, trymax = 200)`
+**Stress = 0.0771** (< 0.10 = good; < 0.20 = acceptable)
 
-**Stress = 0.0743**
+![NMDS — all substrates](plots/png/substrate_all_nmds.png)
 
-| Stress value | Quality of representation |
-|:---:|---|
-| < 0.05 | Excellent |
-| < 0.10 | Good |
-| < 0.20 | Acceptable |
-| > 0.20 | Poor -- interpret with caution |
+![NMDS with species overlay](plots/png/substrate_all_nmds_species.png)
 
-The stress value of 0.0743 indicates a **good** 2D representation of the community distances.
-
-**How to read the plot:**
-- Points coloured by substrate; clustering by colour = communities differ systematically
-- 95% confidence ellipses show group spread; non-overlapping = distinct communities
-- Crosses mark group centroids (mean position)
-- The species overlay plot shows which of the 15 most abundant taxa drive group separation
-
-**Plots:** `plots/community/nmds_ordination.pdf`, `nmds_with_species.pdf`
-
-![NMDS ordination](plots/png/nmds_ordination.png)
-
-![NMDS with species overlay](plots/png/nmds_with_species.png)
-
----
-
-## C2. PERMANOVA
-
-Permutational Multivariate Analysis of Variance tests whether community composition centroids differ between substrates. This is the multivariate equivalent of an ANOVA.
-
-**Parameters:** `vegan::adonis2(comm ~ substrate, method = "bray", permutations = 999)`
+### PERMANOVA
 
 ```
 PERMANOVA — Bray-Curtis distance
@@ -251,134 +158,97 @@ Permutation test for adonis under reduced model
 Permutation: free
 Number of permutations: 999
 
-adonis2(formula = comm_mat ~ substrate, data = meta, permutations = 999, method = "bray")
+adonis2(formula = form, data = meta, permutations = 999, method = "bray")
          Df SumOfSqs      R2      F Pr(>F)    
-Model     2   2.5069 0.22334 3.3069  0.001 ***
-Residual 23   8.7178 0.77666                  
-Total    25  11.2247 1.00000                  
+Model     2    2.792 0.20041 3.6342  0.001 ***
+Residual 29   11.140 0.79959                  
+Total    31   13.932 1.00000                  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
 
-| Metric | Value | Interpretation |
-|--------|:-----:|----------------|
-| F statistic | 3.3069 | Ratio of between- to within-group variation |
-| R-squared | 0.22334 | 22.3% of variation explained by substrate |
-| p-value | 0.001 | **Highly significant** -- communities differ |
+F = 3.6342, R² = 0.20041, p = 0.001
 
-**Interpretation:** Substrate identity explains **22.3%** of the total variation in community composition (p = 0.001). The remaining 77.7% is due to within-substrate variability and unmeasured factors. A significant result means at least two substrate groups harbour distinct communities.
+### ANOSIM
 
-**Caveat:** PERMANOVA can be sensitive to differences in multivariate dispersion (spread). See the betadisper test below.
+R = 0.5604 , p = 0.001 
 
----
+### Beta-dispersion (PERMDISP)
 
-## C3. ANOSIM
+F = 4.332, p = 0.02
 
-Analysis of Similarity -- a complementary non-parametric test comparing between-group to within-group dissimilarities using ranks.
+### Pairwise PERMANOVA
 
-**Parameters:** `vegan::anosim(comm, grouping = substrate, distance = "bray", permutations = 999)`
+| Comparison | F | R² | p (raw) | p (Holm) | Sig. |
+|-----------|:-:|:-:|:-:|:-:|:-:|
+| Ficus leaves vs Ficus wood | 3.8123 | 0.1536 | 0.001 | 0.003 | ** |
+| Ficus leaves vs Lauraceae leaves | 3.3294 | 0.1638 | 0.001 | 0.003 | ** |
+| Ficus wood vs Lauraceae leaves | 3.6839 | 0.1555 | 0.001 | 0.003 | ** |
 
-| Metric | Value | Interpretation |
-|--------|:-----:|----------------|
-| R statistic | 0.6409  | Ranges -1 to 1; values > 0.5 = well-separated groups |
-| p-value | 0.001  | **Highly significant** |
+### Rarefaction
 
-**Interpretation:** R = 0.6409  indicates **strong separation** between substrate communities. Values near 0 would indicate no difference; values near 1 indicate complete separation. This confirms the PERMANOVA finding.
+![Rarefaction — all substrates](plots/png/substrate_all_rarefaction.png)
 
----
+### Indicator Species (23 significant, p ≤ 0.05)
 
-## C4. Beta-Dispersion Test (PERMDISP)
-
-Tests whether groups have equal multivariate spread (dispersion). This is an assumption of PERMANOVA.
-
-**Parameters:** `vegan::betadisper(vegdist(comm, "bray"), groups)` + `permutest(bd, permutations = 999)`
-
-| Metric | Value | Interpretation |
-|--------|:-----:|----------------|
-| F statistic | 0.045084 | Large = dispersions differ |
-| p-value | 999 | **Significant** -- dispersions are unequal |
-
-**Mean distance to centroid per substrate:**
-
-| Substrate | Mean distance | Interpretation |
-|-----------|:---:|---|
-| Ficus leaves Ficus leaves | 0.5373 | Less variable |
-| Ficus wood Ficus wood | 0.6287 | Most variable |
-| Host wood Host wood | 0.4618 | Less variable |
-
-**Interpretation:** The significant result (p = 999) means within-group variability differs between substrates. Ficus wood communities are the most variable (highest distance to centroid), while Host wood communities are the most homogeneous. This means the significant PERMANOVA result could partly reflect dispersion differences rather than purely centroid differences. However, the ANOSIM result (R = 0.6409 , which is less sensitive to dispersion) still supports genuine community differences.
+Full results: `tables/indicator_species_significant.csv`
 
 ---
 
-## C5. Pairwise PERMANOVA
+## C2. Ficus Leaves vs Lauraceae Leaves
 
-Post-hoc pairwise comparisons with Holm-corrected p-values for multiple testing.
+PERMANOVA: F = 3.3294, R² = 0.16377, p = 0.001
 
-**Parameters:** `vegan::adonis2()` on each pair, p-values adjusted with `p.adjust(method = "holm")`
+![NMDS — Ficus vs Lauraceae leaves](plots/png/substrate_leaves_nmds.png)
 
-| Comparison | F | R-squared | p (raw) | p (Holm-adjusted) | Significant? |
-|-----------|:---:|:---:|:---:|:---:|:---:|
-| Ficus leaves vs Ficus wood | 4.3564 | 0.1718 | 0.001 | 0.003 | ** |
-| Ficus leaves vs Host wood | 3.5648 | 0.2448 | 0.007 | 0.012 | * |
-| Ficus wood vs Host wood | 1.7652 | 0.1120 | 0.006 | 0.012 | * |
-
-**Interpretation:** All three pairwise comparisons are significant (adjusted p < 0.05), confirming that **each substrate harbours a distinct fungal community**. The largest effect size (R-squared = 0.2448) is between Ficus leaves vs Host wood, indicating these two substrates are the most different from each other.
+Full results in `tables/substrate_leaves_*.txt`
 
 ---
 
-## D1. Rarefaction Curves
+## E. Zone-Based Analyses
 
-Shows expected number of taxa as a function of sampling effort (number of individuals).
+### E1. Ficus Wood Across Zones
 
-**How to interpret:** If the curve reaches a plateau, sampling was sufficient to capture most diversity. If still rising steeply, more sampling would reveal additional taxa. Substrates with curves plateauing at different heights have genuinely different richness.
+Community comparison of Ficus wood isolates collected at different tree zones (1-6).
 
-**Plot:** `plots/community/rarefaction_curves.pdf`
+![NMDS — Ficus wood zones](plots/png/ficus_wood_zones_nmds.png)
 
-![Rarefaction curves](plots/png/rarefaction_curves.png)
+Full results in `tables/ficus_wood_zones_*.txt`
 
----
+### E2. Ficus Wood: Trunk (Zones 1-5) vs Branch (Zone 6)
 
-## D2. Indicator Species Analysis (IndVal)
+PERMANOVA: F = 1.9802, R² = 0.15256, p = 0.004
 
-Identifies taxa significantly associated with a particular substrate based on fidelity (how consistently the taxon occurs) and exclusivity (how restricted it is).
+![NMDS — trunk vs branch](plots/png/ficus_wood_trunk_vs_branch_nmds.png)
 
-**Parameters:** `indicspecies::multipatt(comm, cluster = substrate, func = "IndVal.g", control = how(nperm = 999))`
+### E4. Substrate Comparison at Zone 6 (Branch Level Only)
 
-**8 significant indicator taxa** were identified (p <= 0.05):
+PERMANOVA: F = 3.3279, R² = 0.22443, p = 0.001
 
-### Ficus leaves indicators (7 taxa)
+![NMDS — substrates at zone 6](plots/png/substrate_zone6_branch_nmds.png)
 
-| Taxon | IndVal statistic | p-value |
-|-------|:---:|:---:|
-| *Colletotrichum colombiense, C. beeveri* | 0.775 | 0.004 |
-| *Diaporthe aff. passiflorae 1* | 0.775 | 0.006 |
-| *Xylariales sp. 2 (Xylaria enteroleuca)* | 0.707 | 0.006 |
-| *Colletotrichum arboricola* | 0.837 | 0.009 |
-| *Pseudocercospora aff. basitruncata* | 0.837 | 0.011 |
-| *Diaporthe aff. araucanorum 4* | 0.837 | 0.013 |
-| *Colletotrichum godetiae* | 0.707 | 0.040 |
+### E5. Substrate × Position Interaction
 
-### Host wood indicators (1 taxa)
+Combined factor analysis testing whether community composition differs by substrate-position combinations.
 
-| Taxon | IndVal statistic | p-value |
-|-------|:---:|:---:|
-| NO (not grown) | 1 | 0.002 |
-
-
-**How to interpret the IndVal statistic:** Ranges 0 to 1. A value of 1 means the taxon is found in all samples of that substrate and nowhere else (perfect indicator). The A component measures specificity (exclusivity to the group) and B measures fidelity (frequency of occurrence within the group).
-
-Most indicators are associated with Ficus leaves (7 taxa), suggesting this substrate harbours a particularly distinctive fungal assemblage. The absence of Ficus wood indicators likely reflects its higher within-group variability (mean distance to centroid = 0.6287).
-
-**Full results:** `tables/indicator_species.txt`, `tables/indicator_species_significant.csv`
+![NMDS — substrate × position](plots/png/substrate_x_position_nmds.png)
 
 ---
 
-# Summary of Key Findings
+## Abundance Plots
 
-1. **Community composition differs significantly across all substrate pairs** (PERMANOVA p = 0.001, ANOSIM R = 0.6409 , all pairwise comparisons adjusted p < 0.05).
-2. **Ficus leaves harbour the most ITS taxa** (135), followed by Lauraceae leaves (106) and Ficus wood (81).
-3. **Shannon diversity is broadly similar** across substrates at the ITS level (H' = 4.0073-4.4705), with Pielou's J' > 0.91 indicating no strong single-taxon dominance.
-4. **7 indicator species** are significantly associated with Ficus leaves, particularly *Colletotrichum* and *Diaporthe* species.
-5. **Within-group variability differs** between substrates (betadisper p = 999): Ficus wood is the most variable, Host wood the least.
-6. **NMDS stress = 0.0743** -- the 2D ordination is a good representation of community distances.
-7. **7 genera** are shared across all three substrates, while 10 are unique to Ficus leaves, 20 to Ficus wood, and 2 to Lauraceae leaves.
+### `plots/abundance/`
+
+Horizontal grouped bar charts showing absolute isolate counts per taxonomic level, broken down by substrate.
+
+![Abundance by genus (pooled)](plots/png/abundance_by_genus.png)
+
+### `plots/pie_charts/`
+
+![Pie chart by phylum](plots/png/pie_by_phylum.png)
+
+![Pie chart by genus](plots/png/pie_by_genus.png)
+
+---
+
+*Auto-generated on 2026-09-01 by `generate_readme.R`*

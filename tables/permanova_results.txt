@@ -6,10 +6,10 @@ Permutation test for adonis under reduced model
 Permutation: free
 Number of permutations: 999
 
-adonis2(formula = comm_mat ~ substrate, data = meta, permutations = 999, method = "bray")
+adonis2(formula = form, data = meta, permutations = 999, method = "bray")
          Df SumOfSqs      R2      F Pr(>F)    
-Model     2   2.5069 0.22334 3.3069  0.001 ***
-Residual 23   8.7178 0.77666                  
-Total    25  11.2247 1.00000                  
+Model     2    2.792 0.20041 3.6342  0.001 ***
+Residual 29   11.140 0.79959                  
+Total    31   13.932 1.00000                  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

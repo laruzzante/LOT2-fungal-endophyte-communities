@@ -1,0 +1,53 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 284
+ Selected number of species: 8 
+ Number of species associated to 1 group: 8 
+ Number of species associated to 2 groups: 0 
+ Number of species associated to 3 groups: 0 
+ Number of species associated to 4 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group Ficus leaves - Branch  #sps.  1 
+                               A   B  stat p.value  
+Pseudocercospora aff. quetri 1.0 0.7 0.837   0.037 *
+
+ Group Ficus wood - Trunk  #sps.  3 
+                                                      A      B  stat p.value  
+Penicillium goetzii, P. rubens                   0.8544 1.0000 0.924   0.019 *
+Aspergillus cvjetkovicii or A. jensenii (3 spp.) 1.0000 0.8000 0.894   0.035 *
+Aspergillus versicolor                           1.0000 0.8000 0.894   0.023 *
+
+ Group Lauraceae leaves - Branch  #sps.  3 
+                                                                                                   A
+Nigrospora cf. gorlenkoana                                                                    1.0000
+Diaporthe sp. 20                                                                              0.9551
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 1.0000
+                                                                                                   B
+Nigrospora cf. gorlenkoana                                                                    0.8750
+Diaporthe sp. 20                                                                              0.8750
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.7500
+                                                                                               stat
+Nigrospora cf. gorlenkoana                                                                    0.935
+Diaporthe sp. 20                                                                              0.914
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.866
+                                                                                              p.value
+Nigrospora cf. gorlenkoana                                                                      0.002
+Diaporthe sp. 20                                                                                0.001
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2   0.001
+                                                                                                 
+Nigrospora cf. gorlenkoana                                                                    ** 
+Diaporthe sp. 20                                                                              ***
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 ***
+
+ Group Lauraceae leaves - Trunk  #sps.  1 
+                           A      B  stat p.value  
+Nigrospora macarangae 0.9524 1.0000 0.976   0.013 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

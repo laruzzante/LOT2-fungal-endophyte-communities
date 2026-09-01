@@ -7,7 +7,7 @@ tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
 uncertain_values <- c("?", "NO", "incertae sedis")
 incertae_label   <- "Incertae sedis"
 
-dat_pie <- all_isolates %>%
+dat_pie <- pooled %>%
   mutate(across(all_of(tax_hierarchy),
                 ~ ifelse(is.na(.) | . %in% uncertain_values,
                          incertae_label, .)),
@@ -26,7 +26,6 @@ make_unique_labels <- function(df, target_col, parent_cols) {
   labels
 }
 
-# Build a large distinguishable palette
 build_palette <- function(n) {
   if (n <= 8) {
     pal <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
@@ -86,7 +85,7 @@ for (level in c("its_taxon", tax_hierarchy)) {
 
   agg <- agg %>%
     mutate(label = make_unique_labels(., level, parent_cols))
-  } # end if/else its_taxon
+  }
 
   plot_data <- agg %>%
     select(label, Lauraceae_leaves, Ficus_leaves, Ficus_wood) %>%
@@ -96,7 +95,6 @@ for (level in c("its_taxon", tax_hierarchy)) {
                               levels = substrate_levels,
                               labels = substrate_labels))
 
-  # Consistent ordering: by total abundance descending
   label_order <- plot_data %>%
     group_by(label) %>%
     summarise(total = sum(count), .groups = "drop") %>%
@@ -107,13 +105,11 @@ for (level in c("its_taxon", tax_hierarchy)) {
   n_labels <- length(label_order)
   taxon_colours <- setNames(build_palette(n_labels), label_order)
 
-  # Percentage labels within each substrate
   plot_data <- plot_data %>%
     group_by(substrate) %>%
     mutate(pct = count / sum(count) * 100) %>%
     ungroup()
 
-  # Only label slices >= 3 % to avoid clutter
   plot_data <- plot_data %>%
     mutate(pie_label = ifelse(pct >= 3, paste0(round(pct, 1), "%"), ""))
 
