@@ -8,8 +8,8 @@ Number of permutations: 999
 
 adonis2(formula = form, data = meta, permutations = 999, method = "bray")
          Df SumOfSqs      R2      F Pr(>F)    
-Model     2    2.792 0.20041 3.6342  0.001 ***
-Residual 29   11.140 0.79959                  
-Total    31   13.932 1.00000                  
+Model     2    2.728 0.18852 3.4847  0.001 ***
+Residual 30   11.742 0.81148                  
+Total    32   14.470 1.00000                  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

@@ -1,6 +1,6 @@
 # Fungal Endophyte Community Analysis — LOT2 (Peru)
 
-> **Analysis environment:** R 4.6.1 | Generated on 2026-09-01
+> **Analysis environment:** R 4.6.1 | Generated on 2026-09-02
 
 ## Overview
 
@@ -8,9 +8,9 @@ This project analyses the fungal endophyte communities isolated from three subst
 
 | Substrate | Isolates (pooled) | Sample-level replicates (units) |
 |-----------|:-:|:-:|
-| **Ficus leaves** | 264 | 10 |
-| **Ficus wood** | 167 | 12 |
-| **Lauraceae leaves** | 219 | 8 |
+| **Ficus leaves** | 528 | 10 |
+| **Ficus wood** | 334 | 12 |
+| **Lauraceae leaves** | 438 | 8 |
 
 ### Sampling design
 
@@ -35,7 +35,7 @@ Entries with `NA`, `"?"`, `"NO"`, or `"incertae sedis"` are pooled into **"Incer
 
 ## Input Data
 
-- **`LOT2_pooled_counts.xlsx`** (first sheet) — Pooled genotype counts per substrate with full taxonomy (284 genotypes)
+- **`LOT2_pooled_counts.xlsx`** (first sheet) — Pooled genotype counts per substrate with full taxonomy (285 genotypes)
 - **`LOT2_samples.xlsx`** (first sheet) — Individual isolate records with sampling zone and unit (650 isolates)
 
 ## Scripts
@@ -101,9 +101,9 @@ tables/                             # Statistical results and summary tables
 
 | Substrate | S | N | H' | 1-D | Inv. Simp. | J' |
 |-----------|:-:|:-:|:-:|:-:|:-:|:-:|
-| Lauraceae leaves | 106 | 219 | 4.2745 | 0.9779 | 45.289 | 0.9166 |
-| Ficus leaves | 135 | 264 | 4.4705 | 0.9791 | 47.8681 | 0.9114 |
-| Ficus wood | 81 | 167 | 4.0073 | 0.9722 | 35.9858 | 0.9119 |
+| Lauraceae leaves | 107 | 438 | 2.8304 | 0.7445 | 3.9136 | 0.6057 |
+| Ficus leaves | 136 | 528 | 2.9284 | 0.7448 | 3.9181 | 0.5961 |
+| Ficus wood | 82 | 334 | 2.6968 | 0.7431 | 3.8919 | 0.612 |
 
 Full data: `tables/alpha_diversity.csv`
 
@@ -133,7 +133,7 @@ At **genus level** (44 total genera): **7** shared across all 3 substrates, **2*
 
 # Multivariate Statistical Analyses
 
-Sample-level analyses use **32 samples** and **284 ITS taxa**, with **Bray-Curtis dissimilarity** and **999 permutations**.
+Sample-level analyses use **33 samples** and **284 ITS taxa**, with **Bray-Curtis dissimilarity** and **999 permutations**.
 
 ---
 
@@ -141,7 +141,7 @@ Sample-level analyses use **32 samples** and **284 ITS taxa**, with **Bray-Curti
 
 ### NMDS Ordination
 
-**Stress = 0.0771** (< 0.10 = good; < 0.20 = acceptable)
+**Stress = 1e-04** (< 0.10 = good; < 0.20 = acceptable)
 
 ![NMDS — all substrates](plots/png/substrate_all_nmds.png)
 
@@ -160,36 +160,36 @@ Number of permutations: 999
 
 adonis2(formula = form, data = meta, permutations = 999, method = "bray")
          Df SumOfSqs      R2      F Pr(>F)    
-Model     2    2.792 0.20041 3.6342  0.001 ***
-Residual 29   11.140 0.79959                  
-Total    31   13.932 1.00000                  
+Model     2    2.728 0.18852 3.4847  0.001 ***
+Residual 30   11.742 0.81148                  
+Total    32   14.470 1.00000                  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
 
-F = 3.6342, R² = 0.20041, p = 0.001
+F = 3.4847, R² = 0.18852, p = 0.001
 
 ### ANOSIM
 
-R = 0.5604 , p = 0.001 
+R = 0.5283 , p = 0.001 
 
 ### Beta-dispersion (PERMDISP)
 
-F = 4.332, p = 0.02
+F = 2.8482, p = 0.083
 
 ### Pairwise PERMANOVA
 
 | Comparison | F | R² | p (raw) | p (Holm) | Sig. |
 |-----------|:-:|:-:|:-:|:-:|:-:|
 | Ficus leaves vs Ficus wood | 3.8123 | 0.1536 | 0.001 | 0.003 | ** |
-| Ficus leaves vs Lauraceae leaves | 3.3294 | 0.1638 | 0.001 | 0.003 | ** |
-| Ficus wood vs Lauraceae leaves | 3.6839 | 0.1555 | 0.001 | 0.003 | ** |
+| Ficus leaves vs Lauraceae leaves | 3.1421 | 0.1486 | 0.001 | 0.003 | ** |
+| Ficus wood vs Lauraceae leaves | 3.4347 | 0.1406 | 0.001 | 0.003 | ** |
 
 ### Rarefaction
 
 ![Rarefaction — all substrates](plots/png/substrate_all_rarefaction.png)
 
-### Indicator Species (23 significant, p ≤ 0.05)
+### Indicator Species (22 significant, p ≤ 0.05)
 
 Full results: `tables/indicator_species_significant.csv`
 
@@ -197,7 +197,7 @@ Full results: `tables/indicator_species_significant.csv`
 
 ## C2. Ficus Leaves vs Lauraceae Leaves
 
-PERMANOVA: F = 3.3294, R² = 0.16377, p = 0.001
+PERMANOVA: F = 3.1421, R² = 0.14862, p = 0.001
 
 ![NMDS — Ficus vs Lauraceae leaves](plots/png/substrate_leaves_nmds.png)
 
@@ -223,7 +223,7 @@ PERMANOVA: F = 1.9802, R² = 0.15256, p = 0.004
 
 ### E4. Substrate Comparison at Zone 6 (Branch Level Only)
 
-PERMANOVA: F = 3.3279, R² = 0.22443, p = 0.001
+PERMANOVA: F = 2.7801, R² = 0.20175, p = 0.001
 
 ![NMDS — substrates at zone 6](plots/png/substrate_zone6_branch_nmds.png)
 
@@ -251,4 +251,4 @@ Horizontal grouped bar charts showing absolute isolate counts per taxonomic leve
 
 ---
 
-*Auto-generated on 2026-09-01 by `generate_readme.R`*
+*Auto-generated on 2026-09-02 by `generate_readme.R`*

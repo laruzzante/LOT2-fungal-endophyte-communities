@@ -1,4 +1,4 @@
 "pair","F_stat","R2","p_value","p_adj"
 "Ficus leaves vs Ficus wood",3.8123,0.1536,0.001,0.003
-"Ficus leaves vs Lauraceae leaves",3.3294,0.1638,0.001,0.003
-"Ficus wood vs Lauraceae leaves",3.6839,0.1555,0.001,0.003
+"Ficus leaves vs Lauraceae leaves",3.1421,0.1486,0.001,0.003
+"Ficus wood vs Lauraceae leaves",3.4347,0.1406,0.001,0.003

@@ -6,48 +6,94 @@
  Significance level (alpha): 0.05
 
  Total number of species: 284
- Selected number of species: 8 
- Number of species associated to 1 group: 8 
- Number of species associated to 2 groups: 0 
+ Selected number of species: 23 
+ Number of species associated to 1 group: 17 
+ Number of species associated to 2 groups: 6 
  Number of species associated to 3 groups: 0 
  Number of species associated to 4 groups: 0 
 
  List of species associated to each combination: 
 
- Group Ficus leaves - Branch  #sps.  1 
-                               A   B  stat p.value  
-Pseudocercospora aff. quetri 1.0 0.7 0.837   0.037 *
+ Group Ficus leaves - Branch  #sps.  4 
+                                        A   B  stat p.value   
+Pseudocercospora aff. quetri          1.0 0.7 0.837   0.005 **
+Colletotrichum cf. brassicicola gen 2 1.0 0.6 0.775   0.004 **
+Xylaria sp. 3                         1.0 0.5 0.707   0.011 * 
+Colletotrichum cf. godetiae           1.0 0.5 0.707   0.006 **
 
- Group Ficus wood - Trunk  #sps.  3 
-                                                      A      B  stat p.value  
-Penicillium goetzii, P. rubens                   0.8544 1.0000 0.924   0.019 *
-Aspergillus cvjetkovicii or A. jensenii (3 spp.) 1.0000 0.8000 0.894   0.035 *
-Aspergillus versicolor                           1.0000 0.8000 0.894   0.023 *
+ Group Ficus wood - Branch  #sps.  1 
+                                                                         A   B
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2 1.0 0.5
+                                                                        stat
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2 0.707
+                                                                       p.value
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2   0.032
+                                                                        
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2 *
 
- Group Lauraceae leaves - Branch  #sps.  3 
+ Group Ficus wood - Trunk  #sps.  8 
+                                                                 A      B  stat
+Penicillium goetzii, P. rubens                              0.8544 1.0000 0.924
+Aspergillus cvjetkovicii or A. jensenii (3 spp.)            1.0000 0.8000 0.894
+Aspergillus versicolor                                      1.0000 0.8000 0.894
+Cladosporium parahalotolerans                               1.0000 0.4000 0.632
+Podila humilis                                              1.0000 0.4000 0.632
+Cladosporium pini-ponderosae, or C. colombiae etc (21 spp.) 1.0000 0.4000 0.632
+Aspergillus aff. sydowii                                    1.0000 0.4000 0.632
+Cladosporium maltirimosum or C. devicae                     1.0000 0.4000 0.632
+                                                            p.value    
+Penicillium goetzii, P. rubens                                0.001 ***
+Aspergillus cvjetkovicii or A. jensenii (3 spp.)              0.001 ***
+Aspergillus versicolor                                        0.002 ** 
+Cladosporium parahalotolerans                                 0.021 *  
+Podila humilis                                                0.023 *  
+Cladosporium pini-ponderosae, or C. colombiae etc (21 spp.)   0.029 *  
+Aspergillus aff. sydowii                                      0.020 *  
+Cladosporium maltirimosum or C. devicae                       0.027 *  
+
+ Group Lauraceae leaves - Branch  #sps.  1 
+                            A      B  stat p.value   
+Nigrospora hainanensis 0.9091 0.7143 0.806   0.003 **
+
+ Group Lauraceae leaves - Trunk  #sps.  3 
+                                   A      B  stat p.value   
+Diaporthe sp. 22              1.0000 0.6667 0.816   0.007 **
+Nigrospora cf. vesicularifera 0.8235 0.6667 0.741   0.017 * 
+Nigrospora macarangae         0.8696 0.3333 0.538   0.044 * 
+
+ Group Ficus leaves - Branch+Lauraceae leaves - Branch  #sps.  1 
+                               A      B  stat p.value  
+Colletotrichum arboricola 1.0000 0.5294 0.728   0.014 *
+
+ Group Ficus leaves - Branch+Lauraceae leaves - Trunk  #sps.  1 
+                      A      B stat p.value  
+Diaporthe sp. 16 0.9112 0.5385  0.7   0.035 *
+
+ Group Lauraceae leaves - Branch+Lauraceae leaves - Trunk  #sps.  4 
                                                                                                    A
 Nigrospora cf. gorlenkoana                                                                    1.0000
-Diaporthe sp. 20                                                                              0.9551
+Diaporthe sp. 20                                                                              0.9713
 Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 1.0000
+Diaporthe sp. 23                                                                              1.0000
                                                                                                    B
-Nigrospora cf. gorlenkoana                                                                    0.8750
-Diaporthe sp. 20                                                                              0.8750
-Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.7500
+Nigrospora cf. gorlenkoana                                                                    0.7000
+Diaporthe sp. 20                                                                              0.7000
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.6000
+Diaporthe sp. 23                                                                              0.4000
                                                                                                stat
-Nigrospora cf. gorlenkoana                                                                    0.935
-Diaporthe sp. 20                                                                              0.914
-Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.866
+Nigrospora cf. gorlenkoana                                                                    0.837
+Diaporthe sp. 20                                                                              0.825
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.775
+Diaporthe sp. 23                                                                              0.632
                                                                                               p.value
 Nigrospora cf. gorlenkoana                                                                      0.002
-Diaporthe sp. 20                                                                                0.001
-Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2   0.001
-                                                                                                 
-Nigrospora cf. gorlenkoana                                                                    ** 
-Diaporthe sp. 20                                                                              ***
-Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 ***
-
- Group Lauraceae leaves - Trunk  #sps.  1 
-                           A      B  stat p.value  
-Nigrospora macarangae 0.9524 1.0000 0.976   0.013 *
+Diaporthe sp. 20                                                                                0.003
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2   0.004
+Diaporthe sp. 23                                                                                0.044
+                                                                                                
+Nigrospora cf. gorlenkoana                                                                    **
+Diaporthe sp. 20                                                                              **
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 **
+Diaporthe sp. 23                                                                              * 
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
