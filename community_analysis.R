@@ -23,6 +23,62 @@ dat_agg <- pooled %>%
          across(c(n_fungi_laur_leaf, n_fungi_fic_leaf, n_fungi_fic_wood),
                 ~ replace_na(., 0)))
 
+# ------------------------------------------------------------
+# Per-isolate lineage: link each sample isolate to its full
+# taxonomy so that community analyses can be repeated at every
+# taxonomic rank (an isolate that is Incertae sedis at species
+# level may still carry a defined genus / family / order ...).
+# Incertae sedis / unresolved values are set to NA at the rank
+# where they are unresolved, so they are simply dropped from
+# every rank-specific analysis (they are kept only in the
+# dedicated abundance bar charts and pie charts).
+# ------------------------------------------------------------
+clean_tax <- function(x) ifelse(is.na(x) | x %in% uncertain_values, NA_character_, x)
+
+# One lineage row per ITS genotype (from the pooled taxonomy table)
+lineage_its <- pooled %>%
+  distinct(its_taxon, .keep_all = TRUE) %>%
+  transmute(its_taxon, across(all_of(tax_hierarchy), clean_tax))
+
+# Genus -> higher-rank lineage (majority vote); used as a fallback
+# for the few sample ITS names that do not match the pooled list.
+lineage_genus <- pooled %>%
+  mutate(genus = clean_tax(genus)) %>%
+  filter(!is.na(genus)) %>%
+  group_by(genus) %>%
+  summarise(across(c(phylum, subphylum, superclass, class, subclass, order, family),
+                   ~ { v <- clean_tax(.x); v <- v[!is.na(v)]
+                       if (length(v)) names(sort(table(v), decreasing = TRUE))[1] else NA_character_ }),
+            .groups = "drop")
+
+samples_lineage <- samples_raw %>% left_join(lineage_its, by = "its_taxon")
+
+# Fill lineage from the leading genus token where the exact ITS
+# name was not found in the pooled taxonomy (name variants).
+need_fix <- is.na(samples_lineage$phylum) & is.na(samples_lineage$genus)
+if (any(need_fix)) {
+  token <- sub(" .*", "", samples_lineage$its_taxon[need_fix])
+  fb <- lineage_genus[match(token, lineage_genus$genus), ]
+  for (col in c("phylum","subphylum","superclass","class","subclass","order","family")) {
+    samples_lineage[[col]][need_fix] <- fb[[col]]
+  }
+  samples_lineage$genus[need_fix] <- ifelse(token %in% lineage_genus$genus, token, NA_character_)
+}
+
+lineage_levels <- c("phylum", "class", "order", "family", "genus", "species", "its_taxon")
+
+cat("Isolate lineage coverage per rank:\n")
+lineage_coverage <- sapply(lineage_levels, function(lv) {
+  v <- if (lv == "its_taxon") samples_lineage$its_taxon else clean_tax(samples_lineage[[lv]])
+  sum(!is.na(v))
+})
+for (lv in lineage_levels)
+  cat(sprintf("  %-9s %d / %d\n", lv, lineage_coverage[[lv]], nrow(samples_lineage)))
+write.csv(data.frame(rank = lineage_levels,
+                     isolates_resolved = as.integer(lineage_coverage),
+                     isolates_total = nrow(samples_lineage)),
+          "tables/lineage_coverage.csv", row.names = FALSE)
+
 # ============================================================
 # A. ALPHA DIVERSITY (from pooled data, per substrate)
 # ============================================================
@@ -45,6 +101,10 @@ for (level in c("its_taxon", tax_hierarchy)) {
                 Ficus_leaves     = sum(n_fungi_fic_leaf),
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop")
   }
+
+  # Exclude the pooled Incertae sedis node at this rank
+  lvl_col <- if (level == "its_taxon") "its_taxon" else level
+  agg <- agg[agg[[lvl_col]] != incertae_label, , drop = FALSE]
 
   mat <- as.matrix(agg[, c("Lauraceae_leaves", "Ficus_leaves", "Ficus_wood")])
   comm <- t(mat)
@@ -112,6 +172,10 @@ for (level in c("genus", "species", "its_taxon")) {
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop")
   }
 
+  # Exclude the pooled Incertae sedis node at this rank
+  lvl_col <- if (level == "its_taxon") "its_taxon" else level
+  agg <- agg[agg[[lvl_col]] != incertae_label, , drop = FALSE]
+
   ra_list <- list()
   for (sub in c("Lauraceae_leaves", "Ficus_leaves", "Ficus_wood")) {
     counts <- sort(agg[[sub]][agg[[sub]] > 0], decreasing = TRUE)
@@ -153,6 +217,9 @@ for (level in c("phylum", "class", "order", "family", "genus")) {
               Ficus_leaves     = sum(n_fungi_fic_leaf),
               Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop") %>%
     mutate(label = .data[[level]])
+
+  # Exclude the pooled Incertae sedis node at this rank
+  agg <- agg[agg$label != incertae_label, , drop = FALSE]
 
   plot_data <- agg %>%
     select(label, Lauraceae_leaves, Ficus_leaves, Ficus_wood) %>%
@@ -219,6 +286,9 @@ for (level in c("genus", "species", "its_taxon")) {
       mutate(taxon = .data[[level]])
   }
 
+  # Exclude the pooled Incertae sedis node at this rank
+  agg <- agg[agg$taxon != incertae_label, , drop = FALSE]
+
   taxa_lists <- list(
     `Lauraceae leaves` = agg$taxon[agg$Lauraceae_leaves > 0],
     `Ficus leaves`     = agg$taxon[agg$Ficus_leaves > 0],
@@ -246,6 +316,93 @@ build_comm_matrix <- function(data, group_col = "sample_id") {
     as.data.frame()
   rownames(comm_wide) <- comm_wide[[group_col]]
   as.matrix(comm_wide[, -1])
+}
+
+# ============================================================
+# HELPER: Build community matrix at an arbitrary taxonomic rank
+# from the lineage-annotated sample data. Isolates that are
+# unresolved (Incertae sedis) at the requested rank are dropped.
+# ============================================================
+build_comm_matrix_level <- function(data, level, group_col = "sample_id") {
+  val <- if (level == "its_taxon") data$its_taxon else clean_tax(data[[level]])
+  d <- data.frame(grp = data[[group_col]], taxon = val, stringsAsFactors = FALSE)
+  d <- d[!is.na(d$taxon), , drop = FALSE]
+  if (nrow(d) == 0) return(NULL)
+  cm <- d %>% count(grp, taxon) %>%
+    pivot_wider(names_from = taxon, values_from = n, values_fill = 0) %>%
+    as.data.frame()
+  rownames(cm) <- cm$grp
+  as.matrix(cm[, -1, drop = FALSE])
+}
+
+# ============================================================
+# HELPER: Repeat the multivariate community comparison across
+# every taxonomic rank for one grouping factor. Returns a tidy
+# summary (PERMANOVA / ANOSIM / PERMDISP + NMDS stress per rank)
+# and optionally writes one NMDS ordination plot per rank.
+# ============================================================
+run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
+                            plotdir = "plots/community") {
+  meta_s <- meta_full[sel, , drop = FALSE]
+  data_s <- samples_lineage[samples_lineage$sample_id %in% meta_s$sample_id, , drop = FALSE]
+  out <- list()
+  for (lv in lineage_levels) {
+    cm <- build_comm_matrix_level(data_s, lv, "sample_id")
+    if (is.null(cm)) next
+    cm <- cm[, colSums(cm) > 0, drop = FALSE]
+    keep <- rowSums(cm) > 0
+    cm <- cm[keep, , drop = FALSE]
+    m <- meta_s[match(rownames(cm), meta_s$sample_id), , drop = FALSE]
+    g <- m[[group_var]]
+    if (nrow(cm) < 3 || length(unique(g)) < 2 || ncol(cm) < 2) next
+
+    set.seed(42)
+    nm <- tryCatch(metaMDS(cm, distance = "bray", k = 2, trymax = 100, trace = 0),
+                   error = function(e) NULL)
+    stress <- if (!is.null(nm)) round(nm$stress, 4) else NA_real_
+    set.seed(42)
+    pm <- tryCatch(adonis2(cm ~ g, data = data.frame(g = g),
+                           method = "bray", permutations = 999),
+                   error = function(e) NULL)
+    set.seed(42)
+    an <- tryCatch(anosim(cm, g, distance = "bray", permutations = 999),
+                   error = function(e) NULL)
+    bd <- tryCatch(permutest(betadisper(vegdist(cm, "bray"), g), permutations = 999),
+                   error = function(e) NULL)
+
+    out[[lv]] <- data.frame(
+      level        = lv,
+      n_samples    = nrow(cm),
+      n_taxa       = ncol(cm),
+      nmds_stress  = stress,
+      permanova_F  = if (!is.null(pm)) round(pm$F[1], 4)  else NA_real_,
+      permanova_R2 = if (!is.null(pm)) round(pm$R2[1], 4) else NA_real_,
+      permanova_p  = if (!is.null(pm)) pm$`Pr(>F)`[1]     else NA_real_,
+      anosim_R     = if (!is.null(an)) round(an$statistic, 4) else NA_real_,
+      anosim_p     = if (!is.null(an)) an$signif          else NA_real_,
+      betadisper_p = if (!is.null(bd)) round(bd$tab$`Pr(>F)`[1], 4) else NA_real_,
+      stringsAsFactors = FALSE
+    )
+
+    if (!is.null(plot_prefix) && !is.null(nm)) {
+      sc <- as.data.frame(scores(nm, display = "sites")); sc$grp <- g
+      cent <- sc %>% group_by(grp) %>%
+        summarise(NMDS1 = mean(NMDS1), NMDS2 = mean(NMDS2), .groups = "drop")
+      pl <- ggplot(sc, aes(NMDS1, NMDS2, colour = grp)) +
+        geom_point(size = 3) +
+        geom_point(data = cent, shape = 4, size = 5, stroke = 1.5) +
+        scale_colour_manual(values = colours) +
+        labs(title = paste0("NMDS at ", lv, " level \u2014 ", plot_prefix),
+             subtitle = paste("Bray-Curtis | Stress =", stress,
+                              "|", ncol(cm), "taxa"),
+             colour = group_var) +
+        theme_minimal(base_size = 12) +
+        theme(plot.title = element_text(face = "bold"), legend.position = "top")
+      ggsave(file.path(plotdir, paste0(plot_prefix, "_", lv, "_nmds.pdf")),
+             plot = pl, width = 9, height = 6.5)
+    }
+  }
+  bind_rows(out)
 }
 
 # ============================================================
@@ -644,6 +801,38 @@ results_subpos <- run_multivariate(
   outdir = "tables",
   colours = combo_colours
 )
+
+# ============================================================
+# D. MULTI-LEVEL TAXONOMIC COMMUNITY ANALYSES
+# Repeat the key multivariate comparisons at every taxonomic
+# rank, using each isolate's full lineage. This shows whether
+# the substrate / zone signal detected at ITS-genotype level
+# persists when isolates are grouped into higher taxa.
+# ============================================================
+cat("\n====== D. Multi-level taxonomic community analyses ======\n")
+
+meta_full$zone_f <- as.character(meta_full$zone)
+
+cat("\n--- D1. Substrate comparison across taxonomic ranks ---\n")
+sweep_substrate <- run_level_sweep(
+  rep(TRUE, nrow(meta_full)), "substrate",
+  substrate_colours_3, plot_prefix = "substrate_bylevel")
+write.csv(sweep_substrate, "tables/substrate_multilevel_summary.csv", row.names = FALSE)
+print(sweep_substrate)
+
+cat("\n--- D2. Ficus wood zones across taxonomic ranks ---\n")
+sweep_zones <- run_level_sweep(
+  meta_full$substrate == "Ficus wood", "zone_f",
+  zone_colours, plot_prefix = "ficus_wood_zones_bylevel")
+write.csv(sweep_zones, "tables/ficus_wood_zones_multilevel_summary.csv", row.names = FALSE)
+print(sweep_zones)
+
+cat("\n--- D3. Substrate x position across taxonomic ranks ---\n")
+sweep_subpos <- run_level_sweep(
+  rep(TRUE, nrow(meta_full)), "sub_pos",
+  combo_colours, plot_prefix = NULL)
+write.csv(sweep_subpos, "tables/substrate_x_position_multilevel_summary.csv", row.names = FALSE)
+print(sweep_subpos)
 
 # ============================================================
 # F. ZONE GRADIENT — FICUS WOOD
