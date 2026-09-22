@@ -1,0 +1,7 @@
+"s.Ficus leaves - E","s.Ficus leaves - N","s.Ficus leaves - S","s.Ficus leaves - W","s.Ficus wood - E","s.Ficus wood - N","s.Ficus wood - S","s.Ficus wood - W","s.Lauraceae leaves - E","s.Lauraceae leaves - N","s.Lauraceae leaves - NW","index","stat","p.value","taxon"
+1,0,1,0,0,0,0,0,0,1,0,82,0.881917103688197,0.014,"Diaporthe sp. 29"
+0,0,1,0,0,0,0,0,0,0,0,3,1,0.014,"Cytospora aff. eucalypti (cf. austromontana)"
+1,1,1,1,0,0,0,0,0,0,0,232,0.881917103688197,0.021,"Pseudocercospora aff. quetri"
+0,1,0,0,0,0,0,0,0,0,0,2,1,0.023,"Nigrospora cf. sacchari-officinarum"
+1,1,0,0,0,0,0,0,0,0,0,12,0.884651736929383,0.025,"Colletotrichum arboricola"
+1,0,0,0,0,0,0,0,0,0,0,1,0.904534033733291,0.031,"Pseudocercospora sp. 1"

@@ -11,6 +11,6 @@ Groups     1 0.001733 0.0017328 0.2436    999  0.626
 Residuals 18 0.128014 0.0071119                     
 
 Group mean distances to centroid:
-                            group mean_dist
-Ficus leaves         Ficus leaves    0.5575
-Lauraceae leaves Lauraceae leaves    0.5761
+                            group  n mean_dist
+Ficus leaves         Ficus leaves 10    0.5575
+Lauraceae leaves Lauraceae leaves 10    0.5761

@@ -1,0 +1,13 @@
+PERMANOVA — Bray-Curtis distance
+Formula: community ~ sun_aspect 
+Permutations: 999
+
+Permutation test for adonis under reduced model
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = form, data = meta, permutations = 999, method = "bray")
+         Df SumOfSqs     R2      F Pr(>F)
+Model     1   0.5990 0.1494 1.5808  0.175
+Residual  9   3.4105 0.8506              
+Total    10   4.0096 1.0000              

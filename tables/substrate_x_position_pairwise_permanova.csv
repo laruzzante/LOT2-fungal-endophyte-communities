@@ -1,11 +1,11 @@
 "pair","F_stat","R2","p_value","p_adj"
-"Ficus leaves - Branch vs Ficus wood - Trunk",4.2438,0.2461,0.001,0.01
-"Ficus leaves - Branch vs Ficus wood - Branch",3.0108,0.1584,0.001,0.01
-"Ficus leaves - Branch vs Lauraceae leaves - Trunk",1.9686,0.1518,0.007,0.028
+"Ficus leaves - Branch vs Ficus wood - Trunk",4.0074,0.2225,0.001,0.01
+"Ficus leaves - Branch vs Ficus wood - Branch",3.0962,0.1711,0.001,0.01
+"Ficus leaves - Branch vs Lauraceae leaves - Trunk",1.9686,0.1518,0.007,0.03
 "Ficus leaves - Branch vs Lauraceae leaves - Branch",2.8245,0.1585,0.001,0.01
-"Ficus wood - Trunk vs Ficus wood - Branch",1.9802,0.1526,0.004,0.02
-"Ficus wood - Trunk vs Lauraceae leaves - Trunk",2.5402,0.2974,0.019,0.057
-"Ficus wood - Trunk vs Lauraceae leaves - Branch",3.5733,0.2633,0.002,0.012
-"Ficus wood - Branch vs Lauraceae leaves - Trunk",1.5482,0.1468,0.021,0.057
-"Ficus wood - Branch vs Lauraceae leaves - Branch",2.4717,0.1598,0.001,0.01
+"Ficus wood - Trunk vs Ficus wood - Branch",1.7926,0.1401,0.006,0.03
+"Ficus wood - Trunk vs Lauraceae leaves - Trunk",2.2104,0.24,0.02,0.054
+"Ficus wood - Trunk vs Lauraceae leaves - Branch",3.2882,0.2301,0.001,0.01
+"Ficus wood - Branch vs Lauraceae leaves - Trunk",1.6536,0.1713,0.018,0.054
+"Ficus wood - Branch vs Lauraceae leaves - Branch",2.5685,0.1763,0.002,0.012
 "Lauraceae leaves - Trunk vs Lauraceae leaves - Branch",0.9207,0.1032,0.616,0.616

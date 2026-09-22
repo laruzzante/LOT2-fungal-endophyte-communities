@@ -2,10 +2,43 @@ dir.create("tables", showWarnings = FALSE)
 dir.create("plots/png", recursive = TRUE, showWarnings = FALSE)
 
 # ---- Convert key PDFs to PNGs for embedding ----
+# The project is run on both Linux and Windows, where a different set
+# of converters is available, so resolve one at run time instead of
+# assuming ImageMagick is on the PATH.
+first_on_path <- function(candidates) {
+  for (cmd in candidates) {
+    p <- Sys.which(cmd)
+    if (nzchar(p)) return(unname(p))
+  }
+  ""
+}
+
+png_converter <- if (requireNamespace("pdftools", quietly = TRUE)) {
+  "pdftools"
+} else {
+  first_on_path(c("magick", "convert", "pdftocairo", "pdftoppm"))
+}
+
 pdf_to_png <- function(pdf_path, png_path, density = 150) {
-  cmd <- sprintf('convert -density %d "%s[0]" -quality 90 "%s"',
-                 density, pdf_path, png_path)
-  system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE)
+  if (identical(png_converter, "pdftools")) {
+    ok <- tryCatch({
+      pdftools::pdf_convert(pdf_path, format = "png", pages = 1,
+                            dpi = density, filenames = png_path, verbose = FALSE)
+      TRUE
+    }, error = function(e) FALSE)
+    return(ok)
+  }
+  if (!nzchar(png_converter)) return(FALSE)
+  tool <- tolower(basename(png_converter))
+  cmd <- if (grepl("pdftocairo|pdftoppm", tool)) {
+    # these append "-<page>.png" to the prefix they are given
+    sprintf('"%s" -png -r %d -f 1 -l 1 -singlefile "%s" "%s"',
+            png_converter, density, pdf_path, sub("\\.png$", "", png_path))
+  } else {
+    sprintf('"%s" -density %d "%s[0]" -quality 90 "%s"',
+            png_converter, density, pdf_path, png_path)
+  }
+  system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE) == 0
 }
 
 embedded_plots <- c(
@@ -25,18 +58,32 @@ embedded_plots <- c(
   "plots/community/substrate_bylevel_genus_nmds.pdf",
   "plots/community/substrate_bylevel_family_nmds.pdf",
   "plots/community/substrate_bylevel_phylum_nmds.pdf",
+  "plots/community/orientation_all_nmds.pdf",
+  "plots/community/orientation_sun_aspect_nmds.pdf",
+  "plots/community/ficus_leaves_orientation_nmds.pdf",
+  "plots/community/substrate_x_orientation_nmds.pdf",
+  "plots/community/orientation_alpha_richness_S.pdf",
+  "plots/community/orientation_alpha_shannon_H.pdf",
+  "plots/community/orientation_venn_ficus_leaves.pdf",
+  "plots/community/orientation_all_rarefaction.pdf",
   "plots/abundance_pooled_incertae_sedis/abundance_by_genus.pdf",
   "plots/pie_charts/pie_by_phylum.pdf",
   "plots/pie_charts/pie_by_genus.pdf"
 )
 
+n_png <- 0
 for (pdf in embedded_plots) {
   if (file.exists(pdf)) {
     png <- file.path("plots/png", sub("\\.pdf$", ".png", basename(pdf)))
-    pdf_to_png(pdf, png)
+    if (isTRUE(pdf_to_png(pdf, png))) n_png <- n_png + 1
   }
 }
-cat("Converted PDFs to PNG\n")
+if (n_png > 0) {
+  cat("Converted", n_png, "PDFs to PNG\n")
+} else {
+  cat("WARNING: no PDF->PNG converter found; README images may be stale.\n",
+      "         Install the 'pdftools' R package, or ImageMagick / poppler.\n", sep = "")
+}
 
 # ---- R and package versions ----
 r_ver <- paste0(R.version$major, ".", R.version$minor)
@@ -110,6 +157,13 @@ nmds_stress <- tryCatch({
 n_samples <- nrow(comm_mat_full)
 n_taxa_comm <- ncol(comm_mat_full)
 
+# Sparsity of the ITS-level matrix - drives how far the ordinations
+# can be trusted (see the caveat block in the Results)
+sparse_no_shared <- if (!is.null(results_substrate$prop_no_shared))
+  round(100 * results_substrate$prop_no_shared) else NA
+sparse_singletons <- if (!is.null(results_substrate$prop_singleton_taxa))
+  round(100 * results_substrate$prop_singleton_taxa) else NA
+
 # Venn counts (Incertae sedis excluded, matching the plots)
 venn_genus <- dat_agg %>%
   filter(genus != incertae_label) %>%
@@ -149,9 +203,61 @@ z6_perm_F <- z6_stats$F; z6_perm_R2 <- z6_stats$R2; z6_perm_p <- z6_stats$p
 
 # Sample counts per substrate
 sub_counts <- samples_raw %>% count(substrate) %>% arrange(substrate)
-sub_units  <- samples_raw %>% distinct(substrate, unit) %>% count(substrate) %>% arrange(substrate)
+# Count the sampling units the analyses actually use (substrate x zone x
+# unit), not distinct unit labels - a couple of Lauraceae unit labels
+# recur in both zone 5 and zone 6, so the two counts differ.
+sub_units  <- samples_raw %>% distinct(substrate, sample_id) %>% count(substrate) %>% arrange(substrate)
 
 # ---- Multi-level taxonomic sweep results ----
+# ---- Branch / trunk orientation results ----
+ori_cov     <- safe_csv("tables/orientation_coverage.csv")
+ori_unres   <- safe_csv("tables/orientation_unresolved.csv")
+ori_sum     <- safe_csv("tables/orientation_summary.csv")
+ori_alpha   <- safe_csv("tables/orientation_alpha_diversity.csv")
+ori_alpha_s <- safe_csv("tables/orientation_alpha_diversity_by_substrate.csv")
+ori_aspect_alpha <- safe_csv("tables/orientation_sun_aspect_alpha_diversity.csv")
+ori_circ    <- safe_csv("tables/orientation_circular_gradient.csv")
+ori_share   <- safe_csv("tables/orientation_taxon_sharing.csv")
+ori_ml      <- safe_csv("tables/orientation_multilevel_summary.csv")
+ori_part_txt <- safe_read("tables/orientation_variance_partitioning.txt")
+
+# Pull the marginal PERMANOVA rows out of the partitioning report
+partition_row <- function(txt, term) {
+  line <- grep(paste0("^", term, "\\s"), txt, value = TRUE)
+  if (length(line) == 0) return(list(R2 = "N/A", F = "N/A", p = "N/A"))
+  pp <- strsplit(trimws(line[1]), "\\s+")[[1]]
+  # term Df SumOfSqs R2 F Pr(>F) [sig]
+  list(R2 = pp[4], F = pp[5], p = pp[6])
+}
+# The report holds three tables; the first two rows are the marginal
+# substrate + orientation model.
+ori_part_marginal <- ori_part_txt[seq_len(min(length(ori_part_txt),
+                                 which(ori_part_txt == "== Sequential (type I): substrate entered first ==")[1] - 1))]
+if (length(ori_part_marginal) == 0) ori_part_marginal <- ori_part_txt
+part_sub <- partition_row(ori_part_marginal, "substrate")
+part_ori <- partition_row(ori_part_marginal, "orientation")
+
+# The sun-aspect marginal model sits in its own block
+aspect_block_start <- which(ori_part_txt == "== Marginal (type III): substrate + sun aspect ==")
+ori_part_aspect <- if (length(aspect_block_start))
+  ori_part_txt[aspect_block_start[1]:length(ori_part_txt)] else character(0)
+part_asp <- partition_row(ori_part_aspect, "sun_aspect")
+
+ori_row <- function(name) {
+  if (nrow(ori_sum) == 0) return(NULL)
+  r <- ori_sum[ori_sum$analysis == name, , drop = FALSE]
+  if (nrow(r) == 0) NULL else r[1, ]
+}
+ori_all    <- ori_row("Orientation - all substrates")
+ori_aspect <- ori_row("Sun aspect - all substrates")
+
+n_orient_units    <- if (!is.null(ori_all)) ori_all$n_units else NA
+n_orient_isolates <- sum(ori_cov$n_isolates)
+n_unres_isolates  <- sum(ori_unres$n_isolates)
+orient_any_sig <- if (nrow(ori_sum) > 0)
+  any(num(ori_sum$permanova_p[grepl("^Orientation - ", ori_sum$analysis)]) < 0.05,
+      na.rm = TRUE) else FALSE
+
 ml_sub <- safe_csv("tables/substrate_multilevel_summary.csv")
 ml_zon <- safe_csv("tables/ficus_wood_zones_multilevel_summary.csv")
 ml_sp  <- safe_csv("tables/substrate_x_position_multilevel_summary.csv")
@@ -161,12 +267,16 @@ lincov <- safe_csv("tables/lineage_coverage.csv")
 ml_table <- function(df) {
   if (nrow(df) == 0) return(character(0))
   header <- c(
-    '| Rank | Taxa | NMDS stress | PERMANOVA F | R\u00b2 | p | ANOSIM R | p | PERMDISP p |',
-    '|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|')
+    '| Rank | Taxa | Pairs sharing no taxa | NMDS stress | PERMANOVA F | R\u00b2 | p | ANOSIM R | p | PERMDISP p |',
+    '|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|')
   rows <- apply(df, 1, function(r) {
-    paste0('| ', r['level'], ' | ', r['n_taxa'], ' | ', r['nmds_stress'], ' | ',
+    pns <- if ('prop_no_shared' %in% names(df))
+             paste0(round(100 * num(r['prop_no_shared'])), '%') else '\u2014'
+    bd  <- if (is.na(r['betadisper_p']) || !nzchar(trimws(r['betadisper_p'])))
+             '\u2014' else trimws(r['betadisper_p'])
+    paste0('| ', r['level'], ' | ', r['n_taxa'], ' | ', pns, ' | ', r['nmds_stress'], ' | ',
            r['permanova_F'], ' | ', r['permanova_R2'], ' | ', r['permanova_p'], ' | ',
-           r['anosim_R'], ' | ', r['anosim_p'], ' | ', r['betadisper_p'], ' |')
+           r['anosim_R'], ' | ', r['anosim_p'], ' | ', bd, ' |')
   })
   c(header, rows)
 }
@@ -213,6 +323,22 @@ paste0('| **Lauraceae leaves** | ', alpha_its$abundance_N[alpha_its$substrate ==
 '| Ficus wood | 1-6 | Trunk (zones 1-5) and branch (zone 6) |',
 '| Lauraceae leaves | 5-6 | Predominantly zone 6 |',
 '',
+'#### Sampling orientation',
+'',
+'Each sampled branch (and, where recorded, trunk face) also carries a **compass orientation**. This information only became usable once the field team reconciled two independent labelling systems: the colour codes written down by the climbers in the field, and the branch numbering entered into the project database. The two disagreed (notably a blue/turquoise colour clash, where blue should have been reserved for the Lauraceae, and disputed collection zones for the Lauraceae branches), so earlier versions of `LOT2_samples.xlsx` had an empty orientation column.',
+'',
+'The re-issued workbook settles that correspondence and adds it as a reconciled column, which the analyses in **Section F** use. Two clean-up rules are applied when reading it:',
+'',
+'- Some bearings still carry a replicate index (`N1`-`N4`, `NW1`-`NW4`). The digit identifies **which branch**, not which direction, so it is stripped: `N3` becomes `N`.',
+'- Material marked `?`, and all Ficus trunk wood (for which no orientation was ever recorded), is treated as **unresolved** and excluded from the orientation analyses.',
+'',
+paste0('This leaves **', n_orient_isolates, ' of ', nrow(samples_raw),
+       ' isolates** (', round(100 * n_orient_isolates / nrow(samples_raw)),
+       '%) with a usable bearing; **', n_unres_isolates,
+       '** are unresolved. A single sampling unit can span more than one bearing, so the orientation analyses group isolates by **substrate x zone x unit x bearing**, giving **',
+       n_orient_units, ' orientation-level sampling units** rather than the ',
+       n_samples, ' used elsewhere.'),
+'',
 '### Handling of uncertain taxonomy (Incertae sedis)',
 '',
 'Many isolates cannot be confidently named at every taxonomic rank. Entries flagged `NA`, `"?"`, `"NO"` or `"incertae sedis"` are treated as **Incertae sedis** ("of uncertain placement") and are handled **rank by rank**:',
@@ -228,7 +354,9 @@ paste0('| **Lauraceae leaves** | ', alpha_its$abundance_N[alpha_its$substrate ==
 '## Input Data',
 '',
 paste0('- **`LOT2_pooled_counts.xlsx`** (first sheet) — Pooled genotype counts per substrate with full taxonomy (', nrow(pooled), ' genotypes)'),
-paste0('- **`LOT2_samples.xlsx`** (first sheet) — Individual isolate records with sampling zone and unit (', nrow(samples_raw), ' isolates)'),
+paste0('- **`LOT2_samples.xlsx`** (first sheet) — Individual isolate records with sampling zone, unit and reconciled branch/trunk orientation (', nrow(samples_raw), ' isolates)'),
+'',
+'  The workbook also keeps the reconciliation working columns (field colour code, database colour code, pre-reconciliation orientation, field notes). They are read for traceability but only the reconciled orientation column is used.',
 '',
 '## Scripts',
 '',
@@ -358,13 +486,36 @@ paste0('These analyses ask **whether whole communities differ between groups** (
 '',
 '**How to read each test:**',
 '',
-'- **NMDS ordination** \u2014 squeezes the many-dimensional Bray-Curtis distances into a 2-D map so that samples plotting close together have similar communities. The **stress** value measures distortion: < 0.10 excellent, < 0.20 acceptable, > 0.20 unreliable. Crosses mark group centroids; shaded ellipses show 95% confidence regions.',
+'- **NMDS ordination** \u2014 squeezes the many-dimensional Bray-Curtis distances into a 2-D map so that samples plotting close together have similar communities. The **stress** value measures distortion: < 0.10 excellent, < 0.20 acceptable, > 0.20 unreliable. Crosses mark group centroids; shaded ellipses show 95% confidence regions. **A stress at or near zero is not a good fit** \u2014 it means the ordination has *degenerated*, which happens when the community matrix is so sparse that most sample pairs share no taxa and their Bray-Curtis distance is pinned at 1. See the sparsity caveat below.',
 '- **PERMANOVA** (`adonis2`) \u2014 tests whether **group centroids differ**. **R\u00b2** is the fraction of community variation explained by the grouping (effect size); a small **p** means the separation is unlikely by chance.',
 '- **ANOSIM** \u2014 a complementary rank-based test; **R** ranges from 0 (no separation) to 1 (groups completely distinct).',
 '- **Beta-dispersion / PERMDISP** (`betadisper`) \u2014 checks whether groups differ in **within-group spread** rather than location. If PERMDISP is significant, part of a PERMANOVA result may reflect unequal dispersion rather than a pure shift in composition, so it is an important caveat.',
 '- **Pairwise PERMANOVA** \u2014 which specific pairs of groups differ, with Holm correction for multiple tests.',
 '- **Rarefaction** \u2014 expected richness rescaled to equal sampling effort, so richness can be compared fairly.',
 '- **Indicator species (IndVal)** \u2014 identifies taxa statistically associated with (diagnostic of) a particular group.',
+'',
+'### An important caveat: the ITS-level matrix is very sparse',
+'',
+paste0('At ITS-genotype resolution this dataset is dominated by rare taxa: **',
+       sparse_singletons, '% of the ', n_taxa_comm,
+       ' genotypes were isolated exactly once**, and as a result **',
+       sparse_no_shared, '% of all sampling-unit pairs share no genotype at all**. Every one of those pairs has a Bray-Curtis distance of exactly 1, so the distance matrix is largely saturated.'),
+'',
+'This has two concrete consequences for how the results below should be read:',
+'',
+'- **The ITS-level NMDS maps are degenerate and should not be interpreted.** Their near-zero stress is the symptom, not a virtue: with most distances tied at 1 there is no gradient left for the ordination to lay out, and the resulting configuration is arbitrary (note the implausible axis ranges). Each such plot is now labelled as degenerate in its subtitle.',
+'- **PERMANOVA and ANOSIM remain valid**, because they work on the ranks and the sums of squares of the distance matrix rather than on a 2-D embedding. They are the tests to trust here, together with the indicator-species analysis.',
+'',
+paste0('The **multi-rank sweep in Section D is the constructive answer to this.** Grouping isolates into genera, families or orders collapses the singleton problem: at those ranks samples share taxa, the ordinations reach sensible stress values',
+       if (nrow(ml_sub) > 0 && 'prop_no_shared' %in% names(ml_sub))
+         paste0(' (see the "pairs sharing no taxa" column \u2014 it falls from ',
+                round(100 * num(ml_sub$prop_no_shared[ml_sub$level == "its_taxon"])),
+                '% at ITS level to ',
+                round(100 * num(ml_sub$prop_no_shared[ml_sub$level == "genus"])),
+                '% at genus level, where the ordination stress reaches a healthy ',
+                ml_sub$nmds_stress[ml_sub$level == "genus"], ')')
+       else '',
+       ', and the substrate signal is reproduced. **Use the Section D ordinations as the readable maps of these communities.**'),
 '',
 '---',
 '',
@@ -375,7 +526,9 @@ paste0('These analyses ask **whether whole communities differ between groups** (
 '### NMDS Ordination',
 '',
 paste0('**Stress = ', nmds_stress, '** ',
-       if (!is.na(num(nmds_stress)) && num(nmds_stress) < 0.20) '(acceptable to good \u2014 the 2-D map is a faithful summary).' else '(interpret the map with some caution).'),
+       if (!is.na(num(nmds_stress)) && num(nmds_stress) < 0.01) '\u2014 **a degenerate solution, not an excellent one** (see the sparsity caveat above). Read the separation from PERMANOVA and from the higher-rank ordinations in Section D, not from this map.'
+       else if (!is.na(num(nmds_stress)) && num(nmds_stress) < 0.20) '(acceptable to good \u2014 the 2-D map is a faithful summary).'
+       else '(interpret the map with some caution).'),
 '',
 '![NMDS — all substrates](plots/png/substrate_all_nmds.png)',
 '',
@@ -532,6 +685,189 @@ paste0('**PERMANOVA: F = ', z6_perm_F, ', R\u00b2 = ', z6_perm_R2, ', p = ', z6_
 '',
 '---',
 '',
+'## F. Branch & Trunk Sampling Orientation',
+'',
+'**Why.** Different faces of a tree experience very different microclimates — sun exposure, temperature, how long the surface stays wet after rain, prevailing wind. If that matters to endophytes, communities should differ systematically between compass bearings. This is the first LOT2 analysis able to test it, because the orientation column only became usable with the re-issued samples workbook (see **Sampling orientation** above).',
+'',
+'### F1. What was actually sampled',
+'',
+'Orientation is an **observational**, not a designed, factor here: bearings were recorded for whichever branches were reachable, so replication is uneven and, for some substrate/bearing combinations, very thin. That constrains how much the tests below can detect, and it is the single most important caveat for this section.',
+'',
+if (nrow(ori_cov) > 0) c(
+  '| Substrate | Position | Orientation | Sampling units | Isolates | ITS taxa |',
+  '|-----------|:-:|:-:|:-:|:-:|:-:|',
+  apply(ori_cov, 1, function(r)
+    paste0('| ', r['substrate'], ' | ', r['position'], ' | ', r['orientation'],
+           ' | ', r['n_units'], ' | ', r['n_isolates'], ' | ', r['n_taxa'], ' |')),
+  ''
+) else character(0),
+if (nrow(ori_unres) > 0) c(
+  paste0('Unresolved (excluded from this section): ',
+         paste(apply(ori_unres, 1, function(r)
+           paste0(r['n_isolates'], ' ', r['substrate'], ' ', tolower(r['position']))),
+           collapse = ', '), '.'),
+  ''
+) else character(0),
+'Three consequences follow, and they shape every result below:',
+'',
+'- Only **Ficus leaves** and **Ficus wood** were sampled on all four cardinal bearings. **Lauraceae leaves** were only ever collected from northern and north-western faces (plus two isolates from one eastern unit), so the Lauraceae cannot contribute to a full-compass comparison.',
+'- **Ficus trunk wood carries no orientation at all**, so this section is effectively a *branch*-level analysis.',
+paste0('- With ', n_orient_units, ' orientation-level units spread over 5 bearings, most groups hold **1-4 replicates**. Tests on a single substrate (7-11 units) have little power: a null result here means *no effect was detectable*, not *no effect exists*.'),
+'',
+'### F2. Does orientation structure the community?',
+'',
+'Same test battery as the substrate analyses — PERMANOVA, ANOSIM, PERMDISP — run on the orientation-level sampling units at ITS-genotype resolution.',
+'',
+if (nrow(ori_sum) > 0) c(
+  '| Analysis | Units | Groups | PERMANOVA F | R² | p | ANOSIM R | p | PERMDISP p | Indicators |',
+  '|----------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|',
+  apply(ori_sum, 1, function(r) {
+    na_dash <- function(x) if (is.na(x) || !nzchar(trimws(x))) '—' else trimws(x)
+    paste0('| ', r['analysis'], ' | ', r['n_units'], ' | ', r['n_groups'], ' | ',
+           na_dash(r['permanova_F']), ' | ', na_dash(r['permanova_R2']), ' | ',
+           na_dash(r['permanova_p']), ' | ', na_dash(r['anosim_R']), ' | ',
+           na_dash(r['anosim_p']), ' | ', na_dash(r['betadisper_p']), ' | ',
+           na_dash(r['n_indicators']), ' |')
+  }),
+  '',
+  '> **PERMDISP shown as —** where the smallest group holds fewer than 3 sampling units. A centroid computed from one or two points has a degenerate spread, which inflates the dispersion F ratio to meaningless magnitudes; those tests are written to the `*_betadisper.txt` files with a warning but are not reported as numbers.',
+  ''
+) else character(0),
+paste0('**Orientation on its own: ', if (!is.null(ori_all)) paste0('F = ', ori_all$permanova_F, ', R² = ', ori_all$permanova_R2, ', p = ', ori_all$permanova_p) else 'N/A', '** — ',
+       if (!is.null(ori_all)) verdict(ori_all$permanova_p) else 'could not be evaluated',
+       '. Within each substrate taken separately the result is the same: ',
+       if (!orient_any_sig) 'no substrate shows a significant orientation effect.' else 'see the table for which substrate drives the effect.',
+       ' ANOSIM agrees, and for Ficus leaves and Ficus wood the ANOSIM R is actually **negative** — meaning units from *different* bearings are, if anything, slightly more similar to each other than units from the *same* bearing. That is the signature of no orientation structure at all.'),
+'',
+'![NMDS — orientation, all substrates](plots/png/orientation_all_nmds.png)',
+'',
+'![NMDS — orientation within Ficus leaves](plots/png/ficus_leaves_orientation_nmds.png)',
+'',
+paste0('*Interpretation.* The bearings overlap almost completely, with centroids piled on top of one another. These are ITS-level ordinations, so \u2014 as everywhere in this report \u2014 the maps are degenerate and carry no weight on their own; the conclusion rests on the PERMANOVA and ANOSIM results above, and on the higher-rank ordinations in **F7**, which agree. Whatever separates these communities, it is not which side of the tree the material came from.'),
+'',
+'### F3. Separating orientation from substrate',
+'',
+'Two of the pooled analyses above **do** come out significant — *substrate x orientation* and *sun aspect* — and both need care, because orientation is partly confounded with substrate in this dataset (the Lauraceae units are almost all north/north-west facing). A marginal (type-III) PERMANOVA asks what each factor explains **once the other is accounted for**:',
+'',
+'```',
+paste(ori_part_txt, collapse = "\n"),
+'```',
+'',
+paste0('**Substrate: R² = ', part_sub$R2, ', p = ', part_sub$p,
+       '. Orientation: R² = ', part_ori$R2, ', p = ', part_ori$p, '.** ',
+       'Substrate holds up; orientation does not. The apparently strong *substrate x orientation* result (R² ≈ ',
+       if (!is.null(ori_row("Substrate x orientation"))) ori_row("Substrate x orientation")$permanova_R2 else 'N/A',
+       ') is therefore the substrate effect re-expressed through a factor that happens to encode it, not evidence that bearing matters.'),
+'',
+'#### Sun aspect',
+'',
+'LOT2 was collected in **Peru, i.e. the southern hemisphere**, where the *northern* face of a tree is the sun-exposed one and the southern face the shaded one. Grouping bearings into **sun-facing (N/NE/NW)**, **shaded (S/SE/SW)** and **lateral (E/W)** gives a more direct microclimate proxy than the raw compass, and coarser groups mean better replication.',
+'',
+paste0('Pooled across substrates this is significant (',
+       if (!is.null(ori_aspect)) paste0('R² = ', ori_aspect$permanova_R2, ', p = ', ori_aspect$permanova_p) else 'N/A',
+       ', PERMDISP p = ', if (!is.null(ori_aspect)) ori_aspect$betadisper_p else 'N/A',
+       ', so not a dispersion artefact) — but the confounding is severe: of the ',
+       n_orient_units, ' orientation units, **all but one Lauraceae unit is sun-facing**, while Ficus leaves and wood are mostly lateral. Adjusting for substrate, **sun aspect gives R² = ', part_asp$R2,
+       ', p = ', part_asp$p, '** — ', verdict(part_asp$p),
+       '. Within each substrate individually it is likewise non-significant. The pooled result is substrate wearing an aspect label.'),
+'',
+'![NMDS — sun aspect](plots/png/orientation_sun_aspect_nmds.png)',
+'',
+'### F4. A directional gradient rather than discrete bearings',
+'',
+'Treating the compass as four or five **discrete classes** spends a lot of degrees of freedom on a dataset this small. An alternative is to treat the bearing as the **circular variable** it is: decomposing it into `cos(bearing)` (the north-south axis) and `sin(bearing)` (the east-west axis) tests for a community that changes *smoothly* around the tree using only 2 df, which is more powerful at this level of replication.',
+'',
+if (nrow(ori_circ) > 0) c(
+  '| Analysis | Units | Bearings | N-S axis R² | p | E-W axis R² | p | Joint R² | Joint p |',
+  '|----------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|',
+  apply(ori_circ, 1, function(r)
+    paste0('| ', r['analysis'], ' | ', r['n_units'], ' | ', r['n_orientations'], ' | ',
+           r['NS_axis_R2'], ' | ', r['NS_axis_p'], ' | ', r['EW_axis_R2'], ' | ',
+           r['EW_axis_p'], ' | ', r['joint_R2'], ' | ', r['joint_p'], ' |')),
+  ''
+) else character(0),
+paste0('*Interpretation.* No joint directional gradient is significant. The one nominally significant single axis is the **north-south axis in Lauraceae leaves** (p = ',
+       if (nrow(ori_circ) > 0 && any(ori_circ$analysis == "Lauraceae leaves"))
+         ori_circ$NS_axis_p[ori_circ$analysis == "Lauraceae leaves"] else 'N/A',
+       '), and it should not be over-read: the Lauraceae span only N and NW (plus two eastern isolates), so the "north-south axis" is fitted over a ~45° arc rather than a full compass, the joint test for the same substrate is non-significant (p = ',
+       if (nrow(ori_circ) > 0 && any(ori_circ$analysis == "Lauraceae leaves"))
+         ori_circ$joint_p[ori_circ$analysis == "Lauraceae leaves"] else 'N/A',
+       '), and it is one nominal result among eight axis tests with no correction applied.'),
+'',
+'### F5. Diversity per orientation',
+'',
+'Community *structure* may not differ while *diversity* still does — a more exposed face could simply support fewer taxa. Richness depends strongly on how many isolates each group contributed, so richness is also reported **rarefied to a common isolate count**.',
+'',
+if (nrow(ori_alpha) > 0) c(
+  paste0('| Orientation | S | N | H\' | 1-D | J\' | Rarefied S (to ', ori_alpha$rarefied_to[1], ') |'),
+  '|-------------|:-:|:-:|:-:|:-:|:-:|:-:|',
+  apply(ori_alpha, 1, function(r)
+    paste0('| ', r['orientation'], ' | ', r['richness_S'], ' | ', r['abundance_N'], ' | ',
+           r['shannon_H'], ' | ', r['simpson_1mD'], ' | ', r['pielou_J'], ' | ',
+           r['rarefied_S'], ' |')),
+  ''
+) else character(0),
+if (nrow(ori_aspect_alpha) > 0) c(
+  paste0('| Sun aspect | S | N | H\' | 1-D | J\' | Rarefied S (to ', ori_aspect_alpha$rarefied_to[1], ') |'),
+  '|------------|:-:|:-:|:-:|:-:|:-:|:-:|',
+  apply(ori_aspect_alpha, 1, function(r)
+    paste0('| ', r['sun_aspect'], ' | ', r['richness_S'], ' | ', r['abundance_N'], ' | ',
+           r['shannon_H'], ' | ', r['simpson_1mD'], ' | ', r['pielou_J'], ' | ',
+           r['rarefied_S'], ' |')),
+  ''
+) else character(0),
+paste0('*Interpretation.* Raw richness tracks sampling effort almost exactly — the most-sampled bearing is also the richest — but once rarefied to a common ',
+       if (nrow(ori_alpha) > 0) ori_alpha$rarefied_to[1] else 'N', ' isolates the bearings are within a few taxa of each other',
+       if (nrow(ori_alpha) > 0) paste0(' (', min(ori_alpha$rarefied_S, na.rm = TRUE), '-', max(ori_alpha$rarefied_S, na.rm = TRUE), ' taxa)') else '',
+       '. Evenness (Pielou J\') is uniformly high, as everywhere else in this dataset. There is no diversity gradient around the tree to match the absent compositional one.'),
+'',
+'![Richness by orientation and substrate](plots/png/orientation_alpha_richness_S.png)',
+'',
+'![Shannon diversity by orientation and substrate](plots/png/orientation_alpha_shannon_H.png)',
+'',
+'> The per-substrate rarefaction target is pulled down to a handful of isolates by the smallest Ficus wood groups, so `tables/orientation_alpha_diversity_by_substrate.csv` should be read as indicative only. The pooled table above is the more reliable of the two.',
+'',
+'### F6. Taxon sharing between orientations',
+'',
+if (nrow(ori_share) > 0) c(
+  '| Occurs in ... orientations | ITS genotypes |',
+  '|:-:|:-:|',
+  apply(ori_share, 1, function(r)
+    paste0('| ', r['n_orientations'], ' | ', r['n_taxa'], ' |')),
+  ''
+) else character(0),
+paste0('*Interpretation.* Most genotypes (',
+       if (nrow(ori_share) > 0) ori_share$n_taxa[ori_share$n_orientations == 1] else 'N/A',
+       ' of ', if (nrow(ori_share) > 0) sum(ori_share$n_taxa) else 'N/A',
+       ') were found on a single bearing. On its own that looks like strong orientation fidelity, but it is the expected consequence of **rarity plus thin sampling**: this community is dominated by singletons and doubletons (see the rank-abundance curves in Section B1), and a taxon seen once can only ever be recorded at one bearing. The multivariate tests above, which use the whole community at once rather than taxon-by-taxon presence, find no such structure — and they are the trustworthy reading.'),
+'',
+'![Shared genotypes between orientations — Ficus leaves](plots/png/orientation_venn_ficus_leaves.png)',
+'',
+'![Rarefaction by orientation](plots/png/orientation_all_rarefaction.png)',
+'',
+'### F7. Orientation across taxonomic ranks',
+'',
+'As in Section D, the comparison is repeated at every rank, in case a bearing effect exists among broader taxonomic groups but is hidden by genotype-level noise.',
+'',
+ml_table(ori_ml),
+'',
+paste0('*Interpretation.* ',
+       if (nrow(ori_ml) > 0 && !any(num(ori_ml$permanova_p) < 0.05, na.rm = TRUE))
+         'Orientation is non-significant at **every** taxonomic rank, so the null result is not an artefact of working at ITS resolution.'
+       else 'Some ranks show an orientation signal; see the table.'),
+'',
+'Full results: `tables/orientation_*`, `tables/*_orientation_*` and `tables/substrate_x_orientation_*`. Summary: `tables/orientation_summary.csv`.',
+'',
+'### F8. What this section concludes',
+'',
+paste0('**Sampling orientation does not detectably structure the LOT2 endophyte communities.** It is non-significant pooled, within each substrate, at every taxonomic rank, as a coarse sun-exposure grouping, and as a smooth directional gradient. The two significant pooled results both dissolve once substrate is accounted for (orientation adjusted for substrate: R² = ',
+       part_ori$R2, ', p = ', part_ori$p, '; sun aspect adjusted for substrate: R² = ',
+       part_asp$R2, ', p = ', part_asp$p, ').'),
+'',
+'**How firm is that?** Firm enough to report, but it is a negative result from an unbalanced observational factor with 1-4 replicates per group. It rules out an orientation effect of the size seen for substrate (R² ≈ 0.19); it does not rule out a small one. Making that test properly would need balanced sampling of all four bearings within each substrate — worth specifying in advance if a future campaign wants to answer this question rather than check it.',
+'',
+'---',
+'',
 '## Abundance & Composition Plots (Incertae sedis retained)',
 '',
 'Unlike every analysis above, the plots below **keep the *Incertae sedis* isolates** (as an explicit pooled category), so they present the complete isolate census without hiding unidentified material.',
@@ -558,8 +894,13 @@ paste0('1. **Substrate is the primary driver of community structure.** The three
        '), and this holds at **every taxonomic rank** \u2014 the effect is in fact strongest around **', ml_best_rank, ' level** (R\u00b2 \u2248 ', round(ml_best_R2, 2), '). The two leaf substrates are more similar to each other than to wood, i.e. **tissue type (leaf vs wood)** is the strongest split, with **host identity (Ficus vs Lauraceae leaves)** adding a secondary but significant effect (p = ', leaves_perm_p, ').'),
 paste0('2. **Tree height has at most a weak effect.** Treated as six discrete zones, height does **not** structure Ficus-wood communities at any taxonomic rank (Section D2, all p > 0.05). When the wood is instead split simply into **trunk vs branch**, a modest but ', verdict(fw_tb_p), ' difference emerges (p = ', fw_tb_p, ', R\u00b2 \u2248 ', round(num(fw_tb_R2), 2), '): branch wood carries a somewhat distinct community from trunk wood, but this coarse contrast explains far less variation than substrate does.'),
 paste0('3. **The substrate signal is real, not a sampling-height artefact.** Even when the comparison is restricted to zone 6 alone (where all substrates co-occur), substrates remain ', verdict(z6_perm_p), ' (p = ', z6_perm_p, ').'),
-'4. **Communities are diverse and even.** All substrates show high evenness (Pielou J\' > 0.9) and long rank-abundance tails; rarefaction curves have not saturated, so true richness is higher still. A shared generalist core of genera co-exists with a substantial set of substrate-exclusive taxa.',
-paste0('5. **Removing *Incertae sedis* sharpened the picture.** Excluding the pooled "unknown" bin from the diversity, overlap and multivariate analyses (while keeping it visible in the abundance/pie plots) increased, rather than decreased, the measured separation between substrates \u2014 confirming that the unidentified fraction had been masking genuine differences.'),
+paste0('4. **Which side of the tree the material came from does not matter.** Now that the field branch codes have been reconciled with the project database, sampling orientation could be tested for the first time (Section F, ',
+       n_orient_isolates, ' of ', nrow(samples_raw), ' isolates). It is non-significant pooled (p = ',
+       if (!is.null(ori_all)) ori_all$permanova_p else 'N/A',
+       '), within every substrate, at every taxonomic rank, as a sun-exposure grouping and as a smooth directional gradient. The two pooled contrasts that do come out significant — *substrate x orientation* and *sun aspect* — both vanish once substrate is accounted for (orientation adjusted for substrate: R² = ',
+       part_ori$R2, ', p = ', part_ori$p, '), because the Lauraceae happened to be sampled almost entirely on north-facing branches. This is a **negative result from an unbalanced observational factor with 1-4 replicates per bearing**: it rules out an orientation effect as large as the substrate effect, not a small one.'),
+'5. **Communities are diverse and even.** All substrates show high evenness (Pielou J\' > 0.9) and long rank-abundance tails; rarefaction curves have not saturated, so true richness is higher still. A shared generalist core of genera co-exists with a substantial set of substrate-exclusive taxa.',
+paste0('6. **Removing *Incertae sedis* sharpened the picture.** Excluding the pooled "unknown" bin from the diversity, overlap and multivariate analyses (while keeping it visible in the abundance/pie plots) increased, rather than decreased, the measured separation between substrates \u2014 confirming that the unidentified fraction had been masking genuine differences.'),
 '',
 '---',
 '',
@@ -570,16 +911,61 @@ writeLines(readme, "README.md")
 cat("README.md generated\n")
 
 # ---- Generate README.pdf via pandoc ----
-# DejaVu fonts give xelatex full Unicode coverage (\u2248, \u2264, \u2192, ...)
-pdf_cmd <- paste(
-  'pandoc README.md -o README.pdf --pdf-engine=xelatex',
-  "-V mainfont='DejaVu Serif'",
-  "-V monofont='DejaVu Sans Mono'",
-  '-V geometry:margin=2cm',
-  '2>&1')
-pdf_ok <- system(pdf_cmd, intern = FALSE)
-if (pdf_ok == 0) {
-  cat("README.pdf generated\n")
+# pandoc and a PDF engine live in different places depending on the
+# machine, so look for them rather than assuming a LaTeX install: on a
+# plain RStudio/Windows box the bundled pandoc + typst are the only
+# ones present, while a Linux box usually has xelatex.
+nz1 <- function(x) length(x) == 1 && !is.na(x) && nzchar(x)
+
+pandoc_bin <- first_on_path("pandoc")
+if (!nz1(pandoc_bin) && requireNamespace("rmarkdown", quietly = TRUE))
+  pandoc_bin <- tryCatch(rmarkdown::pandoc_exec(), error = function(e) "")
+if (!nz1(pandoc_bin)) {
+  bundled <- Sys.glob(c(
+    "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools/pandoc.exe",
+    "C:/Program Files/RStudio/bin/quarto/bin/tools/pandoc.exe",
+    "/usr/lib/rstudio/resources/app/bin/quarto/bin/tools/pandoc"))
+  bundled <- bundled[file.exists(bundled)]
+  if (length(bundled)) pandoc_bin <- bundled[1]
+}
+if (!nz1(pandoc_bin)) pandoc_bin <- ""
+
+# Each engine needs its own font/margin options
+engine_opts <- list(
+  xelatex  = paste("--pdf-engine=xelatex",
+                   "-V mainfont='DejaVu Serif'",
+                   "-V monofont='DejaVu Sans Mono'",
+                   "-V geometry:margin=2cm"),
+  lualatex = paste("--pdf-engine=lualatex",
+                   "-V mainfont='DejaVu Serif'",
+                   "-V monofont='DejaVu Sans Mono'",
+                   "-V geometry:margin=2cm"),
+  typst    = paste("--pdf-engine=typst", "-V margin-x=2cm", "-V margin-y=2cm"),
+  pdflatex = paste("--pdf-engine=pdflatex", "-V geometry:margin=2cm")
+)
+
+if (!nz1(pandoc_bin)) {
+  cat("WARNING: pandoc not found - README.pdf not regenerated\n")
 } else {
-  cat("WARNING: README.pdf generation failed (pandoc/xelatex not available?)\n")
+  # A bundled pandoc also ships its engines next to itself
+  extra_path <- c(dirname(pandoc_bin),
+                  file.path(dirname(pandoc_bin), "x86_64"),
+                  file.path(dirname(pandoc_bin), "aarch64"))
+  extra_path <- extra_path[dir.exists(extra_path)]
+  old_path <- Sys.getenv("PATH")
+  if (length(extra_path))
+    Sys.setenv(PATH = paste(c(old_path, extra_path),
+                            collapse = .Platform$path.sep))
+
+  pdf_ok <- 1L
+  for (eng in names(engine_opts)) {
+    if (!nz1(first_on_path(eng))) next
+    pdf_ok <- system(paste('"', pandoc_bin, '" README.md -o README.pdf ',
+                           engine_opts[[eng]], sep = ""), intern = FALSE)
+    if (pdf_ok == 0) { cat("README.pdf generated (engine:", eng, ")\n"); break }
+  }
+  Sys.setenv(PATH = old_path)
+  if (pdf_ok != 0)
+    cat("WARNING: README.pdf generation failed - no usable PDF engine found\n",
+        "         (tried: ", paste(names(engine_opts), collapse = ", "), ")\n", sep = "")
 }

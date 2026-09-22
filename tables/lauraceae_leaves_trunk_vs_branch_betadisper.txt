@@ -11,6 +11,6 @@ Groups     1 0.004613 0.0046131 0.2899    999  0.702
 Residuals  8 0.127301 0.0159126                     
 
 Group mean distances to centroid:
-        group mean_dist
-Branch Branch    0.5594
-Trunk   Trunk    0.5126
+        group n mean_dist
+Branch Branch 7    0.5594
+Trunk   Trunk 3    0.5126

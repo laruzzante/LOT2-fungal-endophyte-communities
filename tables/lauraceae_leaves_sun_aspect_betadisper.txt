@@ -1,0 +1,23 @@
+Beta-dispersion test (betadisper + permutest)
+
+WARNING: the smallest group holds only 1 sample(s). Distances to a centroid computed from 1-2 points are
+degenerate, so the F ratio and p-value below are NOT interpretable
+and are reported as NA in the summary tables. They are printed here
+for transparency only.
+
+
+Permutation test for homogeneity of multivariate dispersions
+Permutation: free
+Number of permutations: 999
+
+Response: Distances
+          Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)    
+Groups     1 0.30168 0.301676 24.761    999  0.001 ***
+Residuals  9 0.10965 0.012184                         
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Group mean distances to centroid:
+                        group  n mean_dist
+Lateral (E/W)   Lateral (E/W)  1    0.0000
+Sun-facing (N) Sun-facing (N) 10    0.5761

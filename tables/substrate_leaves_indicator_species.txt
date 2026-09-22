@@ -40,4 +40,4 @@ Nigrospora cf. gorlenkoana                                                      
 Diaporthe sp. 20                                                                              * 
 Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 **
 ---
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 

@@ -1,0 +1,19 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 105
+ Selected number of species: 1 
+ Number of species associated to 1 group: 1 
+ Number of species associated to 2 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group N  #sps.  1 
+                   A   B  stat p.value  
+Diaporthe sp. 29 0.8 1.0 0.894   0.031 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 

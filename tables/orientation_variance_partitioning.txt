@@ -1,0 +1,56 @@
+PERMANOVA - variance partitioning, Bray-Curtis distance
+Only sampling units with a reconciled orientation are used.
+Permutations: 999
+
+== Marginal (type III): each term adjusted for the other ==
+Permutation test for adonis under reduced model
+Marginal effects of terms
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = comm_orient ~ substrate + orientation, data = meta_orient, permutations = 999, method = "bray", by = "margin")
+            Df SumOfSqs      R2      F Pr(>F)    
+substrate    2   1.7622 0.14998 2.1956  0.001 ***
+orientation  4   1.6283 0.13859 1.0144  0.398    
+Residual    20   8.0262 0.68311                  
+Total       26  11.7495 1.00000                  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+== Sequential (type I): substrate entered first ==
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = comm_orient ~ substrate + orientation, data = meta_orient, permutations = 999, method = "bray", by = "terms")
+            Df SumOfSqs      R2      F Pr(>F)    
+substrate    2   2.0950 0.17830 2.6101  0.001 ***
+orientation  4   1.6283 0.13859 1.0144  0.398    
+Residual    20   8.0262 0.68311                  
+Total       26  11.7495 1.00000                  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+== Marginal (type III): substrate + sun aspect ==
+Permutation test for adonis under reduced model
+Marginal effects of terms
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = comm_orient ~ substrate + sun_aspect, data = meta_orient, permutations = 999, method = "bray", by = "margin")
+           Df SumOfSqs      R2      F Pr(>F)    
+substrate   2   1.7759 0.15114 2.2253  0.001 ***
+sun_aspect  2   0.8762 0.07457 1.0979  0.208    
+Residual   22   8.7783 0.74713                  
+Total      26  11.7495 1.00000                  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+== Sampling units per substrate x sun aspect ==
+(empty cells show where aspect is confounded with substrate)
+                  
+                   Lateral (E/W) Shaded (S) Sun-facing (N)
+  Ficus leaves                 5          2              2
+  Ficus wood                   4          2              1
+  Lauraceae leaves             1          0             10

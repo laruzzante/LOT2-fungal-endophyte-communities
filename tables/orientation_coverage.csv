@@ -1,0 +1,14 @@
+"substrate","position","orientation","n_units","n_isolates","n_taxa"
+"Ficus leaves","Branch","E",2,51,34
+"Ficus leaves","Branch","N",2,49,30
+"Ficus leaves","Branch","S",2,53,43
+"Ficus leaves","Branch","W",3,62,46
+"Ficus wood","Branch","E",2,32,21
+"Ficus wood","Branch","N",1,11,9
+"Ficus wood","Branch","S",2,10,9
+"Ficus wood","Branch","W",2,32,24
+"Lauraceae leaves","Branch","E",1,2,2
+"Lauraceae leaves","Branch","N",3,81,51
+"Lauraceae leaves","Branch","NW",4,83,57
+"Lauraceae leaves","Trunk","N",1,28,23
+"Lauraceae leaves","Trunk","NW",2,25,16

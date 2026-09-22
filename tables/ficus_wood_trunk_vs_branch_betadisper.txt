@@ -6,13 +6,11 @@ Permutation: free
 Number of permutations: 999
 
 Response: Distances
-          Df   Sum Sq  Mean Sq      F N.Perm Pr(>F)  
-Groups     1 0.049833 0.049833 7.3779    999  0.018 *
-Residuals 11 0.074298 0.006754                       
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+          Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)
+Groups     1 0.012141 0.0121413 1.3068    999  0.275
+Residuals 11 0.102196 0.0092905                     
 
 Group mean distances to centroid:
-        group mean_dist
-Branch Branch    0.6245
-Trunk   Trunk    0.4973
+        group n mean_dist
+Branch Branch 7    0.6064
+Trunk   Trunk 6    0.5451

@@ -42,17 +42,17 @@ Aspergillus cvjetkovicii or A. jensenii (3 spp.)                       0.555
 Aspergillus versicolor                                                 0.555
 Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2 0.555
                                                                        p.value
-Penicillium goetzii, P. rubens                                           0.001
-Ophiocordycipitaceae sp. 1                                               0.003
-Aspergillus cvjetkovicii or A. jensenii (3 spp.)                         0.027
-Aspergillus versicolor                                                   0.029
-Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2   0.028
-                                                                          
-Penicillium goetzii, P. rubens                                         ***
-Ophiocordycipitaceae sp. 1                                             ** 
-Aspergillus cvjetkovicii or A. jensenii (3 spp.)                       *  
-Aspergillus versicolor                                                 *  
-Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2 *  
+Penicillium goetzii, P. rubens                                           0.003
+Ophiocordycipitaceae sp. 1                                               0.004
+Aspergillus cvjetkovicii or A. jensenii (3 spp.)                         0.021
+Aspergillus versicolor                                                   0.026
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2   0.024
+                                                                         
+Penicillium goetzii, P. rubens                                         **
+Ophiocordycipitaceae sp. 1                                             **
+Aspergillus cvjetkovicii or A. jensenii (3 spp.)                       * 
+Aspergillus versicolor                                                 * 
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) gen 2 * 
 
  Group Lauraceae leaves  #sps.  7 
                                                                                                    A
@@ -101,4 +101,4 @@ Nigrospora cf. vesicularifera                                                   
 Diaporthe sp. 29 1.00 0.45 0.671   0.011 *
 Diaporthe sp. 16 1.00 0.40 0.632   0.029 *
 ---
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 

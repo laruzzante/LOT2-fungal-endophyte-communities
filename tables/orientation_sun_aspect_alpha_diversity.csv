@@ -1,0 +1,4 @@
+"sun_aspect","richness_S","abundance_N","shannon_H","simpson_1mD","inv_simpson","pielou_J","rarefied_S","rarefied_to"
+"Lateral (E/W)",114,179,4.4573,0.9816,54.399,0.9411,49.58,63
+"Shaded (S)",52,63,3.8845,0.9776,44.5955,0.9831,52,63
+"Sun-facing (N)",132,277,4.5091,0.9831,59.0677,0.9235,46.76,63

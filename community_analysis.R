@@ -342,17 +342,19 @@ build_comm_matrix_level <- function(data, level, group_col = "sample_id") {
 # and optionally writes one NMDS ordination plot per rank.
 # ============================================================
 run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
-                            plotdir = "plots/community") {
-  meta_s <- meta_full[sel, , drop = FALSE]
-  data_s <- samples_lineage[samples_lineage$sample_id %in% meta_s$sample_id, , drop = FALSE]
+                            plotdir = "plots/community",
+                            meta = meta_full, id_col = "sample_id",
+                            data = samples_lineage) {
+  meta_s <- meta[sel, , drop = FALSE]
+  data_s <- data[data[[id_col]] %in% meta_s[[id_col]], , drop = FALSE]
   out <- list()
   for (lv in lineage_levels) {
-    cm <- build_comm_matrix_level(data_s, lv, "sample_id")
+    cm <- build_comm_matrix_level(data_s, lv, id_col)
     if (is.null(cm)) next
     cm <- cm[, colSums(cm) > 0, drop = FALSE]
     keep <- rowSums(cm) > 0
     cm <- cm[keep, , drop = FALSE]
-    m <- meta_s[match(rownames(cm), meta_s$sample_id), , drop = FALSE]
+    m <- meta_s[match(rownames(cm), meta_s[[id_col]]), , drop = FALSE]
     g <- m[[group_var]]
     if (nrow(cm) < 3 || length(unique(g)) < 2 || ncol(cm) < 2) next
 
@@ -367,13 +369,20 @@ run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
     set.seed(42)
     an <- tryCatch(anosim(cm, g, distance = "bray", permutations = 999),
                    error = function(e) NULL)
-    bd <- tryCatch(permutest(betadisper(vegdist(cm, "bray"), g), permutations = 999),
-                   error = function(e) NULL)
+    # Only interpretable when every group has >= 3 samples (see the
+    # dispersion block in run_multivariate)
+    bd <- if (min(table(g)) >= 3)
+            tryCatch(permutest(betadisper(vegdist(cm, "bray"), g), permutations = 999),
+                     error = function(e) NULL)
+          else NULL
 
     out[[lv]] <- data.frame(
       level        = lv,
       n_samples    = nrow(cm),
       n_taxa       = ncol(cm),
+      # Fraction of sample pairs with no taxon in common: above ~0.5 the
+      # Bray-Curtis matrix is saturated and the NMDS degenerates.
+      prop_no_shared = round(mean(no.shared(cm)), 4),
       nmds_stress  = stress,
       permanova_F  = if (!is.null(pm)) round(pm$F[1], 4)  else NA_real_,
       permanova_R2 = if (!is.null(pm)) round(pm$R2[1], 4) else NA_real_,
@@ -384,6 +393,8 @@ run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
       stringsAsFactors = FALSE
     )
 
+    degenerate <- !is.na(stress) && stress < 0.01 && nrow(cm) > 4
+
     if (!is.null(plot_prefix) && !is.null(nm)) {
       sc <- as.data.frame(scores(nm, display = "sites")); sc$grp <- g
       cent <- sc %>% group_by(grp) %>%
@@ -391,10 +402,33 @@ run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
       pl <- ggplot(sc, aes(NMDS1, NMDS2, colour = grp)) +
         geom_point(size = 3) +
         geom_point(data = cent, shape = 4, size = 5, stroke = 1.5) +
-        scale_colour_manual(values = colours) +
+        scale_colour_manual(values = colours)
+
+      # 95% confidence ellipses, matching the run_multivariate plots.
+      # stat_ellipse needs at least 4 points per group: with fewer it
+      # emits "Too few points to calculate an ellipse" and draws nothing,
+      # so small groups are filtered out here rather than passed in. The
+      # fill legend is suppressed because the colour legend already
+      # names every group.
+      ell_n <- table(sc$grp)
+      ell_grps <- names(ell_n[ell_n >= 4])
+      if (length(ell_grps) > 0) {
+        pl <- pl +
+          stat_ellipse(data = sc[sc$grp %in% ell_grps, , drop = FALSE],
+                       aes(fill = grp), geom = "polygon",
+                       alpha = 0.15, level = 0.95, linetype = 2) +
+          scale_fill_manual(values = colours, guide = "none")
+      }
+
+      pl <- pl +
         labs(title = paste0("NMDS at ", lv, " level \u2014 ", plot_prefix),
-             subtitle = paste("Bray-Curtis | Stress =", stress,
-                              "|", ncol(cm), "taxa"),
+             subtitle = paste0("Bray-Curtis | Stress = ", stress,
+                               " | ", ncol(cm), " taxa | ",
+                               sprintf("%.0f%%", 100 * mean(no.shared(cm))),
+                               " of sample pairs share no taxa",
+                               if (degenerate)
+                                 "\nDEGENERATE ORDINATION - too sparse to interpret"
+                               else ""),
              colour = group_var) +
         theme_minimal(base_size = 12) +
         theme(plot.title = element_text(face = "bold"), legend.position = "top")
@@ -453,9 +487,22 @@ run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
     error = function(e) { cat("  NMDS failed:", e$message, "\n"); NULL }
   )
 
+  # How sparse is this matrix? When most sample pairs share no taxa at
+  # all, Bray-Curtis saturates at 1 and the ordination has almost no
+  # gradient left to recover: metaMDS then returns a (near) zero stress
+  # that means "degenerate solution", not "excellent fit".
+  prop_no_shared <- mean(no.shared(comm_mat))
+  results$prop_no_shared <- round(prop_no_shared, 4)
+  results$prop_singleton_taxa <- round(mean(colSums(comm_mat) == 1), 4)
+
   if (!is.null(nmds)) {
     results$nmds_stress <- round(nmds$stress, 4)
-    cat("  NMDS stress:", results$nmds_stress, "\n")
+    results$nmds_degenerate <- nmds$stress < 0.01 && nrow(comm_mat) > 4
+    cat("  NMDS stress:", results$nmds_stress,
+        if (isTRUE(results$nmds_degenerate)) " (DEGENERATE - see sparsity)" else "", "\n")
+    cat("  Sample pairs sharing no taxa:",
+        sprintf("%.1f%%", 100 * prop_no_shared),
+        " singleton taxa:", sprintf("%.1f%%", 100 * results$prop_singleton_taxa), "\n")
 
     nmds_scores <- as.data.frame(scores(nmds, display = "sites"))
     nmds_scores[[group_var]] <- groups
@@ -470,7 +517,13 @@ run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
       geom_point(data = centroids, shape = 4, size = 5, stroke = 1.5) +
       scale_colour_manual(values = colours) +
       labs(title = paste("NMDS —", label),
-           subtitle = paste("Bray-Curtis | Stress =", round(nmds$stress, 3)),
+           subtitle = paste0(
+             "Bray-Curtis | Stress = ", signif(nmds$stress, 3),
+             " | ", sprintf("%.0f%%", 100 * prop_no_shared),
+             " of sample pairs share no taxa",
+             if (isTRUE(results$nmds_degenerate))
+               "\nDEGENERATE ORDINATION - too sparse to interpret; use the higher-rank plots"
+             else ""),
            colour = group_var) +
       theme_minimal(base_size = 12) +
       theme(plot.title = element_text(face = "bold"),
@@ -556,15 +609,39 @@ run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
 
   if (!is.null(bd)) {
     bd_perm <- permutest(bd, permutations = 999)
+    # A group of 1-2 samples has a degenerate distance-to-centroid
+    # (zero, or the same value for both points), which can drive the
+    # permutest F to absurd magnitudes. The test is only interpretable
+    # when every group holds at least 3 samples.
+    min_grp_n <- min(table(groups))
+    results$betadisper_min_group_n <- as.integer(min_grp_n)
     results$betadisper_F <- round(bd_perm$tab$F[1], 4)
     results$betadisper_p <- round(bd_perm$tab$`Pr(>F)`[1], 4)
-    cat("  Betadisper F:", results$betadisper_F, " p:", results$betadisper_p, "\n")
+
+    if (min_grp_n < 3) {
+      cat("  Betadisper not interpretable (smallest group has", min_grp_n,
+          "sample(s)) - reported as NA\n")
+      results$betadisper_note <- paste0(
+        "not interpretable: smallest group has ", min_grp_n, " sample(s)")
+      results$betadisper_F <- NA_real_
+      results$betadisper_p <- NA_real_
+    } else {
+      cat("  Betadisper F:", results$betadisper_F, " p:", results$betadisper_p, "\n")
+    }
 
     sink(paste0(prefix, "_betadisper.txt"))
     cat("Beta-dispersion test (betadisper + permutest)\n\n")
+    if (min_grp_n < 3) {
+      cat("WARNING: the smallest group holds only ", min_grp_n,
+          " sample(s). Distances to a centroid computed from 1-2 points are\n",
+          "degenerate, so the F ratio and p-value below are NOT interpretable\n",
+          "and are reported as NA in the summary tables. They are printed here\n",
+          "for transparency only.\n\n", sep = "")
+    }
     print(bd_perm)
     cat("\nGroup mean distances to centroid:\n")
     print(data.frame(group = levels(bd$group),
+                     n = as.integer(table(bd$group)),
                      mean_dist = round(tapply(bd$distances, bd$group, mean), 4)))
     sink()
   }
@@ -856,6 +933,434 @@ if (!is.null(results_fw_zones)) {
     cat("  Zone gradient PERMANOVA saved\n")
   }
 }
+
+# ============================================================
+# G. BRANCH / TRUNK SAMPLING ORIENTATION
+#
+# The re-issued samples workbook reconciled the field branch
+# numbering with the project database, which finally makes the
+# compass orientation of each sampled branch / trunk face usable.
+#
+# Orientation is recorded per sampled face, and a single sampling
+# unit can span more than one face, so these analyses use the
+# finer `sample_id_orient` grouping (substrate x zone x unit x
+# bearing). Isolates whose orientation could not be reconciled
+# ("?" in the field sheet, plus all Ficus trunk wood) are dropped.
+# ============================================================
+cat("\n====== G. Branch/trunk sampling orientation ======\n")
+
+orientation_colours <- c("N"  = "#1F4E79", "NE" = "#2E86AB", "E"  = "#4DAF4A",
+                         "SE" = "#A6D854", "S"  = "#F18F01", "SW" = "#E7298A",
+                         "W"  = "#A23B72", "NW" = "#7570B3")
+aspect_colours <- c("Sun-facing (N)" = "#E8A33D",
+                    "Shaded (S)"     = "#3B528B",
+                    "Lateral (E/W)"  = "#21918C")
+
+samples_orient <- samples_raw %>% filter(!is.na(orientation))
+
+cat("Isolates with a resolved orientation:", nrow(samples_orient),
+    "/", nrow(samples_raw), "\n")
+
+if (nrow(samples_orient) == 0) {
+  cat("No orientation data available - skipping Section G\n")
+} else {
+
+# ---- G0. Sampling coverage by orientation ----
+orient_coverage <- samples_orient %>%
+  group_by(substrate, position, orientation) %>%
+  summarise(n_units    = n_distinct(sample_id_orient),
+            n_isolates = n(),
+            n_taxa     = n_distinct(its_taxon),
+            .groups = "drop") %>%
+  arrange(substrate, position, orientation)
+write.csv(orient_coverage, "tables/orientation_coverage.csv", row.names = FALSE)
+cat("\nSampling coverage per orientation:\n")
+print(as.data.frame(orient_coverage))
+
+unresolved <- samples_raw %>%
+  filter(is.na(orientation)) %>%
+  count(substrate, position, name = "n_isolates")
+write.csv(unresolved, "tables/orientation_unresolved.csv", row.names = FALSE)
+cat("\nIsolates without a usable orientation:\n")
+print(as.data.frame(unresolved))
+
+# ---- Orientation-level community matrix ----
+comm_orient <- build_comm_matrix(samples_orient, "sample_id_orient")
+
+meta_orient <- samples_orient %>%
+  distinct(sample_id_orient, substrate, zone, unit, position,
+           orientation, orientation_deg, sun_aspect) %>%
+  as.data.frame()
+rownames(meta_orient) <- meta_orient$sample_id_orient
+meta_orient <- meta_orient[rownames(comm_orient), ]
+meta_orient$zone_f  <- as.character(meta_orient$zone)
+meta_orient$sub_ori <- paste(meta_orient$substrate, meta_orient$orientation, sep = " - ")
+
+cat("\nOrientation community matrix:", nrow(comm_orient), "sampling units x",
+    ncol(comm_orient), "ITS genotypes\n")
+
+# ---- G1. Orientation across all substrates ----
+cat("\n--- G1. Orientation, all substrates pooled ---\n")
+results_orient_all <- run_multivariate(
+  comm_orient, meta_orient, "orientation",
+  label = "orientation_all",
+  outdir = "tables",
+  colours = orientation_colours)
+
+if (!is.null(results_orient_all$permanova)) {
+  sink("tables/orientation_permanova_results.txt")
+  cat("PERMANOVA - Bray-Curtis distance\n")
+  cat("Formula: community ~ orientation (all substrates pooled)\n")
+  cat("Permutations: 999\n\n")
+  print(results_orient_all$permanova)
+  sink()
+}
+
+# ---- G2. Orientation within each substrate ----
+cat("\n--- G2. Orientation within each substrate ---\n")
+
+orient_by_substrate <- meta_orient %>%
+  group_by(substrate) %>%
+  summarise(n_units = n(), n_orient = n_distinct(orientation), .groups = "drop")
+print(as.data.frame(orient_by_substrate))
+
+results_orient_sub <- list()
+for (sub in orient_by_substrate$substrate[orient_by_substrate$n_orient >= 2 &
+                                          orient_by_substrate$n_units >= 3]) {
+  cat("\n  Orientation within:", sub, "\n")
+  sel_sub <- meta_orient$substrate == sub
+  results_orient_sub[[sub]] <- run_multivariate(
+    comm_orient[sel_sub, , drop = FALSE], meta_orient[sel_sub, , drop = FALSE],
+    "orientation",
+    label = paste0(gsub(" ", "_", tolower(sub)), "_orientation"),
+    outdir = "tables",
+    colours = orientation_colours)
+}
+
+# ---- G3. Substrate x orientation combined factor ----
+cat("\n--- G3. Substrate x orientation ---\n")
+n_so <- length(unique(meta_orient$sub_ori))
+sub_ori_colours <- setNames(scales::hue_pal()(n_so), sort(unique(meta_orient$sub_ori)))
+results_sub_ori <- run_multivariate(
+  comm_orient, meta_orient, "sub_ori",
+  label = "substrate_x_orientation",
+  outdir = "tables",
+  colours = sub_ori_colours)
+
+# ---- G4. Sun aspect (southern-hemisphere exposure proxy) ----
+# LOT2 was collected in Peru: the northern face of a tree is the
+# sun-exposed one, the southern face the shaded one, E/W lateral.
+cat("\n--- G4. Sun aspect (sun-facing / lateral / shaded) ---\n")
+results_aspect <- run_multivariate(
+  comm_orient, meta_orient, "sun_aspect",
+  label = "orientation_sun_aspect",
+  outdir = "tables",
+  colours = aspect_colours)
+
+results_aspect_sub <- list()
+for (sub in unique(meta_orient$substrate)) {
+  sel_sub <- meta_orient$substrate == sub
+  if (length(unique(meta_orient$sun_aspect[sel_sub])) < 2) next
+  cat("\n  Sun aspect within:", sub, "\n")
+  results_aspect_sub[[sub]] <- run_multivariate(
+    comm_orient[sel_sub, , drop = FALSE], meta_orient[sel_sub, , drop = FALSE],
+    "sun_aspect",
+    label = paste0(gsub(" ", "_", tolower(sub)), "_sun_aspect"),
+    outdir = "tables",
+    colours = aspect_colours,
+    do_indval = FALSE)
+}
+
+# ---- G5. Variance partitioning: substrate vs orientation ----
+# Marginal (type-III) PERMANOVA: how much community variation does
+# orientation explain once substrate is accounted for, and vice versa?
+cat("\n--- G5. Substrate + orientation variance partitioning ---\n")
+set.seed(42)
+perm_partition <- tryCatch(
+  adonis2(comm_orient ~ substrate + orientation, data = meta_orient,
+          method = "bray", permutations = 999, by = "margin"),
+  error = function(e) { cat("  failed:", e$message, "\n"); NULL })
+
+set.seed(42)
+perm_sequential <- tryCatch(
+  adonis2(comm_orient ~ substrate + orientation, data = meta_orient,
+          method = "bray", permutations = 999, by = "terms"),
+  error = function(e) NULL)
+
+# The same question for the coarser sun-aspect grouping. This one
+# matters: Lauraceae was only ever sampled on its northern/north-western
+# faces, so aspect is partly confounded with substrate and the pooled
+# aspect test on its own cannot separate the two.
+set.seed(42)
+perm_partition_aspect <- tryCatch(
+  adonis2(comm_orient ~ substrate + sun_aspect, data = meta_orient,
+          method = "bray", permutations = 999, by = "margin"),
+  error = function(e) NULL)
+
+aspect_confound <- table(meta_orient$substrate, meta_orient$sun_aspect)
+
+if (!is.null(perm_partition)) {
+  sink("tables/orientation_variance_partitioning.txt")
+  cat("PERMANOVA - variance partitioning, Bray-Curtis distance\n")
+  cat("Only sampling units with a reconciled orientation are used.\n")
+  cat("Permutations: 999\n\n")
+  cat("== Marginal (type III): each term adjusted for the other ==\n")
+  print(perm_partition)
+  if (!is.null(perm_sequential)) {
+    cat("\n== Sequential (type I): substrate entered first ==\n")
+    print(perm_sequential)
+  }
+  if (!is.null(perm_partition_aspect)) {
+    cat("\n== Marginal (type III): substrate + sun aspect ==\n")
+    print(perm_partition_aspect)
+  }
+  cat("\n== Sampling units per substrate x sun aspect ==\n")
+  cat("(empty cells show where aspect is confounded with substrate)\n")
+  print(aspect_confound)
+  sink()
+  cat("  Saved: tables/orientation_variance_partitioning.txt\n")
+  print(perm_partition)
+  if (!is.null(perm_partition_aspect)) {
+    cat("\nSun aspect adjusted for substrate:\n")
+    print(perm_partition_aspect)
+    cat("\nSampling units per substrate x sun aspect:\n")
+    print(aspect_confound)
+  }
+}
+
+# ---- G6. Directional gradient test (circular) ----
+# Treating the compass bearing as a circular variable rather than as
+# discrete classes: a community that changes smoothly around the tree
+# is captured by the sine/cosine pair with only 2 df, which is more
+# powerful than a 4-level factor at this level of replication.
+cat("\n--- G6. Circular (directional gradient) test ---\n")
+
+circular_test <- function(cm, md, label) {
+  if (nrow(cm) < 4 || length(unique(md$orientation)) < 3) return(NULL)
+  rad <- md$orientation_deg * pi / 180
+  df <- data.frame(cos_b = cos(rad), sin_b = sin(rad))
+  set.seed(42)
+  fit <- tryCatch(adonis2(cm ~ cos_b + sin_b, data = df, method = "bray",
+                          permutations = 999, by = "margin"),
+                  error = function(e) NULL)
+  if (is.null(fit)) return(NULL)
+  # adonis2() with the default `by` collapses both terms into a single
+  # "Model" row - that row is the joint 2-df directional test.
+  set.seed(42)
+  fit_joint <- tryCatch(adonis2(cm ~ cos_b + sin_b, data = df, method = "bray",
+                                permutations = 999),
+                        error = function(e) NULL)
+  joint_row <- if (!is.null(fit_joint)) match("Model", rownames(fit_joint)) else NA_integer_
+  data.frame(
+    analysis      = label,
+    n_units       = nrow(cm),
+    n_orientations = length(unique(md$orientation)),
+    # cos(bearing) contrasts the North-South axis, sin(bearing) East-West
+    NS_axis_R2    = round(fit$R2[1], 4),
+    NS_axis_p     = fit$`Pr(>F)`[1],
+    EW_axis_R2    = round(fit$R2[2], 4),
+    EW_axis_p     = fit$`Pr(>F)`[2],
+    joint_R2      = if (!is.na(joint_row)) round(fit_joint$R2[joint_row], 4) else NA_real_,
+    joint_p       = if (!is.na(joint_row)) fit_joint$`Pr(>F)`[joint_row] else NA_real_,
+    stringsAsFactors = FALSE)
+}
+
+circ_rows <- list(circular_test(comm_orient, meta_orient, "All substrates"))
+for (sub in unique(meta_orient$substrate)) {
+  sel_sub <- meta_orient$substrate == sub
+  circ_rows[[length(circ_rows) + 1]] <- circular_test(
+    comm_orient[sel_sub, , drop = FALSE], meta_orient[sel_sub, , drop = FALSE], sub)
+}
+circ_table <- bind_rows(circ_rows)
+if (nrow(circ_table) > 0) {
+  write.csv(circ_table, "tables/orientation_circular_gradient.csv", row.names = FALSE)
+  cat("Saved: tables/orientation_circular_gradient.csv\n")
+  print(circ_table)
+}
+
+# ---- G7. Alpha diversity per orientation ----
+cat("\n--- G7. Alpha diversity per orientation ---\n")
+
+alpha_by <- function(data, grp_col, extra = NULL) {
+  keys <- c(extra, grp_col)
+  cm <- data %>% count(across(all_of(keys)), its_taxon) %>%
+    pivot_wider(names_from = its_taxon, values_from = n, values_fill = 0) %>%
+    as.data.frame()
+  mat <- as.matrix(cm[, -seq_along(keys), drop = FALSE])
+  S <- specnumber(mat); N <- rowSums(mat)
+  H <- diversity(mat, "shannon")
+  out <- cm[, keys, drop = FALSE]
+  out$richness_S  <- S
+  out$abundance_N <- N
+  out$shannon_H   <- round(H, 4)
+  out$simpson_1mD <- round(diversity(mat, "simpson"), 4)
+  out$inv_simpson <- round(diversity(mat, "invsimpson"), 4)
+  out$pielou_J    <- round(ifelse(S > 1, H / log(S), NA_real_), 4)
+  # Richness rarefied to a common isolate count, so that unequal
+  # sampling per bearing cannot drive the comparison. Groups holding
+  # fewer than 10 isolates are too small to rarefy meaningfully: they
+  # are excluded from the target and left as NA.
+  min_n <- suppressWarnings(min(N[N >= 10]))
+  if (is.finite(min_n)) {
+    ok <- N >= min_n
+    out$rarefied_S <- NA_real_
+    out$rarefied_S[ok] <- round(
+      as.numeric(rarefy(mat[ok, , drop = FALSE], sample = min_n)), 2)
+    out$rarefied_to <- min_n
+  } else {
+    out$rarefied_S  <- NA_real_
+    out$rarefied_to <- NA_integer_
+  }
+  out
+}
+
+alpha_orient <- alpha_by(samples_orient, "orientation")
+alpha_orient_sub <- alpha_by(samples_orient, "orientation", extra = "substrate")
+alpha_aspect <- alpha_by(samples_orient, "sun_aspect")
+
+write.csv(alpha_orient, "tables/orientation_alpha_diversity.csv", row.names = FALSE)
+write.csv(alpha_orient_sub, "tables/orientation_alpha_diversity_by_substrate.csv",
+          row.names = FALSE)
+write.csv(alpha_aspect, "tables/orientation_sun_aspect_alpha_diversity.csv",
+          row.names = FALSE)
+cat("\nAlpha diversity per orientation (all substrates):\n")
+print(alpha_orient)
+cat("\nAlpha diversity per sun aspect:\n")
+print(alpha_aspect)
+
+for (idx_name in c("richness_S", "rarefied_S", "shannon_H", "pielou_J")) {
+  p <- ggplot(alpha_orient_sub,
+              aes(x = orientation, y = .data[[idx_name]], fill = substrate)) +
+    geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+    scale_fill_manual(values = substrate_colours_3) +
+    scale_x_discrete(limits = intersect(names(orientation_colours),
+                                        alpha_orient_sub$orientation)) +
+    labs(title = paste("Orientation vs", idx_name),
+         subtitle = if (idx_name == "rarefied_S")
+                      paste("Richness rarefied to", alpha_orient_sub$rarefied_to[1],
+                            "isolates per group") else NULL,
+         x = "Sampling orientation (compass bearing)",
+         y = idx_name, fill = "Substrate") +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"), legend.position = "top")
+  ggsave(file.path("plots/community", paste0("orientation_alpha_", idx_name, ".pdf")),
+         plot = p, width = 9, height = 6)
+}
+cat("Saved: orientation alpha diversity plots\n")
+
+# ---- G8. Taxa shared between orientations ----
+cat("\n--- G8. Taxa shared between orientations ---\n")
+
+orient_taxa <- split(samples_orient$its_taxon, samples_orient$orientation)
+orient_taxa <- lapply(orient_taxa, unique)
+if (length(orient_taxa) %in% 2:4) {
+  p_venn <- ggVennDiagram(orient_taxa, label_alpha = 0) +
+    scale_fill_gradient(low = "#F4FAFE", high = "#2E86AB") +
+    labs(title = "ITS genotypes shared between sampling orientations") +
+    theme(plot.title = element_text(face = "bold", hjust = 0.5),
+          plot.margin = margin(15, 25, 15, 25))
+  ggsave("plots/community/orientation_venn_its_taxon.pdf",
+         plot = p_venn, width = 10, height = 7)
+  cat("Saved: orientation Venn diagram\n")
+}
+
+# Ficus leaves is the only substrate sampled on all four cardinal
+# bearings, so it gives the cleanest four-way overlap picture.
+fl_orient <- samples_orient %>% filter(substrate == "Ficus leaves")
+fl_taxa <- lapply(split(fl_orient$its_taxon, fl_orient$orientation), unique)
+if (length(fl_taxa) %in% 2:4) {
+  p_venn_fl <- ggVennDiagram(fl_taxa, label_alpha = 0) +
+    scale_fill_gradient(low = "#FDF2F7", high = "#A23B72") +
+    labs(title = "Ficus leaves - ITS genotypes shared between orientations") +
+    theme(plot.title = element_text(face = "bold", hjust = 0.5),
+          plot.margin = margin(15, 25, 15, 25))
+  ggsave("plots/community/orientation_venn_ficus_leaves.pdf",
+         plot = p_venn_fl, width = 10, height = 7)
+}
+
+orient_overlap <- samples_orient %>%
+  distinct(orientation, its_taxon) %>%
+  count(its_taxon, name = "n_orientations") %>%
+  count(n_orientations, name = "n_taxa") %>%
+  arrange(n_orientations)
+write.csv(orient_overlap, "tables/orientation_taxon_sharing.csv", row.names = FALSE)
+cat("\nHow many orientations each ITS genotype occurs in:\n")
+print(as.data.frame(orient_overlap))
+
+# ---- G9. Orientation across taxonomic ranks ----
+cat("\n--- G9. Orientation across taxonomic ranks ---\n")
+
+samples_lineage_orient <- samples_lineage %>% filter(!is.na(orientation))
+
+sweep_orient <- run_level_sweep(
+  rep(TRUE, nrow(meta_orient)), "orientation", orientation_colours,
+  plot_prefix = "orientation_bylevel",
+  meta = meta_orient, id_col = "sample_id_orient",
+  data = samples_lineage_orient)
+if (nrow(sweep_orient) > 0) {
+  write.csv(sweep_orient, "tables/orientation_multilevel_summary.csv", row.names = FALSE)
+  print(sweep_orient)
+}
+
+sweep_aspect <- run_level_sweep(
+  rep(TRUE, nrow(meta_orient)), "sun_aspect", aspect_colours,
+  plot_prefix = NULL,
+  meta = meta_orient, id_col = "sample_id_orient",
+  data = samples_lineage_orient)
+if (nrow(sweep_aspect) > 0) {
+  write.csv(sweep_aspect, "tables/orientation_sun_aspect_multilevel_summary.csv",
+            row.names = FALSE)
+  print(sweep_aspect)
+}
+
+sel_fl <- meta_orient$substrate == "Ficus leaves"
+sweep_orient_fl <- run_level_sweep(
+  sel_fl, "orientation", orientation_colours,
+  plot_prefix = "orientation_ficus_leaves_bylevel",
+  meta = meta_orient, id_col = "sample_id_orient",
+  data = samples_lineage_orient)
+if (nrow(sweep_orient_fl) > 0)
+  write.csv(sweep_orient_fl, "tables/orientation_ficus_leaves_multilevel_summary.csv",
+            row.names = FALSE)
+
+# ---- G10. Headline summary of every orientation test ----
+grab <- function(res, name) {
+  if (is.null(res) || is.null(res$permanova))
+    return(data.frame(analysis = name, n_units = NA_integer_, n_groups = NA_integer_,
+                      permanova_F = NA_real_, permanova_R2 = NA_real_,
+                      permanova_p = NA_real_, anosim_R = NA_real_,
+                      anosim_p = NA_real_, betadisper_p = NA_real_,
+                      n_indicators = NA_integer_, stringsAsFactors = FALSE))
+  data.frame(analysis     = name,
+             n_units      = res$n_samples,
+             n_groups     = res$n_groups,
+             permanova_F  = round(res$permanova$F[1], 4),
+             permanova_R2 = round(res$permanova$R2[1], 4),
+             permanova_p  = res$permanova$`Pr(>F)`[1],
+             anosim_R     = if (!is.null(res$anosim_R)) res$anosim_R else NA_real_,
+             anosim_p     = if (!is.null(res$anosim_p)) res$anosim_p else NA_real_,
+             betadisper_p = if (!is.null(res$betadisper_p)) res$betadisper_p else NA_real_,
+             n_indicators = if (!is.null(res$n_indicators)) res$n_indicators else NA_integer_,
+             stringsAsFactors = FALSE)
+}
+
+orient_summary <- bind_rows(
+  grab(results_orient_all, "Orientation - all substrates"),
+  bind_rows(lapply(names(results_orient_sub),
+                   function(s) grab(results_orient_sub[[s]],
+                                    paste0("Orientation - ", s)))),
+  grab(results_sub_ori, "Substrate x orientation"),
+  grab(results_aspect, "Sun aspect - all substrates"),
+  bind_rows(lapply(names(results_aspect_sub),
+                   function(s) grab(results_aspect_sub[[s]],
+                                    paste0("Sun aspect - ", s))))
+)
+orient_summary <- orient_summary[!is.na(orient_summary$n_units), , drop = FALSE]
+write.csv(orient_summary, "tables/orientation_summary.csv", row.names = FALSE)
+cat("\nOrientation analyses - headline summary:\n")
+print(orient_summary)
+
+}  # end of orientation section
 
 # ============================================================
 # Copy key files for backward compatibility

@@ -1,0 +1,47 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 242
+ Selected number of species: 6 
+ Number of species associated to 1 group: 3 
+ Number of species associated to 2 groups: 1 
+ Number of species associated to 3 groups: 1 
+ Number of species associated to 4 groups: 1 
+ Number of species associated to 5 groups: 0 
+ Number of species associated to 6 groups: 0 
+ Number of species associated to 7 groups: 0 
+ Number of species associated to 8 groups: 0 
+ Number of species associated to 9 groups: 0 
+ Number of species associated to 10 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group Ficus leaves - E  #sps.  1 
+                            A      B  stat p.value  
+Pseudocercospora sp. 1 0.8182 1.0000 0.905   0.031 *
+
+ Group Ficus leaves - N  #sps.  1 
+                                    A B stat p.value  
+Nigrospora cf. sacchari-officinarum 1 1    1   0.023 *
+
+ Group Ficus leaves - S  #sps.  1 
+                                             A B stat p.value  
+Cytospora aff. eucalypti (cf. austromontana) 1 1    1   0.014 *
+
+ Group Ficus leaves - E+Ficus leaves - N  #sps.  1 
+                               A      B  stat p.value  
+Colletotrichum arboricola 0.7826 1.0000 0.885   0.025 *
+
+ Group Ficus leaves - E+Ficus leaves - S+Lauraceae leaves - N  #sps.  1 
+                      A      B  stat p.value  
+Diaporthe sp. 29 0.8889 0.8750 0.882   0.014 *
+
+ Group Ficus leaves - E+Ficus leaves - N+Ficus leaves - S+Ficus leaves - W  #sps.  1 
+                                  A      B  stat p.value  
+Pseudocercospora aff. quetri 1.0000 0.7778 0.882   0.021 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
