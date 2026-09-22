@@ -1,0 +1,7 @@
+"index","group1","group2","p_adj"
+"richness_S","Ficus wood","Ficus leaves",0.000337
+"richness_S","Lauraceae leaves","Ficus leaves",0.03212
+"richness_S","Lauraceae leaves","Ficus wood",0.1607
+"shannon_H","Ficus wood","Ficus leaves",0.0006727
+"shannon_H","Lauraceae leaves","Ficus leaves",0.01457
+"shannon_H","Lauraceae leaves","Ficus wood",0.2642

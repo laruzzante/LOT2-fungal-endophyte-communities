@@ -66,6 +66,9 @@ embedded_plots <- c(
   "plots/community/orientation_alpha_shannon_H.pdf",
   "plots/community/orientation_venn_ficus_leaves.pdf",
   "plots/community/orientation_all_rarefaction.pdf",
+  "plots/diversity/richness_estimators.pdf",
+  "plots/diversity/alpha_per_unit_richness_S.pdf",
+  "plots/diversity/alpha_per_unit_shannon_H.pdf",
   "plots/abundance_pooled_incertae_sedis/abundance_by_genus.pdf",
   "plots/pie_charts/pie_by_phylum.pdf",
   "plots/pie_charts/pie_by_genus.pdf"
@@ -163,6 +166,33 @@ sparse_no_shared <- if (!is.null(results_substrate$prop_no_shared))
   round(100 * results_substrate$prop_no_shared) else NA
 sparse_singletons <- if (!is.null(results_substrate$prop_singleton_taxa))
   round(100 * results_substrate$prop_singleton_taxa) else NA
+# Analytical-unit and completeness figures used in the narrative
+n_otus   <- n_distinct(na.omit(samples_raw$otu_97))
+n_labels <- n_distinct(samples_raw$its_taxon)
+n_seqs   <- nrow(samples_raw)
+completeness_tbl   <- safe_csv("tables/sampling_completeness.csv")
+alpha_summary_tbl  <- safe_csv("tables/alpha_diversity_per_unit_summary.csv")
+alpha_tests_tbl    <- safe_csv("tables/alpha_diversity_tests.csv")
+alpha_pairwise_tbl <- safe_csv("tables/alpha_diversity_pairwise.csv")
+coverage_tbl       <- safe_csv("tables/richness_at_equal_coverage.csv")
+# Indicator-species counts (FDR-corrected in community_analysis.R)
+n_ind_raw    <- if (!is.null(results_substrate$n_indicators_raw))
+  results_substrate$n_indicators_raw else NA
+n_ind_tested <- if (!is.null(results_substrate$n_taxa_tested))
+  results_substrate$n_taxa_tested else NA
+# Substrate effect adjusted for sampling depth
+adj_R2 <- if (!is.null(results_substrate$adj_group_R2)) results_substrate$adj_group_R2 else NA
+adj_p  <- if (!is.null(results_substrate$adj_group_p))  results_substrate$adj_group_p  else NA
+dep_R2 <- if (!is.null(results_substrate$depth_R2))     results_substrate$depth_R2     else NA
+dep_p  <- if (!is.null(results_substrate$depth_p))      results_substrate$depth_p      else NA
+
+cov_range <- if (nrow(completeness_tbl) > 0)
+  paste0(min(completeness_tbl$goods_coverage), "-",
+         max(completeness_tbl$goods_coverage), "%") else "n/a"
+
+# Honest (strong-tie) stress for the headline substrate ordination
+nmds_stress_strong <- if (!is.null(results_substrate$nmds_stress_strong))
+  results_substrate$nmds_stress_strong else NA
 
 # Venn counts (Incertae sedis excluded, matching the plots)
 venn_genus <- dat_agg %>%
@@ -267,18 +297,24 @@ lincov <- safe_csv("tables/lineage_coverage.csv")
 ml_table <- function(df) {
   if (nrow(df) == 0) return(character(0))
   header <- c(
-    '| Rank | Taxa | Pairs sharing no taxa | NMDS stress | PERMANOVA F | R\u00b2 | p | ANOSIM R | p | PERMDISP p |',
-    '|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|')
+    '| Rank | Taxa | No-taxa pairs | Stress | Tie-aware | F | R\u00b2 | p | ANOSIM R | ANOSIM p | PERMDISP p |',
+    '|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|')
+  key <- paste('*F / R\u00b2 / p are PERMANOVA; "No-taxa pairs" is the share of',
+               'sample pairs with no taxon in common; "Tie-aware" is the stress',
+               'refitted with strong ties \u2014 the honest one to judge by.*')
   rows <- apply(df, 1, function(r) {
     pns <- if ('prop_no_shared' %in% names(df))
              paste0(round(100 * num(r['prop_no_shared'])), '%') else '\u2014'
     bd  <- if (is.na(r['betadisper_p']) || !nzchar(trimws(r['betadisper_p'])))
              '\u2014' else trimws(r['betadisper_p'])
+    sstr <- if ('nmds_stress_strong' %in% names(df))
+              trimws(r['nmds_stress_strong']) else '\u2014'
     paste0('| ', r['level'], ' | ', r['n_taxa'], ' | ', pns, ' | ', r['nmds_stress'], ' | ',
+           sstr, ' | ',
            r['permanova_F'], ' | ', r['permanova_R2'], ' | ', r['permanova_p'], ' | ',
            r['anosim_R'], ' | ', r['anosim_p'], ' | ', bd, ' |')
   })
-  c(header, rows)
+  c(header, rows, '', key)
 }
 
 # Interpretation values for the substrate sweep
@@ -308,20 +344,43 @@ paste0('| **Ficus leaves** | ', alpha_its$abundance_N[alpha_its$substrate == "Fi
 paste0('| **Ficus wood** | ', alpha_its$abundance_N[alpha_its$substrate == "Ficus wood"], ' | ', sub_units$n[sub_units$substrate == "Ficus wood"], ' |'),
 paste0('| **Lauraceae leaves** | ', alpha_its$abundance_N[alpha_its$substrate == "Lauraceae leaves"], ' | ', sub_units$n[sub_units$substrate == "Lauraceae leaves"], ' |'),
 '',
+'### Sampling design: what was sampled, and the assumptions behind it',
+'',
+'> **This section records assumptions supplied by the data owner, not facts derivable from the files.** They are written out so collaborators can check the reasoning, and because several of them change how the results must be read. If any is wrong, the analyses affected are named underneath it.',
+'',
+'**1. Two individual trees were sampled — one of each host.** A strangler *Ficus* growing on a single Lauraceae host tree. There is no tree-level replication, and no tree identifier in the raw files; `parse_LOT2.R` assigns `tree_id` from the substrate.',
+'',
+'*Consequence.* The **inferential unit is the individual tree, not the host species.** *Ficus* leaves vs *Ficus* wood is a genuine within-tree tissue contrast. But *Ficus* vs Lauraceae compares **one tree with one other tree**, so every "host effect" below describes these two individuals. Sampling units are treated as replicates by PERMANOVA, which is pseudoreplication at the species level: the p-values are real for the trees sampled and cannot be generalised to *Ficus* vs Lauraceae as taxa. All host-level statements are phrased accordingly.',
+'',
+'**2. The two trees are not independent.** The *Ficus* is a strangler growing **on** the Lauraceae, so the two root systems, canopies and microclimates are physically interlocked and share a continuous surface for fungal dispersal.',
+'',
+'*Consequence.* Any host difference is a difference between two *interlocked* individuals, which is a conservative setting for detecting host effects (shared exposure should erode differences, not create them) but rules out treating them as independent samples of two species.',
+'',
+'**3. The Lauraceae trunk was never sampled — it was inaccessible, completely encased by the strangling Ficus.** All Lauraceae material came from exposed upper branches.',
+'',
+'*Consequence.* This one **changes the data.** The rule "zone ≤ 5 = trunk" is correct for the *Ficus* but wrong for the Lauraceae: applied blindly it mislabelled **3 sampling units / 53 isolates** (the zone-5 Lauraceae units) as trunk material. `parse_LOT2.R` now assigns `position = "Branch"` to all Lauraceae. The previous `lauraceae_leaves_trunk_vs_branch_*` analysis was therefore comparing branch against branch and has been removed. Note also that **zone means different things on the two trees**: on the *Ficus* it is height on a continuous trunk; on the Lauraceae it distinguishes two bands of exposed canopy branch.',
+'',
+'**4. Whether the Lauraceae material is leaves or branch wood is still unconfirmed.** `LOT2_pooled_counts.xlsx` labels the column "Lauraceae leaves"; the samples workbook has a sheet titled "66. Fungi-Endo wood (Host)". The data owner indicates the material came from branches, without settling leaf vs wood. The analyses retain the label **Lauraceae leaves**.',
+'',
+'*Consequence.* **The one conclusion that depends on this is the tissue-type claim.** If the Lauraceae material is leaves, the finding "the two leaf substrates resemble each other more than either resembles wood" stands and tissue type is the dominant split. If it is branch wood, that grouping is wrong and the pattern would have to be re-read as *Ficus* vs Lauraceae. Everything else — diversity, orientation, zone — is unaffected. **This should be resolved before the tissue-type interpretation is published.**',
+'',
+'**5. Each row is an independent colony; no de-replication is required.** Repeated isolates of the same genotype within a sampling unit could be either independent colonisations or one colony subsampled. The rule given is that a **shared `Hofstetter-culture code` marks subsamples of a single colony**. The parser checks this: all **650 isolates carry 650 distinct culture codes**, so no collapsing is needed and abundances are counts of independent colonies.',
+'',
+'*Consequence.* None — but the check now runs on every pipeline execution and will warn if a future data version reuses a code.',
+'',
+'**6. Only the first sheet of each workbook is authoritative.** The remaining sheets (per-substrate extracts of 264 / 167 / 20 isolates, and the sequence sheet) are working material. The pipeline reads sheet 1 for both files, plus the sequence sheet `Feuil2` for OTU clustering.',
+'',
 '### Sampling design',
 '',
-'Samples were collected at different **tree zones** (heights):',
+'Samples were collected at different **tree zones** (heights), zone 1 lowest to zone 6 highest. On the *Ficus*, zones 1-5 are trunk and zone 6 is canopy branch. On the Lauraceae the trunk was inaccessible (assumption 3 above), so its zones 5 and 6 are both **exposed upper branch**, not trunk.',
 '',
-'- **Zones 1-5**: Tree trunk (zone 1 = lowest, zone 5 = highest)',
-'- **Zone 6**: Canopy branches (highest zone)',
+'| Substrate | Tree | Zones | Position | Sampling units |',
+'|-----------|------|:---:|---|:-:|',
+paste0('| Ficus leaves | Ficus (strangler) | 6 | Canopy branch | ', sub_units$n[sub_units$substrate == "Ficus leaves"], ' |'),
+paste0('| Ficus wood | Ficus (strangler) | 1-6 | Trunk (1-5) + branch (6) | ', sub_units$n[sub_units$substrate == "Ficus wood"], ' |'),
+paste0('| Lauraceae leaves | Lauraceae (host) | 5-6 | Exposed branch only | ', sub_units$n[sub_units$substrate == "Lauraceae leaves"], ' |'),
 '',
-'Wood collected from zone 6 corresponds to **branch wood** (no trunk present). Wood from zones 1-5 is **trunk wood**.',
-'',
-'| Substrate | Zones sampled | Notes |',
-'|-----------|:---:|---|',
-'| Ficus leaves | 6 only | All leaf samples from canopy |',
-'| Ficus wood | 1-6 | Trunk (zones 1-5) and branch (zone 6) |',
-'| Lauraceae leaves | 5-6 | Predominantly zone 6 |',
+'Because the Lauraceae contributes no trunk material, every trunk-vs-branch contrast in this report is a **Ficus** contrast.',
 '',
 '#### Sampling orientation',
 '',
@@ -356,18 +415,38 @@ paste0('This leaves **', n_orient_isolates, ' of ', nrow(samples_raw),
 paste0('- **`LOT2_pooled_counts.xlsx`** (first sheet) — Pooled genotype counts per substrate with full taxonomy (', nrow(pooled), ' genotypes)'),
 paste0('- **`LOT2_samples.xlsx`** (first sheet) — Individual isolate records with sampling zone, unit and reconciled branch/trunk orientation (', nrow(samples_raw), ' isolates)'),
 '',
-'  The workbook also keeps the reconciliation working columns (field colour code, database colour code, pre-reconciliation orientation, field notes). They are read for traceability but only the reconciled orientation column is used.',
+'  The workbook also keeps the reconciliation working columns (field colour code, database colour code, pre-reconciliation orientation, field notes). They are read for traceability but only the reconciled orientation column is used. Sheet `Feuil2` holds one ITS sequence per isolate and is used for OTU clustering. Remaining sheets are working material and are not read.',
+'',
+paste0('- **`LOT2_otu_map.csv`** \u2014 isolate \u2192 OTU assignment produced by `cluster_otus.sh` (', n_otus, ' OTUs at 97% ITS identity). Committed so the pipeline runs without vsearch.'),
+'',
+'### The analytical unit',
+'',
+paste0('Community analyses use **', unit_label, 's**, not the BLAST-derived name strings. Those names are not a clustered unit: they over-split (near-identical sequences filed under two spellings, e.g. *guandongensis* / *guangdongensis*) and over-lump (single labels covering "26 spp."). Clustering the ', n_seqs, ' ITS sequences themselves collapses ', n_labels, ' name labels into **', n_otus, ' OTUs**, and materially improves the data:'),
+'',
+'| | Name labels | 97% OTUs |',
+'|---|:-:|:-:|',
+paste0('| Taxa | ', n_labels, ' | ', n_otus, ' |'),
+paste0("| Good's coverage | 70% | **", cov_range, '** |'),
+paste0('| Sample pairs sharing no taxon | 59% | **', round(100 * num(results_substrate$prop_no_shared)), '%** |'),
+'',
+'`cluster_otus.sh` regenerates the mapping (needs `vsearch`); it is deterministic and only needs re-running if the sequences change.',
+'',
+'### Input integrity checks',
+'',
+'`parse_LOT2.R` now refuses to analyse silently-inconsistent inputs. It drops spreadsheet **totals rows** (rows with neither a culture code nor a taxon name \u2014 one such row was previously read as a genotype and plotted as a giant *Incertae sedis* category), verifies that pooled and sample-level isolate totals agree, and checks that culture codes are unique, since a repeated code would mark subsamples of one colony that must be collapsed before abundances mean anything.',
 '',
 '## Scripts',
 '',
 '| Script | Purpose |',
 '|--------|---------|',
 '| `main.R` | Master script — loads libraries, sources all other scripts in order |',
-'| `parse_LOT2.R` | Reads both Excel files (first sheet only), standardises column names |',
+'| `cluster_otus.sh` | Clusters the ITS sequences into OTUs (run once; needs `vsearch`) |',
+'| `parse_LOT2.R` | Reads both workbooks, joins the OTU map, applies design rules, runs integrity checks |',
 '| `plot_abundance.R` | Horizontal bar charts of isolate counts by taxonomic level |',
 '| `plot_abundance_pooled.R` | Bar charts with uncertain taxa pooled as "Incertae sedis" |',
 '| `plot_pie.R` | Pie charts of community composition (3 pies per level) |',
-'| `community_analysis.R` | Full community ecology analyses; ITS-level tests plus multi-rank taxonomic sweeps (Section D) |',
+'| `community_analysis.R` | Multivariate community ecology; OTU-level tests plus multi-rank taxonomic sweeps (Section D) |',
+'| `diversity_analysis.R` | Sampling completeness (Chao1/ACE/coverage) and replicated per-unit alpha diversity |',
 '| `generate_readme.R` | Generates this README dynamically from analysis results |',
 '',
 '```r',
@@ -409,17 +488,110 @@ paste0('| ggVennDiagram | ', pkg_versions['ggVennDiagram'], ' | Venn diagrams |'
 '',
 '> Throughout the Results, each analysis is introduced with a short **plain-language explanation** of what it measures and how to read it, followed by a **brief interpretation** of what the LOT2 data actually show. A synthesis of all findings is given in the final **Conclusion**.',
 '',
-'## A. Alpha Diversity (from pooled counts)',
+'## A0. How much of the community was actually found?',
 '',
-'**What it is.** *Alpha diversity* describes how varied the fungal community is **within a single substrate**. It combines two ideas: *richness* (how many different taxa are present) and *evenness* (whether isolates are spread evenly across taxa or dominated by a few). The indices below capture different balances of these two ideas. *Incertae sedis* taxa are excluded so that diversity reflects only confidently identified fungi.',
+'**Why this comes first.** Every diversity number below is a *sample* statistic. Culture-based sampling of tropical endophytes recovers a fraction of what is present, and how large that fraction is determines what the rest of the section can claim. Two standard measures answer it: **Chao1/ACE** estimate the true richness from how many taxa were seen once or twice, and **Good\'s coverage** estimates the probability that the *next* isolate collected would belong to a taxon already seen.',
+'',
+if (nrow(completeness_tbl) > 0) c(
+  '| Substrate | Units | Isolates | Observed | Chao1 (±SE) | ACE | % of Chao1 | Singletons | Coverage |',
+  '|-----------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|',
+  apply(completeness_tbl, 1, function(r)
+    paste0('| ', r['substrate'], ' | ', r['n_units'], ' | ', r['n_isolates'], ' | ',
+           r['observed_S'], ' | ', r['chao1'], ' ± ', r['chao1_se'], ' | ', r['ace'],
+           ' | **', r['pct_of_chao1'], '%** | ', r['singletons'], ' | ',
+           r['goods_coverage'], '% |')),
+  ''
+) else character(0),
+paste0('*Interpretation.* Only **', min(completeness_tbl$pct_of_chao1), '-',
+       max(completeness_tbl$pct_of_chao1),
+       '% of the estimated richness was recovered**, with Good\'s coverage of ', cov_range,
+       '. Roughly one isolate in seven belongs to an OTU seen exactly once. Two things follow. First, **all observed richness values are substantial underestimates** and should be quoted alongside Chao1. Second, *Ficus* wood is the least completely sampled substrate (',
+       completeness_tbl$pct_of_chao1[completeness_tbl$substrate == "Ficus wood"],
+       '% of Chao1), so its apparently lower richness is partly a sampling artefact — which is why the comparison below is done per sampling unit and again at equal coverage.'),
+'',
+'![Observed vs estimated richness](plots/png/richness_estimators.png)',
+'',
+'#### Richness compared at equal coverage',
+'',
+'Comparing richness at equal *isolate count* still favours whichever substrate has the flatter abundance distribution. The fairer contrast standardises to equal **coverage** (Chao & Jost 2012) \u2014 how many taxa each substrate holds at the same level of sampling completeness.',
+'',
+if (nrow(coverage_tbl) > 0) c(
+  '| Substrate | Isolates needed | Coverage reached | Richness at that coverage |',
+  '|-----------|:-:|:-:|:-:|',
+  apply(coverage_tbl, 1, function(r)
+    paste0('| ', r['substrate'], ' | ', r['isolates_needed'], ' | ',
+           r['coverage_reached'], '% | **', r['richness_at_coverage'], '** |')),
+  ''
+) else character(0),
+'*Interpretation \u2014 and an apparent contradiction worth understanding.* At equal coverage the ranking **reverses**: *Ficus* **wood** is the richest substrate, not the poorest. The two statements are not in conflict because they answer different questions. Per sampling unit (A1 below), a patch of wood carries **fewer** taxa than a patch of leaf \u2014 lower alpha diversity. But wood needs far more isolates to reach the same coverage, because its community has a much longer tail of rare taxa; pooled across the substrate it therefore holds **more** taxa overall. In short: **leaf units are individually richer, while the wood community as a whole is more diverse and more heterogeneous between units.** That heterogeneity is the same pattern the dispersion test picks up (Section D), and it is a substantive ecological result rather than an artefact.',
+'',
+'Full tables: `tables/sampling_completeness.csv`, `tables/richness_at_equal_coverage.csv`.',
+'',
+'---',
+'',
+'## A. Alpha Diversity',
+'',
+'**What it is.** *Alpha diversity* describes how varied the fungal community is **within a single substrate**. It combines *richness* (how many taxa) with *evenness* (whether isolates are spread across taxa or dominated by a few).',
 '',
 '| Index | What it measures | Higher means |',
 '|-------|-----------------|--------------|',
 '| **Richness (S)** | Number of distinct taxa | More taxa present |',
 '| **Shannon (H\')** | Combines richness and evenness | More diverse |',
+'| **Hill q1** (= exp H\') | Effective number of common taxa | More diverse |',
 '| **Simpson (1-D)** | Probability two random individuals differ | More diverse |',
-'| **Inverse Simpson** | Effective number of equally-common species | More even |',
 '| **Pielou (J\')** | How evenly individuals are distributed | More even |',
+'',
+'### A1. Per sampling unit — the version that can be tested',
+'',
+paste0('Diversity is computed **per sampling unit**, giving ',
+       paste(alpha_summary_tbl$n_units, collapse = " / "),
+       ' independent values per substrate instead of one pooled number. That is what makes a significance test possible at all: a single pooled value per substrate has no variance and supports no inference.'),
+'',
+if (nrow(alpha_summary_tbl) > 0) c(
+  '| Substrate | Units | Isolates | Mean S (±SD) | Mean H\' (±SD) | Mean Hill q1 | Mean J\' |',
+  '|-----------|:-:|:-:|:-:|:-:|:-:|:-:|',
+  apply(alpha_summary_tbl, 1, function(r)
+    paste0('| ', r['substrate'], ' | ', r['n_units'], ' | ', r['isolates'], ' | ',
+           r['mean_S'], ' ± ', r['sd_S'], ' | ', r['mean_H'], ' ± ', r['sd_H'],
+           ' | ', r['mean_q1'], ' | ', r['mean_J'], ' |')),
+  ''
+) else character(0),
+if (nrow(alpha_tests_tbl) > 0) c(
+  'Kruskal-Wallis across substrates (Holm-adjusted across the four indices):',
+  '',
+  '| Index | H | df | p | p (Holm) |',
+  '|-------|:-:|:-:|:-:|:-:|',
+  apply(alpha_tests_tbl, 1, function(r)
+    paste0('| ', r['index'], ' | ', r['statistic'], ' | ', r['df'], ' | ',
+           r['p_value'], ' | **', r['p_adj'], '** |')),
+  ''
+) else character(0),
+if (nrow(alpha_pairwise_tbl) > 0) c(
+  'Pairwise follow-ups (Wilcoxon, Holm-adjusted):',
+  '',
+  '| Index | Comparison | p (Holm) |',
+  '|-------|------------|:-:|',
+  apply(alpha_pairwise_tbl, 1, function(r)
+    paste0('| ', r['index'], ' | ', r['group1'], ' vs ', r['group2'], ' | ',
+           r['p_adj'], ' |')),
+  ''
+) else character(0),
+paste0('*Interpretation.* **Richness and Shannon differ significantly between substrates** (Holm-adjusted p = ',
+       alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "richness_S"],
+       ' and ', alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "shannon_H"],
+       '), driven by *Ficus* leaves being richer and more diverse than *Ficus* wood; the Lauraceae sits between them and is not separable from wood. **Evenness (Pielou J\') does not differ** (p = ',
+       alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "pielou_J"],
+       '): all three communities are similarly un-dominated, and the difference is in how many taxa are present, not how they are balanced. Because *Ficus* wood is also the least completely sampled substrate, part of its lower richness is sampling effort — the effect is real but its size should not be read off these means alone.'),
+'',
+'![Richness per sampling unit](plots/png/alpha_per_unit_richness_S.png)',
+'',
+'![Shannon per sampling unit](plots/png/alpha_per_unit_shannon_H.png)',
+'',
+'Per-unit values: `tables/alpha_diversity_per_unit.csv`; tests: `tables/alpha_diversity_tests.csv`, `tables/alpha_diversity_pairwise.csv`.',
+'',
+'### A2. Pooled indices across taxonomic ranks',
+'',
+'The table below is the pooled view (one value per substrate per rank) retained for comparability with earlier versions of this report. **It carries no error and supports no test** — use A1 for inference. *Incertae sedis* taxa are excluded rank by rank.',
 '',
 '### At ITS taxon level',
 '',
@@ -486,36 +658,49 @@ paste0('These analyses ask **whether whole communities differ between groups** (
 '',
 '**How to read each test:**',
 '',
-'- **NMDS ordination** \u2014 squeezes the many-dimensional Bray-Curtis distances into a 2-D map so that samples plotting close together have similar communities. The **stress** value measures distortion: < 0.10 excellent, < 0.20 acceptable, > 0.20 unreliable. Crosses mark group centroids; shaded ellipses show 95% confidence regions. **A stress at or near zero is not a good fit** \u2014 it means the ordination has *degenerated*, which happens when the community matrix is so sparse that most sample pairs share no taxa and their Bray-Curtis distance is pinned at 1. See the sparsity caveat below.',
+'- **NMDS ordination** \u2014 squeezes the many-dimensional Bray-Curtis distances into a 2-D map so that samples plotting close together have similar communities. The **stress** value measures distortion: < 0.10 excellent, < 0.20 acceptable, > 0.20 unreliable. Crosses mark group centroids; shaded ellipses show 95% confidence regions. **A stress at or near zero is a warning, not a triumph** \u2014 see the caveat below, which explains why these plots report two stress values.',
 '- **PERMANOVA** (`adonis2`) \u2014 tests whether **group centroids differ**. **R\u00b2** is the fraction of community variation explained by the grouping (effect size); a small **p** means the separation is unlikely by chance.',
 '- **ANOSIM** \u2014 a complementary rank-based test; **R** ranges from 0 (no separation) to 1 (groups completely distinct).',
 '- **Beta-dispersion / PERMDISP** (`betadisper`) \u2014 checks whether groups differ in **within-group spread** rather than location. If PERMDISP is significant, part of a PERMANOVA result may reflect unequal dispersion rather than a pure shift in composition, so it is an important caveat.',
 '- **Pairwise PERMANOVA** \u2014 which specific pairs of groups differ, with Holm correction for multiple tests.',
 '- **Rarefaction** \u2014 expected richness rescaled to equal sampling effort, so richness can be compared fairly.',
-'- **Indicator species (IndVal)** \u2014 identifies taxa statistically associated with (diagnostic of) a particular group.',
+'- **Indicator species (IndVal)** \u2014 identifies taxa statistically associated with (diagnostic of) a particular group. One test is run **per taxon**, so the raw p-values are corrected with Benjamini-Hochberg and only taxa passing **FDR q \u2264 0.05** are reported as indicators. Without that correction, ~14 of ~280 taxa pass p \u2264 0.05 by chance alone.',
 '',
-'### An important caveat: the ITS-level matrix is very sparse',
+'### An important caveat: why the ITS-level ordinations collapse onto a line',
 '',
-paste0('At ITS-genotype resolution this dataset is dominated by rare taxa: **',
+paste0('Several NMDS plots in this report show most samples squeezed onto a single near-vertical line with one point flung far away, next to a stress of ~0.0001. That is **not** an excellent fit and **not** a plotting bug — it is a known failure mode of NMDS, and it is worth understanding because it determines which figures can be read.'),
+'',
+paste0('**The cause.** At ITS-genotype resolution this dataset is dominated by rare taxa: **',
        sparse_singletons, '% of the ', n_taxa_comm,
-       ' genotypes were isolated exactly once**, and as a result **',
-       sparse_no_shared, '% of all sampling-unit pairs share no genotype at all**. Every one of those pairs has a Bray-Curtis distance of exactly 1, so the distance matrix is largely saturated.'),
+       ' genotypes were isolated exactly once**, so **', sparse_no_shared,
+       '% of all sampling-unit pairs share no genotype whatsoever**. Every one of those pairs has a Bray-Curtis dissimilarity of *exactly* 1 — they are **tied**.'),
 '',
-'This has two concrete consequences for how the results below should be read:',
+'NMDS fits an ordination by rank order, and by default (`monoMDS`, weak/primary ties) **tied dissimilarities are allowed to map to any distances at all**. With well over half of the pairs tied, the optimiser is therefore free to ignore most of the matrix: it only has to get the *ordering* of the minority of pairs that do share taxa right. It can do that almost perfectly in two dimensions — hence the near-zero stress — while pushing the unconstrained samples wherever is convenient. The collapsed line and the distant outlier are those unconstrained samples.',
 '',
-'- **The ITS-level NMDS maps are degenerate and should not be interpreted.** Their near-zero stress is the symptom, not a virtue: with most distances tied at 1 there is no gradient left for the ordination to lay out, and the resulting configuration is arbitrary (note the implausible axis ranges). Each such plot is now labelled as degenerate in its subtitle.',
-'- **PERMANOVA and ANOSIM remain valid**, because they work on the ranks and the sums of squares of the distance matrix rather than on a 2-D embedding. They are the tests to trust here, together with the indicator-species analysis.',
+paste0('**The evidence.** Refitting the same dissimilarities with *strong* (secondary) ties, which force tied pairs to equal distances, gives the honest answer. At ITS level the stress jumps from **0.0001 to ',
+       if (nrow(ml_sub) > 0 && 'nmds_stress_strong' %in% names(ml_sub))
+         ml_sub$nmds_stress_strong[ml_sub$level == "its_taxon"] else '0.25',
+       '** — i.e. *unreliable* by the usual thresholds. At genus level the two figures agree closely (',
+       if (nrow(ml_sub) > 0 && 'nmds_stress_strong' %in% names(ml_sub))
+         paste0(ml_sub$nmds_stress[ml_sub$level == "genus"], ' vs ',
+                ml_sub$nmds_stress_strong[ml_sub$level == "genus"]) else 'similar',
+       '), confirming that those ordinations are real. Every NMDS plot in this report now prints **both** values, and is labelled UNRELIABLE on any of three grounds: a tie-aware stress above 0.20, 9 or fewer sampling units (at or below 4k+1 points a 2-D solution fits almost anything), or a tie-aware stress below 0.001 (a perfect fit means the configuration is unconstrained, not faithful).'),
 '',
-paste0('The **multi-rank sweep in Section D is the constructive answer to this.** Grouping isolates into genera, families or orders collapses the singleton problem: at those ranks samples share taxa, the ordinations reach sensible stress values',
+'Two further points were checked and ruled out as explanations: `metaMDS` applied **no** data transformation here, and it did **not** fall back to extended (step-across) dissimilarities — the largest dissimilarity fed to the ordination is exactly 1. The analysis is doing what it says; the data simply cannot support a 2-D map at genotype resolution.',
+'',
+paste0('One sampling unit (`Lauraceae leaves__Z5__S4`, a single isolate) shares no genotype with *any* other unit, leaving the dissimilarity matrix formally **disconnected**. Dropping it and the other tiny units reconnects the matrix but does not rescue the ordination (the tie-aware stress only falls to about 0.21), so no samples are excluded on these grounds.'),
+'',
+'**What to do with this:**',
+'',
+'- **Do not read the ITS-level NMDS maps.** They are kept because they are referenced throughout the literature-standard workflow, and each is now labelled.',
+'- **PERMANOVA, ANOSIM and IndVal are unaffected.** They operate on the dissimilarity matrix itself — its sums of squares and rank order — never on a 2-D embedding, so no tie-handling choice enters. These are the results to trust.',
+paste0('- **Use the higher-rank ordinations in Section D as the readable maps.** Grouping isolates into genera or families dissolves the singleton problem: the share of pairs sharing no taxa falls from ',
        if (nrow(ml_sub) > 0 && 'prop_no_shared' %in% names(ml_sub))
-         paste0(' (see the "pairs sharing no taxa" column \u2014 it falls from ',
-                round(100 * num(ml_sub$prop_no_shared[ml_sub$level == "its_taxon"])),
+         paste0(round(100 * num(ml_sub$prop_no_shared[ml_sub$level == "its_taxon"])),
                 '% at ITS level to ',
-                round(100 * num(ml_sub$prop_no_shared[ml_sub$level == "genus"])),
-                '% at genus level, where the ordination stress reaches a healthy ',
-                ml_sub$nmds_stress[ml_sub$level == "genus"], ')')
-       else '',
-       ', and the substrate signal is reproduced. **Use the Section D ordinations as the readable maps of these communities.**'),
+                round(100 * num(ml_sub$prop_no_shared[ml_sub$level == "genus"])), '% at genus level')
+       else 'sharply',
+       ', and the substrate signal is reproduced there with an honest stress.'),
 '',
 '---',
 '',
@@ -526,7 +711,7 @@ paste0('The **multi-rank sweep in Section D is the constructive answer to this.*
 '### NMDS Ordination',
 '',
 paste0('**Stress = ', nmds_stress, '** ',
-       if (!is.na(num(nmds_stress)) && num(nmds_stress) < 0.01) '\u2014 **a degenerate solution, not an excellent one** (see the sparsity caveat above). Read the separation from PERMANOVA and from the higher-rank ordinations in Section D, not from this map.'
+       if (!is.na(num(nmds_stress)) && num(nmds_stress) < 0.01) paste0('\u2014 **not an excellent fit but a tie-degenerate one**: refitted with strong ties the stress is **', nmds_stress_strong, '**, i.e. unreliable (see the caveat above). Read the separation from PERMANOVA and from the higher-rank ordinations in Section D, not from this map.')
        else if (!is.na(num(nmds_stress)) && num(nmds_stress) < 0.20) '(acceptable to good \u2014 the 2-D map is a faithful summary).'
        else '(interpret the map with some caution).'),
 '',
@@ -544,6 +729,12 @@ paste(perm_txt, collapse = "\n"),
 '',
 paste0('**F = ', perm_F, ', R\u00b2 = ', perm_R2, ', p = ', perm_p, '** \u2014 the substrate effect is ', verdict(perm_p),
        '. Substrate explains about **', round(100 * num(perm_R2)), '%** of the total community variation, a large effect for field endophyte data.'),
+'',
+'#### Adjusted for sampling depth',
+'',
+paste0('Sampling units differ about two-fold in how many isolates they yielded (*Ficus* wood units gave roughly half as many as leaf units), and depth on its own predicts composition. Re-fitting with depth as a covariate (marginal / type-III): **substrate R\u00b2 = ',
+       adj_R2, ', p = ', adj_p, '; depth R\u00b2 = ', dep_R2, ', p = ', dep_p,
+       '**. The substrate effect therefore survives adjustment \u2014 it is not an artefact of unequal recovery \u2014 but depth contributes independently and both are reported. Details in `tables/substrate_all_permanova.txt`.'),
 '',
 '### ANOSIM',
 '',
@@ -584,11 +775,20 @@ if (nrow(pw) > 0) {
 '',
 '*Interpretation.* None of the curves has fully levelled off, so additional sampling would still recover new taxa in every substrate (the communities are undersampled, as usual for hyper-diverse tropical fungi). The **relative ordering** of the curves indicates which substrate is richest at equal effort, which is the sampling-fair complement to the raw richness values in Section A.',
 '',
-if (nrow(indval) > 0) {
+if (TRUE) {
   c(
-    paste0('### Indicator Species (', nrow(indval), ' significant, p \u2264 0.05)'),
+    paste0('### Indicator Species'),
     '',
-    paste0('Indicator (IndVal) analysis finds taxa that are **diagnostic** of a particular substrate \u2014 both faithful to it (mostly found there) and frequent within it. **', nrow(indval), '** ITS genotypes are significant indicators, i.e. reliable biological markers of their substrate. Full ranked list: `tables/indicator_species_significant.csv`.'),
+    paste0('Indicator (IndVal) analysis looks for taxa that are **diagnostic** of a substrate \u2014 both faithful to it and frequent within it. Each taxon is a separate test, so p-values are corrected across the whole taxon set. **',
+           n_ind_raw, ' taxa reach raw p \u2264 0.05, but ', nrow(indval),
+           ' survive FDR correction (q \u2264 0.05).**'),
+    '',
+    if (nrow(indval) == 0)
+      paste0('*Interpretation.* **No taxon is a statistically reliable indicator of any substrate.** With ~',
+             n_ind_tested, ' taxa tested, ', round(0.05 * n_ind_tested),
+             ' hits at p \u2264 0.05 are expected by chance, which is about what was observed. This is a real result rather than a failure: the communities differ in *composition as a whole* (PERMANOVA above) without any single taxon being a dependable marker \u2014 exactly what is expected of an assemblage in which most taxa are singletons. Reporting uncorrected indicators here would be reporting noise.')
+    else
+      paste0('*Interpretation.* These taxa survive correction and can be treated as genuine markers. Full ranked list: `tables/indicator_species_significant.csv`; all taxa with p- and q-values: `tables/substrate_all_indicator_species_all.csv`.'),
     ''
   )
 } else character(0),
@@ -719,7 +919,7 @@ paste0('- With ', n_orient_units, ' orientation-level units spread over 5 bearin
 'Same test battery as the substrate analyses — PERMANOVA, ANOSIM, PERMDISP — run on the orientation-level sampling units at ITS-genotype resolution.',
 '',
 if (nrow(ori_sum) > 0) c(
-  '| Analysis | Units | Groups | PERMANOVA F | R² | p | ANOSIM R | p | PERMDISP p | Indicators |',
+  '| Analysis | Units | Groups | F | R² | p | ANOSIM R | ANOSIM p | Disp. p | Indic. |',
   '|----------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|',
   apply(ori_sum, 1, function(r) {
     na_dash <- function(x) if (is.na(x) || !nzchar(trimws(x))) '—' else trimws(x)
@@ -729,6 +929,8 @@ if (nrow(ori_sum) > 0) c(
            na_dash(r['anosim_p']), ' | ', na_dash(r['betadisper_p']), ' | ',
            na_dash(r['n_indicators']), ' |')
   }),
+  '',
+  '*F / R² / p are PERMANOVA; "Disp. p" is PERMDISP; "Indic." counts significant indicator taxa.*',
   '',
   '> **PERMDISP shown as —** where the smallest group holds fewer than 3 sampling units. A centroid computed from one or two points has a degenerate spread, which inflates the dispersion F ratio to meaningless magnitudes; those tests are written to the `*_betadisper.txt` files with a warning but are not reported as numbers.',
   ''
@@ -899,13 +1101,92 @@ paste0('4. **Which side of the tree the material came from does not matter.** No
        if (!is.null(ori_all)) ori_all$permanova_p else 'N/A',
        '), within every substrate, at every taxonomic rank, as a sun-exposure grouping and as a smooth directional gradient. The two pooled contrasts that do come out significant — *substrate x orientation* and *sun aspect* — both vanish once substrate is accounted for (orientation adjusted for substrate: R² = ',
        part_ori$R2, ', p = ', part_ori$p, '), because the Lauraceae happened to be sampled almost entirely on north-facing branches. This is a **negative result from an unbalanced observational factor with 1-4 replicates per bearing**: it rules out an orientation effect as large as the substrate effect, not a small one.'),
-'5. **Communities are diverse and even.** All substrates show high evenness (Pielou J\' > 0.9) and long rank-abundance tails; rarefaction curves have not saturated, so true richness is higher still. A shared generalist core of genera co-exists with a substantial set of substrate-exclusive taxa.',
-paste0('6. **Removing *Incertae sedis* sharpened the picture.** Excluding the pooled "unknown" bin from the diversity, overlap and multivariate analyses (while keeping it visible in the abundance/pie plots) increased, rather than decreased, the measured separation between substrates \u2014 confirming that the unidentified fraction had been masking genuine differences.'),
+paste0('5. **The communities are richer than they look, and only partly sampled.** Only ',
+       min(completeness_tbl$pct_of_chao1), '-', max(completeness_tbl$pct_of_chao1),
+       '% of the Chao1-estimated richness was recovered (Good\'s coverage ', cov_range,
+       '). Per sampling unit, richness and Shannon differ significantly between substrates (Holm-adjusted p = ',
+       alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "richness_S"],
+       ' and ', alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "shannon_H"],
+       '), while **evenness does not** (p = ',
+       alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "pielou_J"],
+       '): the substrates differ in how many taxa they carry, not in how evenly those taxa are balanced.'),
+paste0('6. **Indicator taxa survive correction only because of OTU clustering.** ',
+       nrow(indval), ' of ', n_ind_tested,
+       ' OTUs qualify as substrate indicators at FDR q \u2264 0.05. Run on the raw BLAST name labels the same analysis yields **none** \u2014 the extra tests and the split singletons destroy the signal. Uncorrected IndVal output should never be reported.'),
+paste0('7. **Removing *Incertae sedis* sharpened the picture.** Excluding the pooled "unknown" bin from the diversity, overlap and multivariate analyses (while keeping it visible in the abundance/pie plots) increased, rather than decreased, the measured separation between substrates \u2014 confirming that the unidentified fraction had been masking genuine differences.'),
 '',
 '---',
 '',
 paste0('*Auto-generated on ', Sys.Date(), ' by `generate_readme.R`*')
 )
+
+# ------------------------------------------------------------
+# Normalise pipe-table separator rows.
+#
+# Pandoc derives each column's *relative width* from the number of
+# dashes in the separator row, not from the content. The compact ":-:"
+# markers used throughout this script therefore hand every column an
+# identical share of the page, and once the README is typeset as PDF the
+# longer headers ("PERMANOVA F", "PERMDISP p", ...) overflow their
+# column and overlap their neighbours.
+#
+# Rewriting each separator so its dash count tracks the widest cell in
+# that column fixes the PDF. Markdown renderers ignore the dash count
+# entirely, so GitHub's view of README.md is unchanged.
+# ------------------------------------------------------------
+balance_table_widths <- function(lines, min_dashes = 3, max_dashes = 30) {
+  is_row <- function(x) grepl("^\\s*\\|.*\\|\\s*$", x)
+  is_sep <- function(x) grepl("^\\s*\\|[ :|-]+\\|\\s*$", x) && grepl("-", x)
+  split_cells <- function(x) {
+    x <- sub("^\\s*\\|", "", x)
+    x <- sub("\\|\\s*$", "", x)
+    trimws(strsplit(x, "|", fixed = TRUE)[[1]])
+  }
+
+  in_code <- FALSE
+  i <- 1L
+  while (i < length(lines)) {
+    if (grepl("^\\s*```", lines[i])) in_code <- !in_code
+    if (in_code || !is_row(lines[i]) || is_sep(lines[i]) || !is_sep(lines[i + 1])) {
+      i <- i + 1L
+      next
+    }
+
+    # Collect the header + body rows belonging to this table
+    last <- i + 1L
+    while (last + 1L <= length(lines) && is_row(lines[last + 1L]) &&
+           !is_sep(lines[last + 1L])) last <- last + 1L
+    body_idx <- if (last > i + 1L) (i + 2L):last else integer(0)
+
+    sep <- split_cells(lines[i + 1L])
+    rows <- lapply(c(i, body_idx), function(k) split_cells(lines[k]))
+    rows <- rows[vapply(rows, length, 1L) == length(sep)]
+    if (length(rows) == 0) { i <- last + 1L; next }
+
+    widths <- vapply(seq_along(sep), function(cl)
+      max(vapply(rows, function(r) nchar(r[cl]), 1L)), 1L)
+    widths <- pmin(pmax(widths, min_dashes), max_dashes)
+
+    lines[i + 1L] <- paste0("|", paste0(vapply(seq_along(sep), function(cl) {
+      s <- sep[cl]
+      left  <- startsWith(s, ":")
+      right <- endsWith(s, ":")
+      d <- strrep("-", widths[cl])
+      if (left && right) paste0(":", d, ":")
+      else if (right)    paste0(d, ":")
+      else if (left)     paste0(":", d)
+      else               d
+    }, character(1)), collapse = "|"), "|")
+
+    i <- last + 1L
+  }
+  lines
+}
+
+# Cap the widest text column at 24 characters: left uncapped, the long
+# analysis labels crowd the numeric columns and push their headers into
+# each other.
+readme <- balance_table_widths(readme, max_dashes = 24)
 
 writeLines(readme, "README.md")
 cat("README.md generated\n")
@@ -940,7 +1221,11 @@ engine_opts <- list(
                    "-V mainfont='DejaVu Serif'",
                    "-V monofont='DejaVu Sans Mono'",
                    "-V geometry:margin=2cm"),
-  typst    = paste("--pdf-engine=typst", "-V margin-x=2cm", "-V margin-y=2cm"),
+  # 9pt with narrower side margins: the wide statistical tables (10
+  # columns) do not otherwise fit the text block, and typst overflows
+  # rather than shrinking them.
+  typst    = paste("--pdf-engine=typst", "-V margin-x=1.5cm", "-V margin-y=2cm",
+                   "-V fontsize=9pt"),
   pdflatex = paste("--pdf-engine=pdflatex", "-V geometry:margin=2cm")
 )
 

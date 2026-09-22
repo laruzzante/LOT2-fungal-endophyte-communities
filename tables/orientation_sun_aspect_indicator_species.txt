@@ -5,24 +5,23 @@
  Association function: IndVal.g
  Significance level (alpha): 0.05
 
- Total number of species: 242
- Selected number of species: 4 
- Number of species associated to 1 group: 4 
- Number of species associated to 2 groups: 0 
+ Total number of species: 121
+ Selected number of species: 6 
+ Number of species associated to 1 group: 3 
+ Number of species associated to 2 groups: 3 
 
  List of species associated to each combination: 
 
- Group Lateral (E/W)  #sps.  1 
-                                 A   B  stat p.value  
-Pestalotiopsis cf. diversiseta 1.0 0.4 0.632    0.02 *
+ Group Shaded (S)  #sps.  3 
+             A      B  stat p.value  
+OTU_079 1.0000 0.5000 0.707   0.016 *
+OTU_041 0.8333 0.5000 0.645   0.045 *
+OTU_069 0.8333 0.5000 0.645   0.050 *
 
- Group Shaded (S)  #sps.  2 
-                                                  A      B  stat p.value  
-Cytospora aff. eucalypti (cf. austromontana) 1.0000 0.5000 0.707   0.016 *
-Xylaria sp. 1                                0.8333 0.5000 0.645   0.045 *
-
- Group Sun-facing (N)  #sps.  1 
-                                A      B  stat p.value  
-Nigrospora cf. gorlenkoana 1.0000 0.5385 0.734    0.03 *
+ Group Shaded (S)+Sun-facing (N)  #sps.  3 
+             A      B  stat p.value  
+OTU_001 0.9245 0.7059 0.808   0.017 *
+OTU_005 0.9356 0.6471 0.778   0.040 *
+OTU_004 1.0000 0.5882 0.767   0.027 *
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 

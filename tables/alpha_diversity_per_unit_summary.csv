@@ -1,0 +1,4 @@
+"substrate","n_units","isolates","mean_S","sd_S","mean_H","sd_H","mean_q1","mean_J"
+"Ficus leaves",10,264,16.1,2.38,2.595,0.201,13.63,0.936
+"Ficus wood",13,167,7.77,3.52,1.719,0.551,6.34,0.892
+"Lauraceae leaves",10,219,10.5,5.54,1.886,0.803,8.12,0.9

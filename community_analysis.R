@@ -65,11 +65,50 @@ if (any(need_fix)) {
   samples_lineage$genus[need_fix] <- ifelse(token %in% lineage_genus$genus, token, NA_character_)
 }
 
-lineage_levels <- c("phylum", "class", "order", "family", "genus", "species", "its_taxon")
+# ------------------------------------------------------------
+# OTU-level lineage rescue.
+# The two workbooks spell ~18 genotype names differently, so those
+# isolates fail the join above. Because sequence-based OTUs group
+# isolates independently of their labels, an unmatched isolate can
+# inherit the majority lineage of its OTU-mates.
+# ------------------------------------------------------------
+if (have_otus) {
+  rank_cols <- c("phylum","subphylum","superclass","class","subclass",
+                 "order","family","genus","species")
+  majority <- function(x) {
+    x <- clean_tax(x); x <- x[!is.na(x)]
+    if (!length(x)) NA_character_ else names(sort(table(x), decreasing = TRUE))[1]
+  }
+  otu_lineage <- samples_lineage %>%
+    filter(!is.na(otu_97)) %>%
+    group_by(otu_97) %>%
+    summarise(across(all_of(rank_cols), majority), .groups = "drop")
+
+  rescued <- 0L
+  idx <- match(samples_lineage$otu_97, otu_lineage$otu_97)
+  for (col in rank_cols) {
+    gap <- is.na(clean_tax(samples_lineage[[col]])) & !is.na(idx)
+    fill <- otu_lineage[[col]][idx]
+    take <- gap & !is.na(fill)
+    rescued <- rescued + sum(take)
+    samples_lineage[[col]][take] <- fill[take]
+  }
+  cat("OTU-level lineage rescue: filled", rescued, "rank values\n")
+}
+
+# The analytical unit for the fine-scale community analyses. Sequence
+# OTUs are preferred over BLAST name strings; `its_taxon` is retained
+# as a sweep level so the two can be compared directly.
+primary_unit <- if (have_otus) "otu_97" else "its_taxon"
+unit_label   <- if (have_otus) "97% ITS OTU" else "ITS genotype"
+
+lineage_levels <- c("phylum", "class", "order", "family", "genus", "species",
+                    if (have_otus) "otu_97", "its_taxon")
 
 cat("Isolate lineage coverage per rank:\n")
 lineage_coverage <- sapply(lineage_levels, function(lv) {
-  v <- if (lv == "its_taxon") samples_lineage$its_taxon else clean_tax(samples_lineage[[lv]])
+  v <- if (lv %in% c("its_taxon", "otu_97", "otu_985")) samples_lineage[[lv]]
+       else clean_tax(samples_lineage[[lv]])
   sum(!is.na(v))
 })
 for (lv in lineage_levels)
@@ -309,13 +348,15 @@ cat("Saved: Venn diagrams\n")
 # ============================================================
 # HELPER: Build community matrix from sample-level data
 # ============================================================
-build_comm_matrix <- function(data, group_col = "sample_id") {
-  comm_wide <- data %>%
-    count(.data[[group_col]], its_taxon) %>%
-    pivot_wider(names_from = its_taxon, values_from = n, values_fill = 0) %>%
+build_comm_matrix <- function(data, group_col = "sample_id",
+                              taxon_col = primary_unit) {
+  d <- data[!is.na(data[[taxon_col]]), , drop = FALSE]
+  comm_wide <- d %>%
+    count(.data[[group_col]], .data[[taxon_col]]) %>%
+    pivot_wider(names_from = all_of(taxon_col), values_from = n, values_fill = 0) %>%
     as.data.frame()
   rownames(comm_wide) <- comm_wide[[group_col]]
-  as.matrix(comm_wide[, -1])
+  as.matrix(comm_wide[, -1, drop = FALSE])
 }
 
 # ============================================================
@@ -324,7 +365,8 @@ build_comm_matrix <- function(data, group_col = "sample_id") {
 # unresolved (Incertae sedis) at the requested rank are dropped.
 # ============================================================
 build_comm_matrix_level <- function(data, level, group_col = "sample_id") {
-  val <- if (level == "its_taxon") data$its_taxon else clean_tax(data[[level]])
+  val <- if (level %in% c("its_taxon", "otu_97", "otu_985")) data[[level]]
+         else clean_tax(data[[level]])
   d <- data.frame(grp = data[[group_col]], taxon = val, stringsAsFactors = FALSE)
   d <- d[!is.na(d$taxon), , drop = FALSE]
   if (nrow(d) == 0) return(NULL)
@@ -376,14 +418,20 @@ run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
                      error = function(e) NULL)
           else NULL
 
+    stress_strong <- nmds_strong_stress(cm)
+    rel <- nmds_reliability(stress, stress_strong, nrow(cm))
+    degenerate <- rel$degenerate
+
     out[[lv]] <- data.frame(
       level        = lv,
       n_samples    = nrow(cm),
       n_taxa       = ncol(cm),
-      # Fraction of sample pairs with no taxon in common: above ~0.5 the
-      # Bray-Curtis matrix is saturated and the NMDS degenerates.
+      # Fraction of sample pairs with no taxon in common: the more of
+      # these, the more of the dissimilarity matrix is tied at 1 and the
+      # less the weak-tie stress means.
       prop_no_shared = round(mean(no.shared(cm)), 4),
       nmds_stress  = stress,
+      nmds_stress_strong = stress_strong,
       permanova_F  = if (!is.null(pm)) round(pm$F[1], 4)  else NA_real_,
       permanova_R2 = if (!is.null(pm)) round(pm$R2[1], 4) else NA_real_,
       permanova_p  = if (!is.null(pm)) pm$`Pr(>F)`[1]     else NA_real_,
@@ -392,8 +440,6 @@ run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
       betadisper_p = if (!is.null(bd)) round(bd$tab$`Pr(>F)`[1], 4) else NA_real_,
       stringsAsFactors = FALSE
     )
-
-    degenerate <- !is.na(stress) && stress < 0.01 && nrow(cm) > 4
 
     if (!is.null(plot_prefix) && !is.null(nm)) {
       sc <- as.data.frame(scores(nm, display = "sites")); sc$grp <- g
@@ -422,12 +468,12 @@ run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
 
       pl <- pl +
         labs(title = paste0("NMDS at ", lv, " level \u2014 ", plot_prefix),
-             subtitle = paste0("Bray-Curtis | Stress = ", stress,
-                               " | ", ncol(cm), " taxa | ",
+             subtitle = paste0("Bray-Curtis | stress ", stress, " (weak ties) / ",
+                               stress_strong, " (tie-aware) | ", ncol(cm), " taxa | ",
                                sprintf("%.0f%%", 100 * mean(no.shared(cm))),
                                " of sample pairs share no taxa",
                                if (degenerate)
-                                 "\nDEGENERATE ORDINATION - too sparse to interpret"
+                                 paste0("\nUNRELIABLE ORDINATION - ", rel$reason)
                                else ""),
              colour = group_var) +
         theme_minimal(base_size = 12) +
@@ -437,6 +483,50 @@ run_level_sweep <- function(sel, group_var, colours, plot_prefix = NULL,
     }
   }
   bind_rows(out)
+}
+
+# ============================================================
+# HELPER: Is an NMDS solution trustworthy?
+#
+# metaMDS/monoMDS default to WEAK (primary) ties: dissimilarities that
+# are exactly equal need not map to equal distances. That is harmless
+# with continuous data, but this dataset is dominated by rare taxa, so a
+# large share of sample pairs share no taxon at all and their
+# Bray-Curtis dissimilarity is tied at exactly 1. Weak ties leave every
+# one of those pairs unconstrained, the optimiser only has to order the
+# remaining pairs, and it reports a near-zero stress while flinging the
+# unconstrained samples anywhere it likes - the collapsed-onto-a-line
+# ordinations with one distant outlier.
+#
+# Refitting with STRONG (secondary) ties, which force tied
+# dissimilarities to equal distances, gives the honest stress. Judge the
+# ordination on that number, not on the one metaMDS prints.
+# ============================================================
+nmds_strong_stress <- function(comm_mat, k = 2) {
+  d <- vegdist(comm_mat, method = "bray")
+  set.seed(42)
+  s <- tryCatch(monoMDS(d, k = k, weakties = FALSE)$stress,
+                error = function(e) NA_real_)
+  round(s, 4)
+}
+
+# A 2-D NMDS needs roughly 4k+1 = 9 points before a low stress means
+# anything; below that almost any configuration fits.
+nmds_reliability <- function(stress_weak, stress_strong, n_samples, k = 2) {
+  if (n_samples <= 4 * k + 1)
+    return(list(degenerate = TRUE,
+                reason = paste0("only ", n_samples,
+                                " sampling units - too few for a 2-D solution")))
+  if (!is.na(stress_strong) && stress_strong > 0.20)
+    return(list(degenerate = TRUE,
+                reason = paste0("tie-aware stress ", stress_strong,
+                                " exceeds 0.20")))
+  # A perfect fit means the configuration is not constrained by the data
+  # rather than that it is a faithful summary.
+  if (!is.na(stress_strong) && stress_strong < 0.001)
+    return(list(degenerate = TRUE,
+                reason = "near-perfect fit - configuration unconstrained by the data"))
+  list(degenerate = FALSE, reason = NA_character_)
 }
 
 # ============================================================
@@ -487,19 +577,20 @@ run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
     error = function(e) { cat("  NMDS failed:", e$message, "\n"); NULL }
   )
 
-  # How sparse is this matrix? When most sample pairs share no taxa at
-  # all, Bray-Curtis saturates at 1 and the ordination has almost no
-  # gradient left to recover: metaMDS then returns a (near) zero stress
-  # that means "degenerate solution", not "excellent fit".
   prop_no_shared <- mean(no.shared(comm_mat))
   results$prop_no_shared <- round(prop_no_shared, 4)
   results$prop_singleton_taxa <- round(mean(colSums(comm_mat) == 1), 4)
 
   if (!is.null(nmds)) {
     results$nmds_stress <- round(nmds$stress, 4)
-    results$nmds_degenerate <- nmds$stress < 0.01 && nrow(comm_mat) > 4
-    cat("  NMDS stress:", results$nmds_stress,
-        if (isTRUE(results$nmds_degenerate)) " (DEGENERATE - see sparsity)" else "", "\n")
+    results$nmds_stress_strong <- nmds_strong_stress(comm_mat)
+    rel <- nmds_reliability(nmds$stress, results$nmds_stress_strong, nrow(comm_mat))
+    results$nmds_degenerate <- rel$degenerate
+    results$nmds_warning    <- rel$reason
+
+    cat("  NMDS stress:", results$nmds_stress, "(weak ties) /",
+        results$nmds_stress_strong, "(tie-aware)",
+        if (rel$degenerate) paste0(" <- UNRELIABLE: ", rel$reason) else "", "\n")
     cat("  Sample pairs sharing no taxa:",
         sprintf("%.1f%%", 100 * prop_no_shared),
         " singleton taxa:", sprintf("%.1f%%", 100 * results$prop_singleton_taxa), "\n")
@@ -518,11 +609,13 @@ run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
       scale_colour_manual(values = colours) +
       labs(title = paste("NMDS —", label),
            subtitle = paste0(
-             "Bray-Curtis | Stress = ", signif(nmds$stress, 3),
-             " | ", sprintf("%.0f%%", 100 * prop_no_shared),
+             "Bray-Curtis | stress ", signif(nmds$stress, 3), " (weak ties) / ",
+             results$nmds_stress_strong, " (tie-aware) | ",
+             sprintf("%.0f%%", 100 * prop_no_shared),
              " of sample pairs share no taxa",
              if (isTRUE(results$nmds_degenerate))
-               "\nDEGENERATE ORDINATION - too sparse to interpret; use the higher-rank plots"
+               paste0("\nUNRELIABLE ORDINATION - ", results$nmds_warning,
+                      "; read the statistics, not this map")
              else ""),
            colour = group_var) +
       theme_minimal(base_size = 12) +
@@ -566,16 +659,56 @@ run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
     error = function(e) { cat("  PERMANOVA failed:", e$message, "\n"); NULL }
   )
 
+  # Isolates recovered per sampling unit varies about two-fold between
+  # substrates, and depth on its own predicts composition, so the group
+  # effect is also reported adjusted for it. A marginal (type-III) test
+  # asks what each term explains once the other is accounted for.
+  depth <- rowSums(comm_mat)
+  perm_adj <- NULL
+  if (length(unique(depth)) > 1) {
+    set.seed(42)
+    perm_adj <- tryCatch(
+      adonis2(comm_mat ~ depth + grp,
+              data = data.frame(depth = depth, grp = groups),
+              method = "bray", permutations = 999, by = "margin"),
+      error = function(e) NULL)
+  }
+
   if (!is.null(perm)) {
     results$permanova <- perm
+    results$permanova_adj <- perm_adj
     cat("  PERMANOVA F:", round(perm$F[1], 4), " R2:", round(perm$R2[1], 4),
         " p:", perm$`Pr(>F)`[1], "\n")
+    if (!is.null(perm_adj)) {
+      results$adj_group_R2 <- round(perm_adj$R2[2], 4)
+      results$adj_group_p  <- perm_adj$`Pr(>F)`[2]
+      results$depth_R2     <- round(perm_adj$R2[1], 4)
+      results$depth_p      <- perm_adj$`Pr(>F)`[1]
+      cat("  adjusted for sampling depth -> ", group_var, " R2:",
+          results$adj_group_R2, " p:", results$adj_group_p,
+          " | depth R2:", results$depth_R2, " p:", results$depth_p, "\n", sep = "")
+    }
 
     sink(paste0(prefix, "_permanova.txt"))
     cat("PERMANOVA — Bray-Curtis distance\n")
     cat("Formula: community ~", group_var, "\n")
-    cat("Permutations: 999\n\n")
+    cat("Permutations: 999\n")
+    cat("Analytical unit:", unit_label, "\n")
+    cat("Replication: ", length(unique(groups)), " groups, sizes ",
+        paste(sort(as.integer(table(groups)), decreasing = TRUE), collapse = ", "),
+        "\n", sep = "")
+    if (min(table(groups)) < 3)
+      cat("CAUTION: the smallest group has", min(table(groups)),
+          "sampling unit(s). A non-significant result here means\n",
+          "         no effect was DETECTABLE, not that no effect exists.\n")
+    cat("\n")
     print(perm)
+    if (!is.null(perm_adj)) {
+      cat("\n== Adjusted for sampling depth (marginal / type III) ==\n")
+      cat("Isolates per sampling unit: min ", min(depth), ", median ",
+          stats::median(depth), ", max ", max(depth), "\n\n", sep = "")
+      print(perm_adj)
+    }
     sink()
   }
 
@@ -728,18 +861,30 @@ run_multivariate <- function(comm_mat, meta, group_var, label, outdir,
       indval_summary <- capture.output(summary(indval, indvalcomp = TRUE))
       writeLines(indval_summary, paste0(prefix, "_indicator_species.txt"))
 
-      sig <- indval$sign[indval$sign$p.value <= 0.05, , drop = FALSE]
-      if (nrow(sig) > 0) {
-        sig$taxon <- rownames(sig)
-        sig <- sig %>% arrange(p.value)
-        write.csv(sig, paste0(prefix, "_indicator_species_significant.csv"),
-                  row.names = FALSE)
-        results$n_indicators <- nrow(sig)
-        cat("  Significant indicators:", nrow(sig), "\n")
-      } else {
-        results$n_indicators <- 0
-        cat("  No significant indicators\n")
-      }
+      # One test per taxon, so the raw p-values need correcting: with
+      # ~280 taxa, 14 hits at p <= 0.05 are expected by chance alone.
+      # Benjamini-Hochberg controls the false discovery rate across the
+      # whole taxon set of this analysis.
+      tab <- indval$sign
+      tab$taxon <- rownames(tab)
+      tab$q.value <- NA_real_
+      ok <- !is.na(tab$p.value)
+      tab$q.value[ok] <- p.adjust(tab$p.value[ok], method = "BH")
+      tab <- tab %>% arrange(p.value)
+
+      write.csv(tab, paste0(prefix, "_indicator_species_all.csv"), row.names = FALSE)
+
+      sig <- tab[!is.na(tab$q.value) & tab$q.value <= 0.05, , drop = FALSE]
+      # recompute after the sort: `ok` above indexes the unsorted table
+      tested <- !is.na(tab$p.value)
+      n_raw <- sum(tab$p.value[tested] <= 0.05)
+      results$n_taxa_tested   <- sum(tested)
+      results$n_indicators_raw <- n_raw
+      results$n_indicators     <- nrow(sig)
+      write.csv(sig, paste0(prefix, "_indicator_species_significant.csv"),
+                row.names = FALSE)
+      cat("  Indicators:", nrow(sig), "at FDR q<=0.05 (", n_raw,
+          "at raw p<=0.05 of", sum(ok), "taxa tested )\n")
     }
   }
 

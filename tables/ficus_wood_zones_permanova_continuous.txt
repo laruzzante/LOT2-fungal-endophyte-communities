@@ -6,8 +6,8 @@ Number of permutations: 999
 
 adonis2(formula = comm_fw ~ zone_num, data = meta_fw_num, permutations = 999, method = "bray")
          Df SumOfSqs      R2      F Pr(>F)  
-Model     1   0.6528 0.12658 1.5941  0.014 *
-Residual 11   4.5044 0.87342                
-Total    12   5.1572 1.00000                
+Model     1   0.6343 0.13101 1.6583  0.027 *
+Residual 11   4.2073 0.86899                
+Total    12   4.8416 1.00000                
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1

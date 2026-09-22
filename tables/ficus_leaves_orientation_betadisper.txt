@@ -11,15 +11,15 @@ Permutation: free
 Number of permutations: 999
 
 Response: Distances
-          Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)    
-Groups     3 0.059677 0.0198924 5.9437    999  0.001 ***
-Residuals  5 0.016734 0.0033468                         
+          Df   Sum Sq   Mean Sq     F N.Perm Pr(>F)    
+Groups     3 0.082968 0.0276559 7.791    999  0.001 ***
+Residuals  5 0.017749 0.0035497                        
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Group mean distances to centroid:
   group n mean_dist
-E     E 2    0.4020
-N     N 2    0.3367
-S     S 2    0.4434
-W     W 3    0.5491
+E     E 2    0.3431
+N     N 2    0.2347
+S     S 2    0.2547
+W     W 3    0.4641

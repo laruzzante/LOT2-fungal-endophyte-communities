@@ -1,0 +1,4 @@
+"substrate","n_units","n_isolates","observed_S","chao1","chao1_se","ace","pct_of_chao1","singletons","doubletons","goods_coverage"
+"Ficus leaves",10,264,74,135.8,27.5,125.6,55,39,11,85.2
+"Ficus wood",13,167,64,159.7,43.5,191.3,40,42,8,74.9
+"Lauraceae leaves",10,219,45,82.5,20.6,90.9,55,25,7,88.6

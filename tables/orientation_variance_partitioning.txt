@@ -10,10 +10,10 @@ Number of permutations: 999
 
 adonis2(formula = comm_orient ~ substrate + orientation, data = meta_orient, permutations = 999, method = "bray", by = "margin")
             Df SumOfSqs      R2      F Pr(>F)    
-substrate    2   1.7622 0.14998 2.1956  0.001 ***
-orientation  4   1.6283 0.13859 1.0144  0.398    
-Residual    20   8.0262 0.68311                  
-Total       26  11.7495 1.00000                  
+substrate    2   1.9763 0.19894 3.1856  0.001 ***
+orientation  4   1.3117 0.13205 1.0572  0.338    
+Residual    20   6.2038 0.62451                  
+Total       26   9.9339 1.00000                  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -25,10 +25,10 @@ Number of permutations: 999
 
 adonis2(formula = comm_orient ~ substrate + orientation, data = meta_orient, permutations = 999, method = "bray", by = "terms")
             Df SumOfSqs      R2      F Pr(>F)    
-substrate    2   2.0950 0.17830 2.6101  0.001 ***
-orientation  4   1.6283 0.13859 1.0144  0.398    
-Residual    20   8.0262 0.68311                  
-Total       26  11.7495 1.00000                  
+substrate    2   2.4184 0.24345 3.8982  0.001 ***
+orientation  4   1.3117 0.13205 1.0572  0.338    
+Residual    20   6.2038 0.62451                  
+Total       26   9.9339 1.00000                  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -40,10 +40,10 @@ Number of permutations: 999
 
 adonis2(formula = comm_orient ~ substrate + sun_aspect, data = meta_orient, permutations = 999, method = "bray", by = "margin")
            Df SumOfSqs      R2      F Pr(>F)    
-substrate   2   1.7759 0.15114 2.2253  0.001 ***
-sun_aspect  2   0.8762 0.07457 1.0979  0.208    
-Residual   22   8.7783 0.74713                  
-Total      26  11.7495 1.00000                  
+substrate   2   1.9753 0.19884 3.2033  0.001 ***
+sun_aspect  2   0.7324 0.07373 1.1878  0.194    
+Residual   22   6.7831 0.68282                  
+Total      26   9.9339 1.00000                  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 

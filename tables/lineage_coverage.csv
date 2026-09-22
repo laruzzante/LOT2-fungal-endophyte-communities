@@ -1,8 +1,9 @@
 "rank","isolates_resolved","isolates_total"
-"phylum",642,650
-"class",644,650
-"order",627,650
-"family",582,650
-"genus",537,650
-"species",238,650
+"phylum",643,650
+"class",645,650
+"order",628,650
+"family",585,650
+"genus",540,650
+"species",384,650
+"otu_97",650,650
 "its_taxon",650,650

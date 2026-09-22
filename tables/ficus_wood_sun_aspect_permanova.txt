@@ -1,6 +1,10 @@
 PERMANOVA — Bray-Curtis distance
 Formula: community ~ sun_aspect 
 Permutations: 999
+Analytical unit: 97% ITS OTU 
+Replication: 3 groups, sizes 4, 2, 1
+CAUTION: the smallest group has 1 sampling unit(s). A non-significant result here means
+          no effect was DETECTABLE, not that no effect exists.
 
 Permutation test for adonis under reduced model
 Permutation: free
@@ -8,6 +12,23 @@ Number of permutations: 5039
 
 adonis2(formula = form, data = meta, permutations = 999, method = "bray")
          Df SumOfSqs      R2      F Pr(>F)
-Model     2  0.86275 0.33129 0.9908  0.487
-Residual  4  1.74147 0.66871              
-Total     6  2.60423 1.00000              
+Model     2  0.84373 0.33293 0.9982  0.462
+Residual  4  1.69054 0.66707              
+Total     6  2.53427 1.00000              
+
+== Adjusted for sampling depth (marginal / type III) ==
+Isolates per sampling unit: min 4, median 15, max 17
+
+Permutation test for adonis under reduced model
+Marginal effects of terms
+Permutation: free
+Number of permutations: 5039
+
+adonis2(formula = comm_mat ~ depth + grp, data = data.frame(depth = depth, grp = groups), permutations = 999, method = "bray", by = "margin")
+         Df SumOfSqs      R2      F Pr(>F)  
+depth     1  0.54159 0.21371 1.4141  0.062 .
+grp       2  0.84455 0.33325 1.1026  0.308  
+Residual  3  1.14896 0.45337                
+Total     6  2.53427 1.00000                
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1

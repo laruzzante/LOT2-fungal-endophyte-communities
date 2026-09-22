@@ -5,7 +5,7 @@
  Association function: IndVal.g
  Significance level (alpha): 0.05
 
- Total number of species: 82
+ Total number of species: 64
  Selected number of species: 1 
  Number of species associated to 1 group: 0 
  Number of species associated to 2 groups: 0 
@@ -16,7 +16,7 @@
  List of species associated to each combination: 
 
  Group 1+2+3+5  #sps.  1 
-                                                 A B stat p.value   
-Aspergillus cvjetkovicii or A. jensenii (3 spp.) 1 1    1    0.01 **
+             A      B  stat p.value  
+OTU_103 0.9575 1.0000 0.979   0.031 *
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
