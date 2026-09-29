@@ -3,7 +3,7 @@
 #
 # The pooled-count diversity table (community_analysis.R, section A)
 # gives ONE value per substrate, so nothing there can be tested. The
-# sample-level file has 10-13 independent sampling units per substrate,
+# sample-level file has 8-12 independent sampling units per substrate,
 # which supports both a proper test of alpha diversity and an estimate
 # of how much of the community was actually recovered.
 #
@@ -145,7 +145,7 @@ cat("\nAlpha diversity per sampling unit (mean +/- SD across units):\n")
 print(alpha_summary)
 
 # ------------------------------------------------------------
-# 3. Test it. Non-parametric: 10-13 units per group, and the indices
+# 3. Test it. Non-parametric: 8-12 units per group, and the indices
 #    are bounded and skewed, so Kruskal-Wallis rather than ANOVA.
 # ------------------------------------------------------------
 alpha_tests <- list()

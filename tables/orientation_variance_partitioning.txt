@@ -10,10 +10,10 @@ Number of permutations: 999
 
 adonis2(formula = comm_orient ~ substrate + orientation, data = meta_orient, permutations = 999, method = "bray", by = "margin")
             Df SumOfSqs      R2      F Pr(>F)    
-substrate    2   1.9763 0.19894 3.1856  0.001 ***
-orientation  4   1.3117 0.13205 1.0572  0.338    
-Residual    20   6.2038 0.62451                  
-Total       26   9.9339 1.00000                  
+substrate    2   1.9763 0.22489 3.5413  0.001 ***
+orientation  4   1.2370 0.14076 1.1083  0.289    
+Residual    18   5.0226 0.57154                  
+Total       24   8.7878 1.00000                  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -25,10 +25,10 @@ Number of permutations: 999
 
 adonis2(formula = comm_orient ~ substrate + orientation, data = meta_orient, permutations = 999, method = "bray", by = "terms")
             Df SumOfSqs      R2      F Pr(>F)    
-substrate    2   2.4184 0.24345 3.8982  0.001 ***
-orientation  4   1.3117 0.13205 1.0572  0.338    
-Residual    20   6.2038 0.62451                  
-Total       26   9.9339 1.00000                  
+substrate    2   2.5282 0.28770 4.5304  0.001 ***
+orientation  4   1.2370 0.14076 1.1083  0.289    
+Residual    18   5.0226 0.57154                  
+Total       24   8.7878 1.00000                  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -40,10 +40,10 @@ Number of permutations: 999
 
 adonis2(formula = comm_orient ~ substrate + sun_aspect, data = meta_orient, permutations = 999, method = "bray", by = "margin")
            Df SumOfSqs      R2      F Pr(>F)    
-substrate   2   1.9753 0.19884 3.2033  0.001 ***
-sun_aspect  2   0.7324 0.07373 1.1878  0.194    
-Residual   22   6.7831 0.68282                  
-Total      26   9.9339 1.00000                  
+substrate   2   2.0078 0.22847 3.6462  0.001 ***
+sun_aspect  2   0.7531 0.08570 1.3676  0.081 .  
+Residual   20   5.5065 0.62661                  
+Total      24   8.7878 1.00000                  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -53,4 +53,4 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
                    Lateral (E/W) Shaded (S) Sun-facing (N)
   Ficus leaves                 5          2              2
   Ficus wood                   4          2              1
-  Lauraceae leaves             1          0             10
+  Lauraceae leaves             1          0              8

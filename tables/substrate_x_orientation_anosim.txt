@@ -1,7 +1,7 @@
 ANOSIM — Bray-Curtis distance
 Permutations: 999
 
-R statistic: 0.4064 
+R statistic: 0.6098 
 p-value: 0.001 
 
 
@@ -9,7 +9,7 @@ Call:
 anosim(x = comm_mat, grouping = groups, permutations = 999, distance = "bray") 
 Dissimilarity: bray 
 
-ANOSIM statistic R: 0.4064 
+ANOSIM statistic R: 0.6098 
       Significance: 0.001 
 
 Permutation: free
@@ -17,21 +17,21 @@ Number of permutations: 999
 
 Upper quantiles of permutations (null model):
   90%   95% 97.5%   99% 
-0.161 0.219 0.264 0.296 
+0.152 0.195 0.239 0.283 
 
 Dissimilarity ranks between and within classes:
                          0%     25%    50%    75%  100%   N
-Between                 2.0  96.000 181.00 291.00 291.0 321
-Ficus leaves - E       60.5  60.500  60.50  60.50  60.5   1
-Ficus leaves - N        8.0   8.000   8.00   8.00   8.0   1
-Ficus leaves - S       10.0  10.000  10.00  10.00  10.0   1
-Ficus leaves - W       81.5  97.000 112.50 129.25 146.0   3
-Ficus wood - E        140.5 140.500 140.50 140.50 140.5   1
+Between                 2.0  85.750 159.00 257.50 257.5 279
+Ficus leaves - E       61.5  61.500  61.50  61.50  61.5   1
+Ficus leaves - N        7.0   7.000   7.00   7.00   7.0   1
+Ficus leaves - S       12.0  12.000  12.00  12.00  12.0   1
+Ficus leaves - W       80.5  96.000 111.50 128.25 145.0   3
+Ficus wood - E        138.0 138.000 138.00 138.00 138.0   1
 Ficus wood - N           NA      NA     NA     NA    NA   0
-Ficus wood - S        291.0 291.000 291.00 291.00 291.0   1
-Ficus wood - W        291.0 291.000 291.00 291.00 291.0   1
+Ficus wood - S        257.5 257.500 257.50 257.50 257.5   1
+Ficus wood - W        257.5 257.500 257.50 257.50 257.5   1
 Lauraceae leaves - E     NA      NA     NA     NA    NA   0
-Lauraceae leaves - N    1.0   5.125  18.25  26.50  43.5   6
-Lauraceae leaves - NW  14.5  27.250 170.50 190.75 291.0  15
+Lauraceae leaves - N    1.0   5.625  19.75  29.00  42.5   6
+Lauraceae leaves - NW   9.5  13.250  22.00  25.50  97.0   6
 
 NULL

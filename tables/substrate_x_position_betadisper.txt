@@ -6,13 +6,15 @@ Permutation: free
 Number of permutations: 999
 
 Response: Distances
-          Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)
-Groups     3 0.11844 0.039480 2.0186    999  0.118
-Residuals 29 0.56720 0.019559                     
+          Df  Sum Sq Mean Sq      F N.Perm Pr(>F)   
+Groups     3 0.21093 0.07031 7.0802    999  0.002 **
+Residuals 26 0.25819 0.00993                        
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Group mean distances to centroid:
                                               group  n mean_dist
 Ficus leaves - Branch         Ficus leaves - Branch 10    0.4356
 Ficus wood - Branch             Ficus wood - Branch  7    0.5970
-Ficus wood - Trunk               Ficus wood - Trunk  6    0.4870
-Lauraceae leaves - Branch Lauraceae leaves - Branch 10    0.4599
+Ficus wood - Trunk               Ficus wood - Trunk  5    0.4166
+Lauraceae leaves - Branch Lauraceae leaves - Branch  8    0.3692

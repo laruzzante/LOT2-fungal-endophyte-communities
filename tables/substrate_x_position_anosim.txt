@@ -1,7 +1,7 @@
 ANOSIM — Bray-Curtis distance
 Permutations: 999
 
-R statistic: 0.665 
+R statistic: 0.7277 
 p-value: 0.001 
 
 
@@ -9,7 +9,7 @@ Call:
 anosim(x = comm_mat, grouping = groups, permutations = 999, distance = "bray") 
 Dissimilarity: bray 
 
-ANOSIM statistic R: 0.665 
+ANOSIM statistic R: 0.7277 
       Significance: 0.001 
 
 Permutation: free
@@ -17,14 +17,14 @@ Number of permutations: 999
 
 Upper quantiles of permutations (null model):
    90%    95%  97.5%    99% 
-0.0737 0.1043 0.1340 0.1562 
+0.0711 0.1106 0.1369 0.1772 
 
 Dissimilarity ranks between and within classes:
-                          0%    25%   50%   75%  100%   N
-Between                   16 198.50 416.5 416.5 416.5 402
-Ficus leaves - Branch     11  31.00  66.0  98.0 148.0  45
-Ficus wood - Branch       77 180.00 238.5 416.5 416.5  21
-Ficus wood - Trunk         1 125.75 156.0 206.5 416.5  15
-Lauraceae leaves - Branch  2  26.00  52.0 194.5 416.5  45
+                          0%    25%   50%     75%  100%   N
+Between                   18 172.00 263.0 355.500 355.5 331
+Ficus leaves - Branch     11  30.00  66.0  99.500 147.0  45
+Ficus wood - Branch       78 172.00 216.5 355.500 355.5  21
+Ficus wood - Trunk         1  30.25 120.5 138.625 168.0  10
+Lauraceae leaves - Branch  2  11.25  29.5  48.250 132.5  28
 
 NULL

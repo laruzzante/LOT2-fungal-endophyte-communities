@@ -199,3 +199,36 @@ All eleven problems have been addressed in the pipeline, and the five provenance
 ### Still open
 
 **Whether the Lauraceae material is leaves or branch wood.** This is the one unresolved question, and the report's tissue-type conclusion depends on it. If it is branch wood, "the two leaf substrates resemble each other more than either resembles wood" cannot stand. Everything else is unaffected.
+
+---
+
+## 6. Addendum (2026-09-29): sampling-unit corrections
+
+After this review, the data curator checked the sampling design with the field team (LoT) and found two labelling errors in `LOT2_samples.xlsx`. `parse_LOT2.R` now corrects both when it reads the workbook:
+
+1. **All Lauraceae branches are in zone 6.** 53 isolates (S7, most of S8, one S4 isolate) were recorded as zone 5. Because a sampling unit is substrate × zone × unit, S4 and S8 were each split in two, so the Lauraceae had **10 units instead of 8**. One of the extra units held a single isolate and another held three.
+2. **Ficus trunk wood is numbered S11–S15** (zone 5 down to zone 1), renamed from S9–S13 so it cannot be confused with canopy branches S9–S10, where only leaves were sampled. Three zone-4 isolates still carried the old label S10, which split zone 4 into two units.
+
+The pipeline also now checks every sampling unit against the curator's design. The data go from **33 to 30 sampling units** (Ficus leaves 10, Ficus wood 12, Lauraceae 8). Figures quoted in sections 1–5 predate this correction. What changed:
+
+| Item | Before | After |
+|:---|:---|:---|
+| P3: units treated as host replicates (leaf contrast) | 20 | 18 |
+| P4: Lauraceae mean richness per unit | 10.5 ± 5.5 | 12.9 ± 3.5 |
+| P4: Lauraceae vs Ficus wood, richness / Shannon (Holm p) | 0.16 / 0.26 | **0.029 / 0.047** |
+| P6: depth, adjusted for substrate | p = 0.006 | p = 0.054 |
+| P7: PERMDISP across substrates | F = 7.2 | F = 21.7 |
+| Substrate PERMANOVA (97% OTUs) | R² = 0.28 | R² = 0.33 |
+| P10: units per Ficus trunk zone | 1–2 | exactly 1 |
+| Substrate indicators (FDR q ≤ 0.05) | 14 | 13 |
+
+**Readings that changed.**
+
+- **Alpha diversity.** The two tiny Lauraceae units had pulled its per-unit mean down. The Lauraceae now separates from Ficus wood, not only Ficus leaves from wood.
+- **Orientation within the Lauraceae** becomes nominally significant (p = 0.048). It does not survive Holm correction across the three substrates (p = 0.144), and it compares 4 north-facing with 4 north-west-facing branches. The pooled orientation conclusions are unchanged.
+- **Zones.** With one unit per trunk zone, P10 applies with full force. The zone sweep is significant at class level only (p = 0.017; it was already p = 0.025 before the correction). The previous README conclusion that zones were non-significant "at any rank" did not match its own table, and now does.
+- **ITS-label NMDS.** The ~0.0001 stress in the substrate ordination at name-label resolution came from the one-isolate unit, which shared no genotype with any other unit. With the unit merged, that ordination is no longer degenerate. It is still unreliable (tie-aware stress 0.20).
+
+**A reading that held, with a caveat on how to test it.** The tissue-type conclusion still stands: by distance between substrate centroids, the two leaf substrates are the closest pair at every rank (new table `substrate_pairwise_multilevel.csv`, README Section D1). Pairwise PERMANOVA R² would suggest otherwise at some ranks. R² falls when a group is heterogeneous, and after the correction the Lauraceae units are far more homogeneous than the Ficus wood units, so R² is not a valid way to rank which substrates are most alike.
+
+**Newly open.** The design lists 13 Ficus wood units (8 branches + 5 trunk zones), but **no isolates are recorded for branch S4 wood**, in either the main sheet or the per-substrate sheet. If S4 wood was sampled and yielded nothing, 12 is correct. If its isolates exist but are mislabelled, they are currently counted under another unit.

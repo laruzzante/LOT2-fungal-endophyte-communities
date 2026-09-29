@@ -234,9 +234,31 @@ z6_perm_F <- z6_stats$F; z6_perm_R2 <- z6_stats$R2; z6_perm_p <- z6_stats$p
 # Sample counts per substrate
 sub_counts <- samples_raw %>% count(substrate) %>% arrange(substrate)
 # Count the sampling units the analyses actually use (substrate x zone x
-# unit), not distinct unit labels - a couple of Lauraceae unit labels
-# recur in both zone 5 and zone 6, so the two counts differ.
+# unit). Before the curator's corrections this differed from the design:
+# two Lauraceae labels recurred in zones 5 and 6, and one Ficus trunk
+# zone carried two labels.
 sub_units  <- samples_raw %>% distinct(substrate, sample_id) %>% count(substrate) %>% arrange(substrate)
+n_units_of <- function(sb) sub_units$n[sub_units$substrate == sb]
+design_of  <- function(sb) design_units$n_design[design_units$substrate == sb]
+# Show "observed (designed)" wherever a designed unit yielded no isolates
+units_cell <- function(sb) if (n_units_of(sb) == design_of(sb)) n_units_of(sb) else
+  paste0(n_units_of(sb), ' (of ', design_of(sb), ' sampled)')
+fw_empty   <- sub("^Ficus wood__Z6__", "", units_no_isolates[startsWith(units_no_isolates, "Ficus wood__Z6__")])
+
+# Replication behind the zone tests: one Ficus trunk unit per zone
+fw_units_per_zone <- samples_raw %>% filter(substrate == "Ficus wood") %>%
+  distinct(zone, sample_id) %>% count(zone)
+fw_trunk_one_each <- all(fw_units_per_zone$n[fw_units_per_zone$zone <= 5] == 1)
+fw_branch_units   <- fw_units_per_zone$n[fw_units_per_zone$zone == 6]
+z6_units <- samples_raw %>% filter(zone == 6) %>% distinct(substrate, sample_id) %>% count(substrate)
+
+# Is the ITS-level dissimilarity matrix connected? A unit sharing no
+# taxon with any other unit is a separate component for the ordination.
+conn_groups   <- vegan::distconnected(vegan::vegdist(comm_mat_full, "bray"),
+                                      toolong = 1, trace = FALSE)
+conn_n        <- length(unique(conn_groups))
+conn_isolated <- rownames(comm_mat_full)[conn_groups %in%
+                   as.integer(names(which(table(conn_groups) == 1)))]
 
 # ---- Multi-level taxonomic sweep results ----
 # ---- Branch / trunk orientation results ----
@@ -282,6 +304,10 @@ ori_all    <- ori_row("Orientation - all substrates")
 ori_aspect <- ori_row("Sun aspect - all substrates")
 
 n_orient_units    <- if (!is.null(ori_all)) ori_all$n_units else NA
+ori_sub_n <- if (nrow(ori_sum) > 0)
+  ori_sum$n_units[grepl("^Orientation - ", ori_sum$analysis) &
+                  ori_sum$analysis != "Orientation - all substrates"] else NA
+ori_sub_units <- paste(range(ori_sub_n, na.rm = TRUE), collapse = "-")
 n_orient_isolates <- sum(ori_cov$n_isolates)
 n_unres_isolates  <- sum(ori_unres$n_isolates)
 orient_any_sig <- if (nrow(ori_sum) > 0)
@@ -292,6 +318,10 @@ ml_sub <- safe_csv("tables/substrate_multilevel_summary.csv")
 ml_zon <- safe_csv("tables/ficus_wood_zones_multilevel_summary.csv")
 ml_sp  <- safe_csv("tables/substrate_x_position_multilevel_summary.csv")
 lincov <- safe_csv("tables/lineage_coverage.csv")
+incertae_tbl <- safe_csv("tables/incertae_sedis_share.csv")
+# Largest unresolved share across substrates at one rank
+incertae_max <- function(rank) if (nrow(incertae_tbl) > 0)
+  max(unlist(incertae_tbl[incertae_tbl$rank == rank, -1])) else 'N/A'
 
 # Build a markdown table from a multi-level summary data frame
 ml_table <- function(df) {
@@ -326,7 +356,90 @@ if (nrow(ml_sub) > 0) {
 } else {
   ml_best_rank <- "N/A"; ml_best_R2 <- NA; ml_its_R2 <- NA; ml_all_sig <- FALSE
 }
+# Ordinations whose weak-tie stress has collapsed to ~0 (degenerate)
+degenerate_in <- function(df, label) {
+  if (nrow(df) == 0 || !"nmds_stress" %in% names(df)) return(character(0))
+  lv <- df$level[num(df$nmds_stress) < 0.001]
+  if (length(lv) == 0) character(0) else paste0(label, ' at ', lv, ' level')
+}
+degenerate_maps <- c(degenerate_in(ml_sub, 'substrate'), degenerate_in(ml_zon, 'Ficus-wood zones'),
+                     degenerate_in(ml_sp, 'substrate x position'), degenerate_in(ori_ml, 'orientation'))
+
 zones_any_sig <- if (nrow(ml_zon) > 0) any(num(ml_zon$permanova_p) < 0.05, na.rm = TRUE) else FALSE
+zones_sig_ranks <- if (nrow(ml_zon) > 0) ml_zon$level[num(ml_zon$permanova_p) < 0.05] else character(0)
+zones_sig_txt <- paste0('**', zones_sig_ranks, '** level (p = ',
+                        ml_zon$permanova_p[match(zones_sig_ranks, ml_zon$level)], ')', collapse = ', ')
+zones_other_minp <- if (nrow(ml_zon) > 0)
+  suppressWarnings(min(num(ml_zon$permanova_p[!ml_zon$level %in% zones_sig_ranks]))) else NA
+ml_sp_best <- if (nrow(ml_sp) > 0) ml_sp$level[which.max(ml_sp$permanova_R2)] else "N/A"
+
+# Which substrates sit closest together at each rank? Judged by the
+# distance between substrate centroids: pairwise R2 also falls when a
+# group is heterogeneous, so it cannot rank the pairs by similarity.
+pw_rank   <- safe_csv("tables/substrate_pairwise_multilevel.csv")
+leaf_pair <- "Ficus leaves vs Lauraceae leaves"
+pw_ranks  <- unique(pw_rank$level)
+leaf_closest_ranks <- pw_ranks[vapply(pw_ranks, function(lv) {
+  r <- pw_rank[pw_rank$level == lv, ]
+  r$pair[which.min(r$centroid_distance)] == leaf_pair }, logical(1))]
+leaf_closest_everywhere <- length(pw_ranks) > 0 && length(leaf_closest_ranks) == length(pw_ranks)
+pw_ns <- pw_rank[num(pw_rank$p_value) >= 0.05, , drop = FALSE]
+pw_rank_table <- if (nrow(pw_rank) == 0) character(0) else {
+  pairs_order <- c("Ficus leaves vs Ficus wood", leaf_pair, "Ficus wood vs Lauraceae leaves")
+  c('| Rank | Ficus leaves vs Ficus wood | Ficus leaves vs Lauraceae | Ficus wood vs Lauraceae |',
+    '|------|:-:|:-:|:-:|',
+    vapply(pw_ranks, function(lv) {
+      r <- pw_rank[pw_rank$level == lv, ]
+      v <- r$centroid_distance[match(pairs_order, r$pair)]
+      cells <- ifelse(v == min(v, na.rm = TRUE), paste0('**', v, '**'), as.character(v))
+      paste0('| ', lv, ' | ', paste(cells, collapse = ' | '), ' |')
+    }, character(1)),
+    '',
+    paste0('*Bray-Curtis distance between substrate centroids (PCoA space); the smallest per rank, i.e. the most similar pair, is in bold. Every pair also differs by PERMANOVA (p \u2264 ', max(num(pw_rank$p_value[num(pw_rank$p_value) < 0.05])), ')',
+           if (nrow(pw_ns) > 0) paste0(' except ', paste0(pw_ns$pair, ' at ', pw_ns$level, ' level (p = ', pw_ns$p_value, ')', collapse = '; ')) else '', '.*'))
+}
+
+# Per-unit alpha diversity: Holm-adjusted pairwise p for one contrast
+alpha_pw_p <- function(idx, a, b) {
+  t <- alpha_pairwise_tbl
+  r <- t[t$index == idx & ((t$group1 == a & t$group2 == b) | (t$group1 == b & t$group2 == a)), ]
+  if (nrow(r) == 0) "N/A" else r$p_adj[1]
+}
+
+# Orientation within each substrate, and a Holm correction across them
+ori_within <- if (nrow(ori_sum) > 0)
+  ori_sum[grepl("^Orientation - ", ori_sum$analysis) &
+          ori_sum$analysis != "Orientation - all substrates", , drop = FALSE] else data.frame()
+if (nrow(ori_within) > 0) {
+  ori_within$substrate <- sub("^Orientation - ", "", ori_within$analysis)
+  ori_within$p_holm    <- signif(p.adjust(num(ori_within$permanova_p), "holm"), 3)
+}
+ori_within_txt <- if (nrow(ori_within) > 0)
+  paste0(ori_within$substrate, ' p = ', ori_within$permanova_p, collapse = '; ') else 'N/A'
+ori_nominal <- if (nrow(ori_within) > 0) ori_within[num(ori_within$permanova_p) < 0.05, , drop = FALSE] else data.frame()
+ori_nominal_txt <- if (nrow(ori_nominal) > 0)
+  paste0(ori_nominal$substrate, ' (p = ', ori_nominal$permanova_p,
+         ', Holm-adjusted p = ', ori_nominal$p_holm, ')', collapse = '; ') else ''
+laur_cov <- if (nrow(ori_cov) > 0) ori_cov[ori_cov$substrate == "Lauraceae leaves", , drop = FALSE] else data.frame()
+laur_cov_txt <- if (nrow(laur_cov) > 0)
+  paste0(laur_cov$n_units, ' ', laur_cov$orientation, collapse = ', ') else 'N/A'
+ori_exception_txt <- if (nrow(ori_nominal) == 0) '' else
+  paste0(' The one exception is ', ori_nominal_txt,
+         if (all(num(ori_nominal$p_holm) >= 0.05)) ', which does not survive correction across substrates' else '',
+         if ("Lauraceae leaves" %in% ori_nominal$substrate) paste0(' and compares branches facing N and NW (', laur_cov_txt, ' units)') else '',
+         '.')
+
+# Circular gradient: every nominally significant axis / joint test
+circ_hits <- character(0)
+if (nrow(ori_circ) > 0) {
+  for (i in seq_len(nrow(ori_circ))) for (tst in c("NS_axis", "EW_axis", "joint")) {
+    p <- num(ori_circ[[paste0(tst, "_p")]][i])
+    if (!is.na(p) && p < 0.05)
+      circ_hits <- c(circ_hits, paste0(c(NS_axis = "north-south axis", EW_axis = "east-west axis",
+                                         joint = "joint gradient")[[tst]],
+                                       ' in ', ori_circ$analysis[i], ' (p = ', p, ')'))
+  }
+}
 
 # ---- Build README ----
 readme <- c(
@@ -356,9 +469,9 @@ paste0('| **Lauraceae leaves** | ', alpha_its$abundance_N[alpha_its$substrate ==
 '',
 '*Consequence.* Any host difference is a difference between two *interlocked* individuals, which is a conservative setting for detecting host effects (shared exposure should erode differences, not create them) but rules out treating them as independent samples of two species.',
 '',
-'**3. The Lauraceae trunk was never sampled — it was inaccessible, completely encased by the strangling Ficus.** All Lauraceae material came from exposed upper branches.',
+'**3. The Lauraceae trunk was never sampled — it was inaccessible, completely encased by the strangling Ficus.** All Lauraceae material came from eight exposed branches (S1–S8), all in **zone 6**.',
 '',
-'*Consequence.* This one **changes the data.** The rule "zone ≤ 5 = trunk" is correct for the *Ficus* but wrong for the Lauraceae: applied blindly it mislabelled **3 sampling units / 53 isolates** (the zone-5 Lauraceae units) as trunk material. `parse_LOT2.R` now assigns `position = "Branch"` to all Lauraceae. The previous `lauraceae_leaves_trunk_vs_branch_*` analysis was therefore comparing branch against branch and has been removed. Note also that **zone means different things on the two trees**: on the *Ficus* it is height on a continuous trunk; on the Lauraceae it distinguishes two bands of exposed canopy branch.',
+'*Consequence.* `parse_LOT2.R` assigns `position = "Branch"` to all Lauraceae, so every trunk-vs-branch contrast in this report is a *Ficus* contrast. An earlier `lauraceae_leaves_trunk_vs_branch_*` analysis, built when some Lauraceae branches were wrongly recorded in zone 5 and read as trunk, compared branch against branch and has been removed (see **Corrections to the sampling units** below).',
 '',
 '**4. Whether the Lauraceae material is leaves or branch wood is still unconfirmed.** `LOT2_pooled_counts.xlsx` labels the column "Lauraceae leaves"; the samples workbook has a sheet titled "66. Fungi-Endo wood (Host)". The data owner indicates the material came from branches, without settling leaf vs wood. The analyses retain the label **Lauraceae leaves**.',
 '',
@@ -370,21 +483,33 @@ paste0('| **Lauraceae leaves** | ', alpha_its$abundance_N[alpha_its$substrate ==
 '',
 '**6. Only the first sheet of each workbook is authoritative.** The remaining sheets (per-substrate extracts of 264 / 167 / 20 isolates, and the sequence sheet) are working material. The pipeline reads sheet 1 for both files, plus the sequence sheet `Feuil2` for OTU clustering.',
 '',
+'### Corrections to the sampling units',
+'',
+'The data curator checked the sampling design with the field team (LoT) and found two labelling errors in `LOT2_samples.xlsx`. Both are corrected by `parse_LOT2.R` when the workbook is read. The delivered file is left unchanged, and each correction does nothing once a corrected workbook is issued.',
+'',
+paste0('1. **All Lauraceae branches are in zone 6.** The workbook recorded ', n_laur_rezoned,
+       ' Lauraceae isolates (all of S7, most of S8 and one isolate of S4) as zone 5, copied from a field file that later proved wrong. A sampling unit is *substrate × zone × unit*, so S4 and S8 were each split into a zone-5 and a zone-6 unit. Earlier versions of this report therefore counted **10 Lauraceae units instead of 8**, including a one-isolate unit (`Lauraceae leaves__Z5__S4`), and left some Lauraceae units out of the zone-6 comparison (E4).'),
+paste0('2. **Ficus trunk wood is numbered S11–S15**, not S9–S13. The rename keeps the trunk apart from canopy branches S9–S10, where only leaves were sampled. ', n_trunk_renamed,
+       ' zone-4 trunk isolates still carried the old label S10, which split zone 4 into two units. They now belong to S12, so the *Ficus* trunk has **exactly one sampling unit per zone** (S11 = zone 5 … S15 = zone 1).'),
+'',
+paste0('The corrected data have **', n_samples, ' sampling units** (previously 33), and every one of them now matches the sampling design. ',
+       if (length(fw_empty) > 0) paste0('The design has ', design_of("Ficus wood"), ' *Ficus* wood units, but no isolates are recorded for branch ', paste(fw_empty, collapse = ", "), ' wood, so ', n_units_of("Ficus wood"), ' of them contribute data.') else ''),
+'',
 '### Sampling design',
 '',
-'Samples were collected at different **tree zones** (heights), zone 1 lowest to zone 6 highest. On the *Ficus*, zones 1-5 are trunk and zone 6 is canopy branch. On the Lauraceae the trunk was inaccessible (assumption 3 above), so its zones 5 and 6 are both **exposed upper branch**, not trunk.',
+'Samples were collected at different **tree zones** (heights), zone 1 lowest to zone 6 highest. On the *Ficus*, zones 1-5 are trunk and zone 6 is canopy branch. The Lauraceae trunk was inaccessible (assumption 3 above), so all Lauraceae material comes from **exposed branches in zone 6**.',
 '',
 '| Substrate | Tree | Zones | Position | Sampling units |',
 '|-----------|------|:---:|---|:-:|',
-paste0('| Ficus leaves | Ficus (strangler) | 6 | Canopy branch | ', sub_units$n[sub_units$substrate == "Ficus leaves"], ' |'),
-paste0('| Ficus wood | Ficus (strangler) | 1-6 | Trunk (1-5) + branch (6) | ', sub_units$n[sub_units$substrate == "Ficus wood"], ' |'),
-paste0('| Lauraceae leaves | Lauraceae (host) | 5-6 | Exposed branch only | ', sub_units$n[sub_units$substrate == "Lauraceae leaves"], ' |'),
+paste0('| Ficus leaves | Ficus (strangler) | 6 | Canopy branch (S1-S10) | ', units_cell("Ficus leaves"), ' |'),
+paste0('| Ficus wood | Ficus (strangler) | 1-6 | Trunk, zones 1-5 (S11-S15) + branch, zone 6 (S1-S8) | ', units_cell("Ficus wood"), ' |'),
+paste0('| Lauraceae leaves | Lauraceae (host) | 6 | Exposed branch only (S1-S8) | ', units_cell("Lauraceae leaves"), ' |'),
 '',
-'Because the Lauraceae contributes no trunk material, every trunk-vs-branch contrast in this report is a **Ficus** contrast.',
+'Because the Lauraceae contributes no trunk material, every trunk-vs-branch contrast in this report is a **Ficus** contrast. And because each trunk zone is a single sampling unit, the zone analyses have **no replication within any trunk zone** (see Section E).',
 '',
 '#### Sampling orientation',
 '',
-'Each sampled branch (and, where recorded, trunk face) also carries a **compass orientation**. This information only became usable once the field team reconciled two independent labelling systems: the colour codes written down by the climbers in the field, and the branch numbering entered into the project database. The two disagreed (notably a blue/turquoise colour clash, where blue should have been reserved for the Lauraceae, and disputed collection zones for the Lauraceae branches), so earlier versions of `LOT2_samples.xlsx` had an empty orientation column.',
+'Each sampled branch (and, where recorded, trunk face) also carries a **compass orientation**. This information only became usable once the field team reconciled two independent labelling systems: the colour codes written down by the climbers in the field, and the branch numbering entered into the project database. The two disagreed (notably a blue/turquoise colour clash, where blue should have been reserved for the Lauraceae, and disputed collection zones for the Lauraceae branches, since settled as zone 6), so earlier versions of `LOT2_samples.xlsx` had an empty orientation column.',
 '',
 'The re-issued workbook settles that correspondence and adds it as a reconciled column, which the analyses in **Section F** use. Two clean-up rules are applied when reading it:',
 '',
@@ -402,8 +527,8 @@ paste0('This leaves **', n_orient_isolates, ' of ', nrow(samples_raw),
 '',
 'Many isolates cannot be confidently named at every taxonomic rank. Entries flagged `NA`, `"?"`, `"NO"` or `"incertae sedis"` are treated as **Incertae sedis** ("of uncertain placement") and are handled **rank by rank**:',
 '',
-'- They are **shown** — as a single pooled *Incertae sedis* category — **only in the abundance bar charts and the pie charts**, so that the full isolate count is never hidden.',
-'- They are **excluded from every diversity index, rank-/relative-abundance curve, Venn diagram and multivariate test**. A single large, shared "unknown" bin behaves like a taxon that is common everywhere: it inflates apparent overlap between substrates and **flattens the real ecological differences** we are trying to detect.',
+'- They are **shown** — as a single pooled *Incertae sedis* category — **in the abundance bar charts, the relative-abundance bars and the pie charts**, so that the full isolate count is never hidden. It is always drawn the same way: a neutral grey that no taxon uses, placed last (top of each stacked bar, last slice of each pie, top row of each bar chart), with its share of isolates printed on the chart.',
+'- They are **excluded from every diversity index, rank-abundance curve, Venn diagram and multivariate test**. A single large, shared "unknown" bin behaves like a taxon that is common everywhere: it inflates apparent overlap between substrates and **flattens the real ecological differences** we are trying to detect.',
 '- Because the exclusion is applied **independently at each rank**, an isolate that is unresolved at *species* level but has a defined *genus*, *family* or *order* still contributes to the analyses run at those higher ranks (see **Section D — Multi-level analyses**).',
 '',
 '> The sample-level multivariate analyses are run at **ITS-genotype** resolution, where each of the sequenced genotypes is a distinct entity. There is no dominant "unknown" bin at that level, so no isolates are dropped there; the *Incertae sedis* filtering matters only when isolates are grouped into higher taxa.',
@@ -427,13 +552,13 @@ paste0('Community analyses use **', unit_label, 's**, not the BLAST-derived name
 '|---|:-:|:-:|',
 paste0('| Taxa | ', n_labels, ' | ', n_otus, ' |'),
 paste0("| Good's coverage | 70% | **", cov_range, '** |'),
-paste0('| Sample pairs sharing no taxon | 59% | **', round(100 * num(results_substrate$prop_no_shared)), '%** |'),
+paste0('| Sample pairs sharing no taxon | ', if (nrow(ml_sub) > 0) round(100 * num(ml_sub$prop_no_shared[ml_sub$level == "its_taxon"])) else 'N/A', '% | **', round(100 * num(results_substrate$prop_no_shared)), '%** |'),
 '',
 '`cluster_otus.sh` regenerates the mapping (needs `vsearch`); it is deterministic and only needs re-running if the sequences change.',
 '',
 '### Input integrity checks',
 '',
-'`parse_LOT2.R` now refuses to analyse silently-inconsistent inputs. It drops spreadsheet **totals rows** (rows with neither a culture code nor a taxon name \u2014 one such row was previously read as a genotype and plotted as a giant *Incertae sedis* category), verifies that pooled and sample-level isolate totals agree, and checks that culture codes are unique, since a repeated code would mark subsamples of one colony that must be collapsed before abundances mean anything.',
+'`parse_LOT2.R` now refuses to analyse silently-inconsistent inputs. It drops spreadsheet **totals rows** (rows with neither a culture code nor a taxon name \u2014 one such row was previously read as a genotype and plotted as a giant *Incertae sedis* category), verifies that pooled and sample-level isolate totals agree, and checks that culture codes are unique, since a repeated code would mark subsamples of one colony that must be collapsed before abundances mean anything. Finally, it compares every sampling unit with the curator\'s sampling design: a mislabelled zone or unit does not raise an error, it silently becomes an extra "replicate", which is how the Lauraceae came to be counted as 10 units instead of 8.',
 '',
 '## Scripts',
 '',
@@ -579,7 +704,13 @@ if (nrow(alpha_pairwise_tbl) > 0) c(
 paste0('*Interpretation.* **Richness and Shannon differ significantly between substrates** (Holm-adjusted p = ',
        alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "richness_S"],
        ' and ', alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "shannon_H"],
-       '), driven by *Ficus* leaves being richer and more diverse than *Ficus* wood; the Lauraceae sits between them and is not separable from wood. **Evenness (Pielou J\') does not differ** (p = ',
+       '). *Ficus* leaves are the richest and most diverse, *Ficus* wood the poorest (Holm p = ',
+       alpha_pw_p("richness_S", "Ficus leaves", "Ficus wood"), ' for richness), and the Lauraceae sits between them. The Lauraceae separates from *Ficus* wood (richness p = ',
+       alpha_pw_p("richness_S", "Lauraceae leaves", "Ficus wood"), ', Shannon p = ',
+       alpha_pw_p("shannon_H", "Lauraceae leaves", "Ficus wood"), ') and only marginally from *Ficus* leaves (richness p = ',
+       alpha_pw_p("richness_S", "Lauraceae leaves", "Ficus leaves"), ', Shannon p = ',
+       alpha_pw_p("shannon_H", "Lauraceae leaves", "Ficus leaves"),
+       '). Before the sampling-unit corrections, two spurious one- and three-isolate Lauraceae units pulled its mean down and made it indistinguishable from wood. **Evenness (Pielou J\') does not differ** (p = ',
        alpha_tests_tbl$p_adj[alpha_tests_tbl$index == "pielou_J"],
        '): all three communities are similarly un-dominated, and the difference is in how many taxa are present, not how they are balanced. Because *Ficus* wood is also the least completely sampled substrate, part of its lower richness is sampling effort — the effect is real but its size should not be read off these means alone.'),
 '',
@@ -619,7 +750,7 @@ paste0('**Interpretation.** The richest community is **', top_by(alpha_its, "ric
 '',
 '## B. Community Composition',
 '',
-'These analyses describe **what the communities are made of** and **how much they overlap**, again after removing *Incertae sedis*.',
+'These analyses describe **what the communities are made of** and **how much they overlap**. The rank-abundance curves and Venn diagrams exclude *Incertae sedis*; the relative-abundance bars show it, so that each bar is the full isolate census.',
 '',
 '### B1. Rank-Abundance Curves',
 '',
@@ -631,13 +762,23 @@ paste0('**Interpretation.** The richest community is **', top_by(alpha_its, "ric
 '',
 '### B2. Relative Abundance',
 '',
-'**What it is.** Stacked bars show the **proportional composition** of each substrate at a given rank (each bar sums to 100%). They make it easy to see which phyla/genera dominate and how composition shifts between substrates.',
+'**What it is.** Stacked bars show the **proportional composition** of each substrate at a given rank. Each bar sums to 100% of **all** isolates: those that cannot be placed at that rank form the grey *Incertae sedis* segment on top, and its share is printed under each bar. They make it easy to see which phyla/genera dominate and how composition shifts between substrates.',
+'',
+if (nrow(incertae_tbl) > 0) c(
+  'Share of isolates that are *Incertae sedis* at each rank:',
+  '',
+  '| Rank | Lauraceae leaves | Ficus leaves | Ficus wood |',
+  '|------|:-:|:-:|:-:|',
+  apply(incertae_tbl, 1, function(r)
+    paste0('| ', r[1], ' | ', trimws(r[2]), '% | ', trimws(r[3]), '% | ', trimws(r[4]), '% |')),
+  ''
+) else character(0),
 '',
 '![Relative abundance by phylum](plots/png/rel_abundance_phylum.png)',
 '',
 '![Relative abundance by genus](plots/png/rel_abundance_genus.png)',
 '',
-'*Interpretation.* At phylum level the communities are overwhelmingly **Ascomycota**, as expected for culturable endophytes. The genus-level bars reveal the real contrast between substrates: the identity and proportion of dominant genera differ markedly between leaves and wood, foreshadowing the significant substrate effect quantified in the multivariate tests below.',
+paste0('*Interpretation.* At phylum level the communities are overwhelmingly **Ascomycota**, as expected for culturable endophytes, and almost every isolate is placed (', incertae_max('phylum'), '% or less unresolved). The unresolved share grows towards the finer ranks, reaching up to ', incertae_max('genus'), '% at genus and ', incertae_max('species'), '% at species level. The genus-level bars therefore name at least ', 100 - num(incertae_max('genus')), '% of each substrate\'s isolates, and they reveal the real contrast between substrates: the identity and proportion of dominant genera differ markedly between leaves and wood, foreshadowing the significant substrate effect quantified in the multivariate tests below.'),
 '',
 '### B3. Venn Diagrams \u2014 Shared Taxa',
 '',
@@ -668,7 +809,7 @@ paste0('These analyses ask **whether whole communities differ between groups** (
 '',
 '### An important caveat: why the ITS-level ordinations collapse onto a line',
 '',
-paste0('Several NMDS plots in this report show most samples squeezed onto a single near-vertical line with one point flung far away, next to a stress of ~0.0001. That is **not** an excellent fit and **not** a plotting bug — it is a known failure mode of NMDS, and it is worth understanding because it determines which figures can be read.'),
+paste0(if (length(degenerate_maps) > 0) paste0('Some NMDS plots in this report (', paste(degenerate_maps, collapse = '; '), ') show') else 'NMDS at genotype resolution can show', ' most samples squeezed onto a single near-vertical line with one point flung far away, next to a stress of ~0.0001. That is **not** an excellent fit and **not** a plotting bug — it is a known failure mode of NMDS, and it is worth understanding because it determines which figures can be read.'),
 '',
 paste0('**The cause.** At ITS-genotype resolution this dataset is dominated by rare taxa: **',
        sparse_singletons, '% of the ', n_taxa_comm,
@@ -677,7 +818,7 @@ paste0('**The cause.** At ITS-genotype resolution this dataset is dominated by r
 '',
 'NMDS fits an ordination by rank order, and by default (`monoMDS`, weak/primary ties) **tied dissimilarities are allowed to map to any distances at all**. With well over half of the pairs tied, the optimiser is therefore free to ignore most of the matrix: it only has to get the *ordering* of the minority of pairs that do share taxa right. It can do that almost perfectly in two dimensions — hence the near-zero stress — while pushing the unconstrained samples wherever is convenient. The collapsed line and the distant outlier are those unconstrained samples.',
 '',
-paste0('**The evidence.** Refitting the same dissimilarities with *strong* (secondary) ties, which force tied pairs to equal distances, gives the honest answer. At ITS level the stress jumps from **0.0001 to ',
+paste0('**The evidence.** Refitting the same dissimilarities with *strong* (secondary) ties, which force tied pairs to equal distances, gives the honest answer. At ITS level the stress rises from **', if (nrow(ml_sub) > 0) ml_sub$nmds_stress[ml_sub$level == "its_taxon"] else 'N/A', ' to ',
        if (nrow(ml_sub) > 0 && 'nmds_stress_strong' %in% names(ml_sub))
          ml_sub$nmds_stress_strong[ml_sub$level == "its_taxon"] else '0.25',
        '** — i.e. *unreliable* by the usual thresholds. At genus level the two figures agree closely (',
@@ -688,7 +829,14 @@ paste0('**The evidence.** Refitting the same dissimilarities with *strong* (seco
 '',
 'Two further points were checked and ruled out as explanations: `metaMDS` applied **no** data transformation here, and it did **not** fall back to extended (step-across) dissimilarities — the largest dissimilarity fed to the ordination is exactly 1. The analysis is doing what it says; the data simply cannot support a 2-D map at genotype resolution.',
 '',
-paste0('One sampling unit (`Lauraceae leaves__Z5__S4`, a single isolate) shares no genotype with *any* other unit, leaving the dissimilarity matrix formally **disconnected**. Dropping it and the other tiny units reconnects the matrix but does not rescue the ordination (the tie-aware stress only falls to about 0.21), so no samples are excluded on these grounds.'),
+if (conn_n == 1)
+  paste0('The dissimilarity matrix is nonetheless **connected**: every sampling unit is linked to the others through shared ', unit_label, 's, so any collapse comes from the ties alone, not from isolated samples. (Earlier versions of this report named a disconnected one-isolate unit, `Lauraceae leaves__Z5__S4`. That was true only for the name-based genotypes, and the unit itself was an artefact of the zone-labelling error. It is now part of branch S4.)')
+else
+  paste0('The dissimilarity matrix is formally **disconnected** into ', conn_n, ' components',
+         if (length(conn_isolated) > 0) paste0('. ', length(conn_isolated), ' sampling unit(s) (',
+           paste0('`', conn_isolated, '`', collapse = ", "), ') share no ', unit_label,
+           ' with *any* other unit') else '',
+         '. All units are kept: PERMANOVA and ANOSIM do not need a connected matrix.'),
 '',
 '**What to do with this:**',
 '',
@@ -719,7 +867,7 @@ paste0('**Stress = ', nmds_stress, '** ',
 '',
 '![NMDS with species overlay](plots/png/substrate_all_nmds_species.png)',
 '',
-'*Interpretation.* The three substrates form visually distinct clouds, with the two leaf substrates sitting closer to each other than to wood \u2014 consistent with tissue type (leaf vs wood) being a strong driver. The species overlay points to the genotypes pulling each substrate apart.',
+'*Interpretation.* The three substrates form visually distinct clouds, with the two leaf substrates sitting closer to each other than to wood \u2014 consistent with tissue type (leaf vs wood) being a strong driver (Section D1 confirms this at every taxonomic rank). The species overlay points to the genotypes pulling each substrate apart.',
 '',
 '### PERMANOVA',
 '',
@@ -734,7 +882,7 @@ paste0('**F = ', perm_F, ', R\u00b2 = ', perm_R2, ', p = ', perm_p, '** \u2014 t
 '',
 paste0('Sampling units differ about two-fold in how many isolates they yielded (*Ficus* wood units gave roughly half as many as leaf units), and depth on its own predicts composition. Re-fitting with depth as a covariate (marginal / type-III): **substrate R\u00b2 = ',
        adj_R2, ', p = ', adj_p, '; depth R\u00b2 = ', dep_R2, ', p = ', dep_p,
-       '**. The substrate effect therefore survives adjustment \u2014 it is not an artefact of unequal recovery \u2014 but depth contributes independently and both are reported. Details in `tables/substrate_all_permanova.txt`.'),
+       '**. The substrate effect therefore survives adjustment \u2014 it is not an artefact of unequal recovery', if (!is.na(num(dep_p)) && num(dep_p) < 0.05) ' \u2014 but depth contributes independently and both are reported.' else '. Once substrate is accounted for, depth adds nothing significant of its own.', ' Details in `tables/substrate_all_permanova.txt`.'),
 '',
 '### ANOSIM',
 '',
@@ -831,17 +979,32 @@ paste0('*Interpretation.* The substrate effect is ', if (ml_all_sig) '**signific
 '',
 '![NMDS at family level — substrates](plots/png/substrate_bylevel_family_nmds.png)',
 '',
+'#### Which substrates are most alike?',
+'',
+'The overall test says the three substrates differ; it does not say which two are most alike. That is a question about where each community sits, so it is answered with the distance between substrate centroids, repeated at every rank:',
+'',
+pw_rank_table,
+'',
+paste0('*Interpretation.* ', if (leaf_closest_everywhere)
+  'At every rank the two leaf substrates have the closest centroids: **tissue type (leaf vs wood) is the strongest split**, and the host contrast between the two leaf communities is the smaller one.'
+  else paste0('The two leaf substrates have the closest centroids at ', length(leaf_closest_ranks), ' of ', length(pw_ranks),
+              ' ranks', if (length(leaf_closest_ranks) > 0) paste0(' (', paste(leaf_closest_ranks, collapse = ', '), ')') else '',
+              '; at the others another pair is closer, so the tissue-type split is not consistent across ranks.'),
+       ' Pairwise PERMANOVA R\u00b2 (also in the table file) is not used to rank the pairs, because R\u00b2 falls when a group is internally heterogeneous, and *Ficus* wood units are far more heterogeneous than leaf units (PERMDISP, Section C1). That penalises every contrast involving wood regardless of how far apart the communities sit.'),
+'',
+'Full table: `tables/substrate_pairwise_multilevel.csv`.',
+'',
 '### D2. Ficus wood zones across ranks',
 '',
 ml_table(ml_zon),
 '',
-paste0('*Interpretation.* ', if (!zones_any_sig) 'At **no** taxonomic rank do Ficus-wood communities differ significantly among tree zones (all PERMANOVA p > 0.05). The vertical position of wood on the tree does **not** structure its fungal community detectably \u2014 the same conclusion reached at ITS level, now confirmed to be robust to taxonomic resolution.' else 'Some ranks show a zone effect; see the table.'),
+paste0('*Interpretation.* ', if (!zones_any_sig) 'At **no** taxonomic rank do Ficus-wood communities differ significantly among tree zones (all PERMANOVA p > 0.05). The result is the same at every taxonomic resolution. But each trunk zone is a single sampling unit (see E1), so this test has very little power: it rules out a large zone effect, not a small one.' else paste0('Zones differ significantly only at ', zones_sig_txt, '; at the other ranks p \u2265 ', zones_other_minp, '. A significant result at ', length(zones_sig_ranks), ' of ', nrow(ml_zon), ' ranks, with no correction across ranks and no replication within any trunk zone (see E1), is weak evidence of a height effect.')),
 '',
 '### D3. Substrate \u00d7 position across ranks',
 '',
 ml_table(ml_sp),
 '',
-'*Interpretation.* Combining substrate with trunk/branch position remains significant at every rank, and the effect size again peaks at intermediate ranks (class\u2013family). This mirrors the substrate result: the signal is carried by broad taxonomic groups, not just rare fine-scale genotypes.',
+paste0('*Interpretation.* Combining substrate with trunk/branch position remains significant at every rank, and the effect size again peaks at **', ml_sp_best, '** level. This mirrors the substrate result: the signal is carried by broad taxonomic groups, not just rare fine-scale genotypes.'),
 '',
 'Summary tables: `tables/substrate_multilevel_summary.csv`, `tables/ficus_wood_zones_multilevel_summary.csv`, `tables/substrate_x_position_multilevel_summary.csv`.',
 '',
@@ -855,9 +1018,11 @@ ml_table(ml_sp),
 '',
 'Community comparison of Ficus wood isolates collected at different tree zones (1\u20136).',
 '',
+paste0('**Replication.** ', if (fw_trunk_one_each) paste0('Each trunk zone (1–5) is a **single sampling unit** (S11–S15); only zone 6 is replicated (', fw_branch_units, ' branch units). A six-level zone factor therefore spends five degrees of freedom on five unreplicated trunk units, and its residual variation comes entirely from the zone-6 branches. This test cannot tell zones apart from units. It asks only whether the trunk units, taken one by one, depart from the spread among branches. **E2 is the replicated version of the height question.**') else 'Zone replication is uneven; see `tables/ficus_wood_zones_permanova.txt`.'),
+'',
 '![NMDS — Ficus wood zones](plots/png/ficus_wood_zones_nmds.png)',
 '',
-'*Interpretation.* Samples from different zones intermingle on the NMDS with no zone-wise grouping, indicating wood-inhabiting fungi are distributed largely independently of height. Full results: `tables/ficus_wood_zones_*.txt`.',
+'*Interpretation.* Samples from different zones intermingle on the NMDS with no zone-wise grouping. Given the replication above, that is consistent with height not mattering, but it is not evidence of it. Full results: `tables/ficus_wood_zones_*.txt`.',
 '',
 '### E2. Ficus Wood: Trunk (Zones 1-5) vs Branch (Zone 6)',
 '',
@@ -868,7 +1033,10 @@ paste0('**PERMANOVA: F = ', fw_tb_F, ', R\u00b2 = ', fw_tb_R2, ', p = ', fw_tb_p
 '',
 '### E4. Substrate Comparison at Zone 6 (Branch Level Only)',
 '',
-'**Why.** Restricting to zone 6 removes any confound between substrate and height, since all three substrates are present there.',
+paste0('**Why.** Restricting to zone 6 removes any confound between substrate and height, since all three substrates are present there. Now that every Lauraceae branch is correctly placed in zone 6, this comparison uses all ',
+       z6_units$n[z6_units$substrate == "Ficus leaves"], ' *Ficus* leaf units, all ',
+       z6_units$n[z6_units$substrate == "Lauraceae leaves"], ' Lauraceae units and the ',
+       z6_units$n[z6_units$substrate == "Ficus wood"], ' *Ficus* branch-wood units. It is the full dataset minus the *Ficus* trunk.'),
 '',
 paste0('**PERMANOVA: F = ', z6_perm_F, ', R\u00b2 = ', z6_perm_R2, ', p = ', z6_perm_p, '** \u2014 ', verdict(z6_perm_p),
        '. The substrate effect ', if (!is.na(num(z6_perm_p)) && num(z6_perm_p) < 0.05) 'persists even within a single zone, confirming it is driven by substrate itself and not by differences in sampling height.' else 'is weaker when height is held constant.'),
@@ -912,7 +1080,7 @@ if (nrow(ori_unres) > 0) c(
 '',
 '- Only **Ficus leaves** and **Ficus wood** were sampled on all four cardinal bearings. **Lauraceae leaves** were only ever collected from northern and north-western faces (plus two isolates from one eastern unit), so the Lauraceae cannot contribute to a full-compass comparison.',
 '- **Ficus trunk wood carries no orientation at all**, so this section is effectively a *branch*-level analysis.',
-paste0('- With ', n_orient_units, ' orientation-level units spread over 5 bearings, most groups hold **1-4 replicates**. Tests on a single substrate (7-11 units) have little power: a null result here means *no effect was detectable*, not *no effect exists*.'),
+paste0('- With ', n_orient_units, ' orientation-level units spread over 5 bearings, most groups hold **1-4 replicates**. Tests on a single substrate (', ori_sub_units, ' units) have little power: a null result here means *no effect was detectable*, not *no effect exists*.'),
 '',
 '### F2. Does orientation structure the community?',
 '',
@@ -937,9 +1105,15 @@ if (nrow(ori_sum) > 0) c(
 ) else character(0),
 paste0('**Orientation on its own: ', if (!is.null(ori_all)) paste0('F = ', ori_all$permanova_F, ', R² = ', ori_all$permanova_R2, ', p = ', ori_all$permanova_p) else 'N/A', '** — ',
        if (!is.null(ori_all)) verdict(ori_all$permanova_p) else 'could not be evaluated',
-       '. Within each substrate taken separately the result is the same: ',
-       if (!orient_any_sig) 'no substrate shows a significant orientation effect.' else 'see the table for which substrate drives the effect.',
-       ' ANOSIM agrees, and for Ficus leaves and Ficus wood the ANOSIM R is actually **negative** — meaning units from *different* bearings are, if anything, slightly more similar to each other than units from the *same* bearing. That is the signature of no orientation structure at all.'),
+       '. Within each substrate taken separately: ', ori_within_txt, '. ',
+       if (nrow(ori_nominal) == 0) 'No substrate shows a significant orientation effect, and ANOSIM agrees. '
+       else paste0('One result is nominally significant: **', ori_nominal_txt, '**. ',
+                   if (all(num(ori_nominal$p_holm) >= 0.05)) paste0('It does not survive correction for the ', nrow(ori_within), ' per-substrate tests. ') else '',
+                   if (nrow(laur_cov) > 0 && "Lauraceae leaves" %in% ori_nominal$substrate)
+                     paste0('It also rests on thin, lopsided sampling. The Lauraceae units are ', laur_cov_txt,
+                            ', so the test is essentially north vs north-west: two bearings 45° apart, both sun-facing. Treat it as a lead for targeted sampling, not a finding. ') else ''),
+       if (nrow(ori_within) > 0 && all(num(ori_within$anosim_R[startsWith(ori_within$substrate, "Ficus")]) <= 0, na.rm = TRUE))
+         'For both *Ficus* substrates the ANOSIM R is zero or negative: units from *different* bearings are no less similar than units from the *same* bearing, which is the signature of no orientation structure at all.' else ''),
 '',
 '![NMDS — orientation, all substrates](plots/png/orientation_all_nmds.png)',
 '',
@@ -988,13 +1162,16 @@ if (nrow(ori_circ) > 0) c(
            r['EW_axis_p'], ' | ', r['joint_R2'], ' | ', r['joint_p'], ' |')),
   ''
 ) else character(0),
-paste0('*Interpretation.* No joint directional gradient is significant. The one nominally significant single axis is the **north-south axis in Lauraceae leaves** (p = ',
-       if (nrow(ori_circ) > 0 && any(ori_circ$analysis == "Lauraceae leaves"))
-         ori_circ$NS_axis_p[ori_circ$analysis == "Lauraceae leaves"] else 'N/A',
-       '), and it should not be over-read: the Lauraceae span only N and NW (plus two eastern isolates), so the "north-south axis" is fitted over a ~45° arc rather than a full compass, the joint test for the same substrate is non-significant (p = ',
-       if (nrow(ori_circ) > 0 && any(ori_circ$analysis == "Lauraceae leaves"))
-         ori_circ$joint_p[ori_circ$analysis == "Lauraceae leaves"] else 'N/A',
-       '), and it is one nominal result among eight axis tests with no correction applied.'),
+paste0('*Interpretation.* ',
+       if (length(circ_hits) == 0) 'No axis and no joint directional gradient is significant.'
+       else paste0('The only nominally significant result', if (length(circ_hits) > 1) 's are the ' else ' is the ',
+                   paste(circ_hits, collapse = '; '), ', out of ', 3 * nrow(ori_circ), ' uncorrected tests in this table.'),
+       ' The Lauraceae need a specific warning. They span only N and NW plus a single eastern unit, so any "gradient" is fitted over a ~45° arc plus one point',
+       if (any(ori_circ$analysis == "Lauraceae leaves") &&
+           num(ori_circ$n_orientations[ori_circ$analysis == "Lauraceae leaves"]) == 3)
+         paste0('. With exactly three bearings, the 2-df joint test is mathematically the same test as the three-group PERMANOVA in F2 (R² = ',
+                ori_circ$joint_R2[ori_circ$analysis == "Lauraceae leaves"],
+                ' in both), so it is not independent confirmation.') else '.'),
 '',
 '### F5. Diversity per orientation',
 '',
@@ -1062,27 +1239,27 @@ paste0('*Interpretation.* ',
 '',
 '### F8. What this section concludes',
 '',
-paste0('**Sampling orientation does not detectably structure the LOT2 endophyte communities.** It is non-significant pooled, within each substrate, at every taxonomic rank, as a coarse sun-exposure grouping, and as a smooth directional gradient. The two significant pooled results both dissolve once substrate is accounted for (orientation adjusted for substrate: R² = ',
+paste0('**Sampling orientation does not detectably structure the LOT2 endophyte communities.** It is non-significant pooled, ', if (nrow(ori_nominal) == 0) 'within each substrate, ' else '', 'at every taxonomic rank, as a coarse sun-exposure grouping, and as a smooth directional gradient pooled across substrates.', ori_exception_txt, ' The two significant pooled results both dissolve once substrate is accounted for (orientation adjusted for substrate: R² = ',
        part_ori$R2, ', p = ', part_ori$p, '; sun aspect adjusted for substrate: R² = ',
        part_asp$R2, ', p = ', part_asp$p, ').'),
 '',
-'**How firm is that?** Firm enough to report, but it is a negative result from an unbalanced observational factor with 1-4 replicates per group. It rules out an orientation effect of the size seen for substrate (R² ≈ 0.19); it does not rule out a small one. Making that test properly would need balanced sampling of all four bearings within each substrate — worth specifying in advance if a future campaign wants to answer this question rather than check it.',
+paste0('**How firm is that?** Firm enough to report, but it is a negative result from an unbalanced observational factor with 1-4 replicates per group. It rules out an orientation effect of the size seen for substrate (R² ≈ ', round(num(perm_R2), 2), '); it does not rule out a small one. Making that test properly would need balanced sampling of all four bearings within each substrate — worth specifying in advance if a future campaign wants to answer this question rather than check it.'),
 '',
 '---',
 '',
 '## Abundance & Composition Plots (Incertae sedis retained)',
 '',
-'Unlike every analysis above, the plots below **keep the *Incertae sedis* isolates** (as an explicit pooled category), so they present the complete isolate census without hiding unidentified material.',
+'Like the relative-abundance bars in B2, the plots below **keep the *Incertae sedis* isolates** as an explicit pooled category, so they present the complete isolate census without hiding unidentified material. The category is grey and placed last on every chart, with its share of each substrate printed on the chart.',
 '',
 '### `plots/abundance_pooled_incertae_sedis/`',
 '',
-'Horizontal grouped bar charts of **absolute isolate counts** per taxon, split by substrate, with unresolved taxa collected into an *Incertae sedis* bar.',
+'Horizontal grouped bar charts of **absolute isolate counts** per taxon, split by substrate. Unresolved taxa are collected into an *Incertae sedis* row, pinned to the top on a grey band, with each bar labelled by its count and share of that substrate\'s isolates.',
 '',
 '![Abundance by genus (pooled)](plots/png/abundance_by_genus.png)',
 '',
 '### `plots/pie_charts/`',
 '',
-'Proportional composition of each substrate; the *Incertae sedis* slice shows how much of each community remains unidentified at that rank.',
+'Proportional composition of each substrate; the grey *Incertae sedis* slice shows how much of each community remains unidentified at that rank, and its share is given under each pie\'s title.',
 '',
 '![Pie chart by phylum](plots/png/pie_by_phylum.png)',
 '',
@@ -1093,13 +1270,13 @@ paste0('**Sampling orientation does not detectably structure the LOT2 endophyte 
 '# Conclusion',
 '',
 paste0('1. **Substrate is the primary driver of community structure.** The three substrates host significantly different fungal communities (PERMANOVA p = ', perm_p, ', R\u00b2 \u2248 ', round(num(perm_R2), 2),
-       '), and this holds at **every taxonomic rank** \u2014 the effect is in fact strongest around **', ml_best_rank, ' level** (R\u00b2 \u2248 ', round(ml_best_R2, 2), '). The two leaf substrates are more similar to each other than to wood, i.e. **tissue type (leaf vs wood)** is the strongest split, with **host identity (Ficus vs Lauraceae leaves)** adding a secondary but significant effect (p = ', leaves_perm_p, ').'),
-paste0('2. **Tree height has at most a weak effect.** Treated as six discrete zones, height does **not** structure Ficus-wood communities at any taxonomic rank (Section D2, all p > 0.05). When the wood is instead split simply into **trunk vs branch**, a modest but ', verdict(fw_tb_p), ' difference emerges (p = ', fw_tb_p, ', R\u00b2 \u2248 ', round(num(fw_tb_R2), 2), '): branch wood carries a somewhat distinct community from trunk wood, but this coarse contrast explains far less variation than substrate does.'),
+       '), and this holds at **every taxonomic rank** \u2014 the effect is in fact strongest around **', ml_best_rank, ' level** (R\u00b2 \u2248 ', round(ml_best_R2, 2), '). The two leaf substrates are more similar to each other than to wood at every rank (Section D1), i.e. **tissue type (leaf vs wood)** is the strongest split, with **host identity (Ficus vs Lauraceae leaves)** adding a secondary but significant effect (p = ', leaves_perm_p, ').'),
+paste0('2. **Tree height has at most a weak effect.** Treated as six discrete zones, height ', if (!zones_any_sig) 'does **not** structure Ficus-wood communities at any taxonomic rank (Section D2, all p > 0.05)' else paste0('structures Ficus-wood communities only at ', zones_sig_txt, ' and at no other rank (Section D2)'), '; with a single sampling unit per trunk zone, that test has little power. When the wood is instead split simply into **trunk vs branch**, a modest but ', verdict(fw_tb_p), ' difference emerges (p = ', fw_tb_p, ', R\u00b2 \u2248 ', round(num(fw_tb_R2), 2), '): branch wood carries a somewhat distinct community from trunk wood, but this coarse contrast explains far less variation than substrate does.'),
 paste0('3. **The substrate signal is real, not a sampling-height artefact.** Even when the comparison is restricted to zone 6 alone (where all substrates co-occur), substrates remain ', verdict(z6_perm_p), ' (p = ', z6_perm_p, ').'),
 paste0('4. **Which side of the tree the material came from does not matter.** Now that the field branch codes have been reconciled with the project database, sampling orientation could be tested for the first time (Section F, ',
        n_orient_isolates, ' of ', nrow(samples_raw), ' isolates). It is non-significant pooled (p = ',
        if (!is.null(ori_all)) ori_all$permanova_p else 'N/A',
-       '), within every substrate, at every taxonomic rank, as a sun-exposure grouping and as a smooth directional gradient. The two pooled contrasts that do come out significant — *substrate x orientation* and *sun aspect* — both vanish once substrate is accounted for (orientation adjusted for substrate: R² = ',
+       '), ', if (nrow(ori_nominal) == 0) 'within every substrate, ' else '', 'at every taxonomic rank, as a sun-exposure grouping and as a smooth directional gradient.', ori_exception_txt, ' The two pooled contrasts that do come out significant — *substrate x orientation* and *sun aspect* — both vanish once substrate is accounted for (orientation adjusted for substrate: R² = ',
        part_ori$R2, ', p = ', part_ori$p, '), because the Lauraceae happened to be sampled almost entirely on north-facing branches. This is a **negative result from an unbalanced observational factor with 1-4 replicates per bearing**: it rules out an orientation effect as large as the substrate effect, not a small one.'),
 paste0('5. **The communities are richer than they look, and only partly sampled.** Only ',
        min(completeness_tbl$pct_of_chao1), '-', max(completeness_tbl$pct_of_chao1),
@@ -1113,7 +1290,7 @@ paste0('5. **The communities are richer than they look, and only partly sampled.
 paste0('6. **Indicator taxa survive correction only because of OTU clustering.** ',
        nrow(indval), ' of ', n_ind_tested,
        ' OTUs qualify as substrate indicators at FDR q \u2264 0.05. Run on the raw BLAST name labels the same analysis yields **none** \u2014 the extra tests and the split singletons destroy the signal. Uncorrected IndVal output should never be reported.'),
-paste0('7. **Removing *Incertae sedis* sharpened the picture.** Excluding the pooled "unknown" bin from the diversity, overlap and multivariate analyses (while keeping it visible in the abundance/pie plots) increased, rather than decreased, the measured separation between substrates \u2014 confirming that the unidentified fraction had been masking genuine differences.'),
+paste0('7. **Removing *Incertae sedis* sharpened the picture.** Excluding the pooled "unknown" bin from the diversity, overlap and multivariate analyses (while keeping it visible in the abundance, relative-abundance and pie charts) increased, rather than decreased, the measured separation between substrates \u2014 confirming that the unidentified fraction had been masking genuine differences.'),
 '',
 '---',
 '',

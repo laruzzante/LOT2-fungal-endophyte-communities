@@ -1,10 +1,10 @@
 "analysis","n_units","n_groups","permanova_F","permanova_R2","permanova_p","anosim_R","anosim_p","betadisper_p","n_indicators"
-"Orientation - all substrates",27,5,1.1792,0.1765,0.155,0.0729,0.107,0.669,0
+"Orientation - all substrates",25,5,1.278,0.2036,0.073,0.0472,0.218,0.105,0
 "Orientation - Ficus leaves",9,4,1.2002,0.4186,0.154,0,0.485,NA,0
 "Orientation - Ficus wood",7,4,0.8327,0.4544,0.839,-0.2593,0.854,NA,0
-"Orientation - Lauraceae leaves",11,3,1.7181,0.3005,0.066,0.1793,0.187,NA,0
-"Substrate x orientation",27,11,1.8273,0.5332,0.001,0.4064,0.001,NA,0
-"Sun aspect - all substrates",27,3,1.6106,0.1183,0.02,0.1432,0.044,0.3,0
+"Orientation - Lauraceae leaves",9,3,2.6648,0.4704,0.048,0.3993,0.039,NA,0
+"Substrate x orientation",25,11,2.1595,0.6067,0.001,0.6098,0.001,NA,0
+"Sun aspect - all substrates",25,3,1.8643,0.1449,0.007,0.1705,0.016,0.068,0
 "Sun aspect - Ficus leaves",9,3,1.2741,0.2981,0.122,-0.1181,0.639,NA,NA
 "Sun aspect - Ficus wood",7,3,0.9982,0.3329,0.462,0.1122,0.365,NA,NA
-"Sun aspect - Lauraceae leaves",11,2,2.2283,0.1985,0.175,0.7156,0.095,NA,NA
+"Sun aspect - Lauraceae leaves",9,2,4.1375,0.3715,0.126,1,0.126,NA,NA

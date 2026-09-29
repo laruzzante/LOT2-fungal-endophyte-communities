@@ -248,6 +248,25 @@ cat("Saved: rank-abundance curves\n")
 # ============================================================
 cat("\n====== B2. Relative abundance stacked bars ======\n")
 
+# Unlike the tests, these bars keep Incertae sedis: a composition chart
+# that silently drops the unresolved isolates overstates every named
+# taxon. It is drawn in a grey no taxon uses, stacked on top, and its
+# share is printed under each bar.
+incertae_colour <- "#BDBDBD"
+
+# Share of isolates unresolved at each rank (pooled taxonomy)
+incertae_share <- bind_rows(lapply(c(tax_hierarchy, "its_taxon"), function(lv) {
+  u <- dat_agg[[lv]] == incertae_label
+  data.frame(rank = lv,
+             `Lauraceae leaves` = round(100 * sum(dat_agg$n_fungi_laur_leaf[u]) / sum(dat_agg$n_fungi_laur_leaf), 1),
+             `Ficus leaves`     = round(100 * sum(dat_agg$n_fungi_fic_leaf[u])  / sum(dat_agg$n_fungi_fic_leaf), 1),
+             `Ficus wood`       = round(100 * sum(dat_agg$n_fungi_fic_wood[u])  / sum(dat_agg$n_fungi_fic_wood), 1),
+             check.names = FALSE)
+}))
+write.csv(incertae_share, "tables/incertae_sedis_share.csv", row.names = FALSE)
+cat("Share of isolates that are Incertae sedis at each rank (%):\n")
+print(incertae_share)
+
 for (level in c("phylum", "class", "order", "family", "genus")) {
   idx <- which(tax_hierarchy == level)
   agg <- dat_agg %>%
@@ -256,9 +275,6 @@ for (level in c("phylum", "class", "order", "family", "genus")) {
               Ficus_leaves     = sum(n_fungi_fic_leaf),
               Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop") %>%
     mutate(label = .data[[level]])
-
-  # Exclude the pooled Incertae sedis node at this rank
-  agg <- agg[agg$label != incertae_label, , drop = FALSE]
 
   plot_data <- agg %>%
     select(label, Lauraceae_leaves, Ficus_leaves, Ficus_wood) %>%
@@ -271,34 +287,52 @@ for (level in c("phylum", "class", "order", "family", "genus")) {
     ungroup()
 
   tax_order <- plot_data %>%
+    filter(label != incertae_label) %>%
     group_by(label) %>% summarise(tot = sum(count), .groups = "drop") %>%
     arrange(desc(tot)) %>% pull(label)
-  plot_data$label <- factor(plot_data$label, levels = rev(tax_order))
+  # The first level stacks on top: Incertae sedis, then the rarest taxa,
+  # down to the most abundant taxon at the baseline
+  has_incertae <- any(plot_data$label == incertae_label)
+  plot_data$label <- factor(plot_data$label,
+                            levels = c(if (has_incertae) incertae_label, rev(tax_order)))
 
   n <- length(tax_order)
+  # No greys: grey is reserved for Incertae sedis
   pal <- if (n <= 12) {
     scales::hue_pal()(n)
   } else {
     colorRampPalette(c(
       "#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#A65628",
-      "#F781BF","#999999","#66C2A5","#FC8D62","#8DA0CB","#E78AC3",
+      "#F781BF","#66C2A5","#FC8D62","#8DA0CB","#E78AC3",
       "#A6D854","#FFD92F","#1B9E77","#D95F02","#7570B3","#E7298A"
     ))(n)
   }
 
+  incertae_pct <- plot_data %>%
+    group_by(substrate) %>%
+    summarise(pct = 100 * sum(rel[label == incertae_label]), .groups = "drop")
+  x_labels <- setNames(paste0(incertae_pct$substrate, "\n", incertae_label, ": ",
+                              sprintf("%.1f", incertae_pct$pct), "%"),
+                       incertae_pct$substrate)
+
   p <- ggplot(plot_data,
               aes(x = substrate, y = rel, fill = label)) +
     geom_col(width = 0.7, colour = "white", linewidth = 0.2) +
-    scale_fill_manual(values = setNames(pal, tax_order), name = level) +
+    scale_fill_manual(values = c(setNames(pal, tax_order),
+                                 setNames(incertae_colour, incertae_label)),
+                      name = level) +
+    scale_x_discrete(labels = x_labels) +
     scale_y_continuous(labels = scales::percent) +
     labs(title = paste("Relative abundance by", level),
+         subtitle = paste0("Share of all isolates. Grey (top) = ", incertae_label,
+                           ", unresolved at this rank"),
          x = NULL, y = "Relative abundance") +
     theme_minimal(base_size = 12) +
     theme(plot.title = element_text(face = "bold"), legend.position = "right")
 
   ggsave(file.path("plots/community",
                     paste0("rel_abundance_", level, ".pdf")),
-         plot = p, width = 10, height = 7)
+         plot = p, width = 12, height = 7)
 }
 cat("Saved: relative abundance stacked bar plots\n")
 
@@ -1041,6 +1075,50 @@ sweep_substrate <- run_level_sweep(
   substrate_colours_3, plot_prefix = "substrate_bylevel")
 write.csv(sweep_substrate, "tables/substrate_multilevel_summary.csv", row.names = FALSE)
 print(sweep_substrate)
+
+# ---- D1b. Which substrates are closest, rank by rank ----
+# The tissue-type reading ("the two leaf substrates resemble each other
+# more than either resembles wood") is a statement about WHERE the
+# communities sit, so it is judged by the distance between substrate
+# centroids in Bray-Curtis (PCoA) space. Pairwise PERMANOVA R2 is kept
+# alongside but is not a distance: it also falls when a group is
+# internally heterogeneous, and Ficus wood is far more heterogeneous
+# than either leaf substrate.
+cat("\n--- D1b. Pairwise substrate contrasts across taxonomic ranks ---\n")
+centroid_distance_fn <- function(cm, grp) {
+  bd  <- betadisper(vegdist(cm, "bray"), grp, type = "centroid")
+  pos <- bd$eig > 0
+  # axes with negative eigenvalues subtract, as in betadisper's own distances
+  function(a, b) {
+    d <- bd$centroids[a, ] - bd$centroids[b, ]
+    sqrt(max(sum(d[pos]^2) - sum(d[!pos]^2), 0))
+  }
+}
+substrate_pairs <- combn(sort(unique(meta_full$substrate)), 2, simplify = FALSE)
+pairwise_by_rank <- list()
+for (lv in lineage_levels) {
+  cm <- build_comm_matrix_level(samples_lineage, lv)
+  if (is.null(cm)) next
+  cm <- cm[rowSums(cm) > 0, , drop = FALSE]
+  grp <- meta_full$substrate[match(rownames(cm), meta_full$sample_id)]
+  cdist <- centroid_distance_fn(cm, factor(grp))
+  for (pr in substrate_pairs) {
+    sel <- grp %in% pr
+    set.seed(42)
+    pw <- tryCatch(
+      adonis2(cm[sel, , drop = FALSE] ~ grp, data = data.frame(grp = grp[sel]),
+              method = "bray", permutations = 999),
+      error = function(e) NULL)
+    pairwise_by_rank[[length(pairwise_by_rank) + 1]] <- data.frame(
+      level = lv, pair = paste(pr, collapse = " vs "),
+      centroid_distance = round(cdist(pr[1], pr[2]), 4),
+      R2      = if (is.null(pw)) NA_real_ else round(pw$R2[1], 4),
+      p_value = if (is.null(pw)) NA_real_ else pw$`Pr(>F)`[1])
+  }
+}
+pairwise_by_rank <- bind_rows(pairwise_by_rank)
+write.csv(pairwise_by_rank, "tables/substrate_pairwise_multilevel.csv", row.names = FALSE)
+print(pairwise_by_rank)
 
 cat("\n--- D2. Ficus wood zones across taxonomic ranks ---\n")
 sweep_zones <- run_level_sweep(

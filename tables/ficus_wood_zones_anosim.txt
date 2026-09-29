@@ -1,32 +1,32 @@
 ANOSIM — Bray-Curtis distance
 Permutations: 999
 
-R statistic: -0.1769 
-p-value: 0.79 
+R statistic: -0.2317 
+p-value: 0.834 
 
 
 Call:
 anosim(x = comm_mat, grouping = groups, permutations = 999, distance = "bray") 
 Dissimilarity: bray 
 
-ANOSIM statistic R: -0.1769 
-      Significance: 0.79 
+ANOSIM statistic R: -0.2317 
+      Significance: 0.834 
 
 Permutation: free
 Number of permutations: 999
 
 Upper quantiles of permutations (null model):
   90%   95% 97.5%   99% 
-0.286 0.362 0.433 0.524 
+0.317 0.435 0.496 0.565 
 
 Dissimilarity ranks between and within classes:
-          0%   25%   50%  75% 100%  N
-Between  1.0 18.75 36.75 65.5 65.5 56
-1         NA    NA    NA   NA   NA  0
-2         NA    NA    NA   NA   NA  0
-3         NA    NA    NA   NA   NA  0
-4       65.5 65.50 65.50 65.5 65.5  1
-5         NA    NA    NA   NA   NA  0
-6        5.0 25.00 43.00 65.5 65.5 21
+        0% 25%  50%  75% 100%  N
+Between  1  16 31.0 45.5   57 45
+1       NA  NA   NA   NA   NA  0
+2       NA  NA   NA   NA   NA  0
+3       NA  NA   NA   NA   NA  0
+4       NA  NA   NA   NA   NA  0
+5       NA  NA   NA   NA   NA  0
+6        5  24 37.5 57.0   57 21
 
 NULL

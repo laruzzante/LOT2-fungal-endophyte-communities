@@ -6,13 +6,15 @@
  Significance level (alpha): 0.05
 
  Total number of species: 64
- Selected number of species: 1 
- Number of species associated to 1 group: 1 
+ Selected number of species: 3 
+ Number of species associated to 1 group: 3 
 
  List of species associated to each combination: 
 
- Group Trunk  #sps.  1 
-             A      B  stat p.value  
-OTU_103 0.9476 0.8333 0.889   0.028 *
+ Group Trunk  #sps.  3 
+             A      B  stat p.value   
+OTU_103 0.9559 1.0000 0.978   0.005 **
+OTU_106 0.8077 1.0000 0.899   0.017 * 
+OTU_082 0.9074 0.8000 0.852   0.028 * 
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 

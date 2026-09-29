@@ -52,6 +52,34 @@ names(samples_raw) <- c("substrate", "zone", "unit",
 # Drop any fully empty trailing rows
 samples_raw <- samples_raw[!is.na(samples_raw$substrate), ]
 
+# --- Sampling-unit corrections from the data curator ----------
+# Two labelling errors in the workbook, both confirmed by the data
+# curator with the field team (LoT). They are corrected here, by rule,
+# so the delivered workbook stays untouched and each correction becomes
+# a no-op once a fixed workbook is issued.
+#
+# 1. Every Lauraceae branch was collected in ZONE 6. Some rows carry
+#    zone 5 (all of S7, most of S8, one S4 isolate), copied from a field
+#    file that later proved wrong. A sampling unit is substrate x zone x
+#    unit, so this split S4 and S8 in two and turned the 8 Lauraceae
+#    branches (S1-S8) into 10 units.
+# 2. Ficus trunk wood is numbered S11-S15 (zone 5 down to zone 1). It was
+#    renamed from S9-S13 so that it cannot be mistaken for the wood of
+#    canopy branches S9/S10, whose leaves only were sampled. The rename
+#    missed 3 zone-4 isolates still labelled S10. One trunk unit was
+#    taken per zone, so the unit is re-derived from the zone.
+n_laur_rezoned <- sum(samples_raw$substrate == "Lauraceae" &
+                        samples_raw$zone != 6, na.rm = TRUE)
+samples_raw$zone[samples_raw$substrate == "Lauraceae"] <- 6
+
+is_trunk_wood   <- samples_raw$substrate == "Ficus wood" & samples_raw$zone %in% 1:5
+trunk_unit      <- paste0("S", 16 - samples_raw$zone)
+n_trunk_renamed <- sum(is_trunk_wood & trimws(samples_raw$unit) != trunk_unit)
+samples_raw$unit[is_trunk_wood] <- trunk_unit[is_trunk_wood]
+
+cat("Curator corrections:", n_laur_rezoned, "Lauraceae isolates moved to zone 6;",
+    n_trunk_renamed, "Ficus trunk isolates relabelled to S11-S15\n")
+
 # --- Orientation cleaning -------------------------------------
 # Field sheets carry a replicate index on some bearings (N1..N4,
 # NW1..NW4): the digit identifies the branch, not the direction, and
@@ -85,11 +113,11 @@ samples_raw <- samples_raw %>%
     # "these two individuals", not "these two species" (see README).
     tree_id = ifelse(substrate == "Lauraceae leaves",
                      "Lauraceae (host tree)", "Ficus (strangler)"),
-    # Zone-to-position is NOT the same rule for both trees. The
-    # Lauraceae trunk was inaccessible - entirely encased by the
+    # The Lauraceae trunk was inaccessible - entirely encased by the
     # strangling Ficus - so ALL Lauraceae material came from exposed
-    # upper branches, including the zone-5 units. Applying the Ficus
-    # rule (zone <= 5 = trunk) to it mislabels 3 units / 53 isolates.
+    # branches. Stated explicitly rather than left to the Ficus rule
+    # (zone <= 5 = trunk), which only happens to agree now that every
+    # Lauraceae unit is recorded in zone 6.
     position = case_when(
       substrate == "Lauraceae leaves" ~ "Branch",
       zone <= 5                       ~ "Trunk",
@@ -149,6 +177,27 @@ if (file.exists(otu_map_file)) {
 depth_by_unit <- samples_raw %>% count(sample_id, name = "unit_depth")
 samples_raw <- samples_raw %>% left_join(depth_by_unit, by = "sample_id")
 
+# --- Sampling design -----------------------------------------
+# The units that were actually collected, as specified by the data
+# curator. Units are compared against this list because a mislabelled
+# zone or unit does not fail - it silently becomes an extra "replicate"
+# (which is how the Lauraceae ended up with 10 units instead of 8).
+sampling_design <- bind_rows(
+  data.frame(substrate = "Ficus leaves",     zone = 6L,  unit = paste0("S", 1:10)),
+  data.frame(substrate = "Ficus wood",       zone = 6L,  unit = paste0("S", 1:8)),
+  data.frame(substrate = "Ficus wood",       zone = 5:1, unit = paste0("S", 11:15)),
+  data.frame(substrate = "Lauraceae leaves", zone = 6L,  unit = paste0("S", 1:8))
+) %>%
+  mutate(sample_id = paste(substrate, paste0("Z", zone), unit, sep = "__"))
+
+units_off_design   <- setdiff(unique(samples_raw$sample_id), sampling_design$sample_id)
+units_no_isolates  <- setdiff(sampling_design$sample_id, unique(samples_raw$sample_id))
+design_units <- sampling_design %>%
+  group_by(substrate) %>%
+  summarise(n_design  = n(),
+            n_with_isolates = sum(sample_id %in% samples_raw$sample_id),
+            .groups = "drop")
+
 # --- Cross-file integrity checks -----------------------------
 # The two workbooks are maintained separately and have drifted before
 # (a totals row read as a taxon, genotype names spelled two ways).
@@ -181,6 +230,17 @@ check_inputs <- function() {
     cat("Integrity check:", n_codes, "distinct culture codes for",
         nrow(samples_raw), "isolates - no colony subsampling to collapse\n")
   }
+
+  if (length(units_off_design) > 0) {
+    warning(length(units_off_design), " sampling unit(s) are not in the sampling design ",
+            "(mislabelled zone or unit?): ", paste(units_off_design, collapse = ", "))
+  } else {
+    cat("Integrity check: all", n_distinct(samples_raw$sample_id),
+        "sampling units match the sampling design\n")
+  }
+  if (length(units_no_isolates) > 0)
+    cat("Note: no isolates recorded for designed unit(s):",
+        paste(units_no_isolates, collapse = ", "), "\n")
 
   unmatched <- setdiff(unique(samples_raw$its_taxon), unique(pooled$its_taxon))
   if (length(unmatched) > 0)

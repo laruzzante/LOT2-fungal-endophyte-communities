@@ -74,27 +74,58 @@ for (level in levels_to_plot) {
                               levels = c("Lauraceae_leaves", "Ficus_leaves", "Ficus_wood"),
                               labels = c("Lauraceae leaves", "Ficus leaves", "Ficus wood")))
 
+  # Identified taxa ranked by abundance; Incertae sedis pinned to the top
+  # row (last level under coord_flip) so it is never lost in the ranking
   label_order <- plot_data %>%
     group_by(label) %>%
     summarise(total = sum(count), .groups = "drop") %>%
     arrange(total) %>%
     pull(label)
+  has_incertae <- incertae_label %in% label_order
+  label_order <- c(setdiff(label_order, incertae_label),
+                   if (has_incertae) incertae_label)
   plot_data$label <- factor(plot_data$label, levels = label_order)
+
+  # Unresolved share of each substrate's isolates
+  plot_data <- plot_data %>%
+    group_by(substrate) %>%
+    mutate(pct = 100 * count / sum(count)) %>%
+    ungroup()
+  # The dodged bars are too thin to carry readable value labels, so the
+  # per-substrate shares go in the subtitle, which is always legible
+  incertae_rows <- plot_data %>% filter(label == incertae_label)
+  subtitle <- if (has_incertae)
+    paste0(incertae_label, " (grey band, top row) = unknown or unresolved at this rank.\n",
+           "Share of isolates: ",
+           paste0(incertae_rows$substrate, " ", sprintf("%.1f", incertae_rows$pct), "%",
+                  " (", incertae_rows$count, ")", collapse = ", "))
+  else paste0("No isolates are ", incertae_label, " at this rank")
 
   n_labels <- length(label_order)
   plot_h <- max(6, n_labels * 0.25 + 2)
   x_size <- if (n_labels > 80) 4 else if (n_labels > 40) 6 else 8
+  y_max  <- max(plot_data$count)
 
-  p <- ggplot(plot_data, aes(x = label, y = count, fill = substrate)) +
+  p <- ggplot(plot_data, aes(x = label, y = count, fill = substrate))
+  if (has_incertae)
+    p <- p + geom_col(data = data.frame(label = factor(incertae_label, levels = label_order),
+                                        y = y_max * 1.05),
+                      aes(x = label, y = y), inherit.aes = FALSE,
+                      width = 1, fill = "#EEEEEE")
+  p <- p +
     geom_col(position = position_dodge(width = 0.8), width = 0.7) +
     scale_fill_manual(values = substrate_colours) +
+    # explicit limits: the band layer would otherwise reorder the axis
+    scale_x_discrete(limits = label_order) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0))) +
     coord_flip() +
     labs(title = paste("Fungal isolate abundance by", level),
-         subtitle = "Unknown/missing taxa pooled as Incertae sedis",
+         subtitle = subtitle,
          x = NULL, y = "Number of isolates", fill = "Substrate") +
     theme_minimal(base_size = 12) +
     theme(axis.text.y  = element_text(size = x_size),
           legend.position = "top",
+          plot.title.position = "plot",
           plot.title  = element_text(face = "bold"))
 
   ggsave(file.path(outdir, paste0("abundance_by_", level, ".pdf")),

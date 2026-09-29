@@ -12,8 +12,8 @@ Number of permutations: 999
 
 Response: Distances
           Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)   
-Groups    10 0.57320 0.057320 3.9519    999  0.007 **
-Residuals 16 0.23207 0.014505                        
+Groups    10 0.43831 0.043831 7.5228    999  0.004 **
+Residuals 14 0.08157 0.005826                        
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -29,4 +29,4 @@ Ficus wood - S               Ficus wood - S 2    0.5000
 Ficus wood - W               Ficus wood - W 2    0.5000
 Lauraceae leaves - E   Lauraceae leaves - E 1    0.0000
 Lauraceae leaves - N   Lauraceae leaves - N 4    0.3153
-Lauraceae leaves - NW Lauraceae leaves - NW 6    0.5128
+Lauraceae leaves - NW Lauraceae leaves - NW 4    0.3541

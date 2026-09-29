@@ -6,6 +6,10 @@ tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
 
 uncertain_values <- c("?", "NO", "incertae sedis")
 incertae_label   <- "Incertae sedis"
+# Unresolved isolates are drawn in a neutral grey that no taxon uses,
+# as the last slice, and their share is printed in each pie's title:
+# a thin slice cannot carry a label, but the share must stay readable.
+incertae_colour  <- "#BDBDBD"
 
 dat_pie <- pooled %>%
   mutate(across(all_of(tax_hierarchy),
@@ -26,18 +30,19 @@ make_unique_labels <- function(df, target_col, parent_cols) {
   labels
 }
 
+# No greys: grey is reserved for Incertae sedis
 build_palette <- function(n) {
   if (n <= 8) {
     pal <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-             "#FF7F00", "#A65628", "#F781BF", "#999999")
+             "#FF7F00", "#A65628", "#F781BF", "#66C2A5")
   } else {
     base <- c(
       "#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#A65628",
-      "#F781BF","#999999","#66C2A5","#FC8D62","#8DA0CB","#E78AC3",
-      "#A6D854","#FFD92F","#E5C494","#B3B3B3","#1B9E77","#D95F02",
-      "#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D","#666666",
+      "#F781BF","#66C2A5","#FC8D62","#8DA0CB","#E78AC3",
+      "#A6D854","#FFD92F","#E5C494","#1B9E77","#D95F02",
+      "#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D",
       "#8DD3C7","#FFFFB3","#BEBADA","#FB8072","#80B1D3","#FDB462",
-      "#B3DE69","#FCCDE5","#D9D9D9","#BC80BD","#CCEBC5","#FFED6F"
+      "#B3DE69","#FCCDE5","#BC80BD","#CCEBC5","#FFED6F"
     )
     if (n <= length(base)) {
       pal <- base[1:n]
@@ -95,20 +100,32 @@ for (level in c("its_taxon", tax_hierarchy)) {
                               levels = substrate_levels,
                               labels = substrate_labels))
 
+  # Identified taxa by abundance, then Incertae sedis last
   label_order <- plot_data %>%
     group_by(label) %>%
     summarise(total = sum(count), .groups = "drop") %>%
     arrange(desc(total)) %>%
     pull(label)
+  known_order <- setdiff(label_order, incertae_label)
+  label_order <- c(known_order, intersect(incertae_label, label_order))
   plot_data$label <- factor(plot_data$label, levels = label_order)
 
   n_labels <- length(label_order)
-  taxon_colours <- setNames(build_palette(n_labels), label_order)
+  taxon_colours <- c(setNames(build_palette(length(known_order)), known_order),
+                     setNames(incertae_colour, incertae_label))
 
   plot_data <- plot_data %>%
     group_by(substrate) %>%
     mutate(pct = count / sum(count) * 100) %>%
     ungroup()
+
+  # Pie titles carry the unresolved share, including when it is 0%
+  incertae_pct <- sapply(substrate_labels, function(sb) {
+    v <- plot_data$pct[plot_data$substrate == sb & plot_data$label == incertae_label]
+    if (length(v)) v else 0 })
+  strip_labels <- setNames(paste0(substrate_labels, "\n", incertae_label, ": ",
+                                  sprintf("%.1f", incertae_pct), "%"),
+                           substrate_labels)
 
   plot_data <- plot_data %>%
     mutate(pie_label = ifelse(pct >= 3, paste0(round(pct, 1), "%"), ""))
@@ -123,14 +140,16 @@ for (level in c("its_taxon", tax_hierarchy)) {
     geom_text(aes(label = pie_label),
               position = position_stack(vjust = 0.5), size = 2.5) +
     coord_polar(theta = "y") +
-    facet_wrap(~ substrate, nrow = 1, scales = "free_y") +
+    facet_wrap(~ substrate, nrow = 1, scales = "free_y",
+               labeller = as_labeller(strip_labels)) +
     scale_y_continuous(expand = c(0, 0)) +
     scale_fill_manual(values = taxon_colours, name = level) +
     labs(title = paste("Fungal isolate composition by", level),
-         subtitle = "Unknown/missing taxa pooled as Incertae sedis") +
+         subtitle = paste0("Share of all isolates. Grey = ", incertae_label,
+                           " (unknown or unresolved at this rank)")) +
     theme_void(base_size = 12) +
     theme(plot.title    = element_text(face = "bold", hjust = 0.5),
-          plot.subtitle = element_text(hjust = 0.5),
+          plot.subtitle = element_text(hjust = 0.5, margin = margin(b = 12)),
           strip.text    = element_text(face = "bold", size = 12),
           legend.position = "bottom",
           legend.text   = element_text(size = legend_size),

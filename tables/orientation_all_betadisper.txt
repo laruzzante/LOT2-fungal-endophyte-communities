@@ -7,13 +7,13 @@ Number of permutations: 999
 
 Response: Distances
           Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)
-Groups     4 0.05752 0.014379 0.5968    999  0.669
-Residuals 22 0.53005 0.024093                     
+Groups     4 0.17293 0.043232 2.2766    999  0.105
+Residuals 20 0.37979 0.018990                     
 
 Group mean distances to centroid:
    group n mean_dist
 E      E 5    0.6002
 N      N 7    0.4791
-NW    NW 6    0.5128
+NW    NW 4    0.3541
 S      S 4    0.5319
 W      W 5    0.5829
