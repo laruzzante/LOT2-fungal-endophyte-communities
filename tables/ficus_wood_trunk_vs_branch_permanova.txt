@@ -14,7 +14,7 @@ Model     1   0.8208 0.19005 2.3464  0.003 **
 Residual 10   3.4983 0.80995                 
 Total    11   4.3192 1.00000                 
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 == Adjusted for sampling depth (marginal / type III) ==
 Isolates per sampling unit: min 4, median 15, max 26
@@ -31,4 +31,4 @@ grp       1   0.8212 0.19013 2.4217  0.001 ***
 Residual  9   3.0519 0.70660                  
 Total    11   4.3192 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

@@ -15,7 +15,7 @@ orientation  4   1.2370 0.14076 1.1083  0.289
 Residual    18   5.0226 0.57154                  
 Total       24   8.7878 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 == Sequential (type I): substrate entered first ==
 Permutation test for adonis under reduced model
@@ -30,7 +30,7 @@ orientation  4   1.2370 0.14076 1.1083  0.289
 Residual    18   5.0226 0.57154                  
 Total       24   8.7878 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 == Marginal (type III): substrate + sun aspect ==
 Permutation test for adonis under reduced model
@@ -45,7 +45,7 @@ sun_aspect  2   0.7531 0.08570 1.3676  0.081 .
 Residual   20   5.5065 0.62661                  
 Total      24   8.7878 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 == Sampling units per substrate x sun aspect ==
 (empty cells show where aspect is confounded with substrate)

@@ -1,6 +1,6 @@
 # Fungal Endophyte Community Analysis — LOT2 (Peru)
 
-> **Analysis environment:** R 4.5.2 | Generated on 2026-09-29
+> **Analysis environment:** R 4.6.1 | Generated on 2026-10-06
 
 ## Overview
 
@@ -130,12 +130,12 @@ source("main.R")
 
 | Package | Version | Role |
 |-------------|-------|------------------------|
-| readxl | 1.4.5 | Reading Excel input |
-| dplyr | 1.1.4 | Data manipulation |
-| tidyr | 1.3.1 | Data reshaping |
-| ggplot2 | 4.0.1 | Plotting |
+| readxl | 1.5.0.1 | Reading Excel input |
+| dplyr | 1.2.1 | Data manipulation |
+| tidyr | 1.3.2 | Data reshaping |
+| ggplot2 | 4.0.3 | Plotting |
 | scales | 1.4.0 | Axis formatting |
-| vegan | 2.7.6 | Diversity, NMDS, PERMANOVA, ANOSIM, betadisper |
+| vegan | 2.7.5 | Diversity, NMDS, PERMANOVA, ANOSIM, betadisper |
 | indicspecies | 1.8.0 | Indicator species analysis (IndVal) |
 | ggVennDiagram | 1.5.7 | Venn diagrams |
 
@@ -248,7 +248,7 @@ The table below is the pooled view (one value per substrate per rank) retained f
 
 | Substrate | S | N | H' | 1-D | Inv. Simp. | J' |
 |----------------|:---:|:---:|:------:|:------:|:----------:|:------:|
-| Lauraceae leaves | 106 | 219 | 4.2745 | 0.9779 | 45.289 | 0.9166 |
+| Lauraceae leaves | 106 | 219 | 4.2813 | 0.9781 | 45.7207 | 0.9181 |
 | Ficus leaves | 135 | 264 | 4.4705 | 0.9791 | 47.8681 | 0.9114 |
 | Ficus wood | 81 | 167 | 4.0073 | 0.9722 | 35.9858 | 0.9119 |
 
@@ -377,7 +377,7 @@ Model     2   3.6803 0.33338 6.7516  0.001 ***
 Residual 27   7.3588 0.66662                  
 Total    29  11.0391 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
 
 **F = 6.7516, R² = 0.33338, p = 0.001** — the substrate effect is **statistically significant**. Substrate explains about **33%** of the total community variation, a large effect for field endophyte data.
@@ -649,7 +649,7 @@ orientation  4   1.2370 0.14076 1.1083  0.289
 Residual    18   5.0226 0.57154                  
 Total       24   8.7878 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 == Sequential (type I): substrate entered first ==
 Permutation test for adonis under reduced model
@@ -664,7 +664,7 @@ orientation  4   1.2370 0.14076 1.1083  0.289
 Residual    18   5.0226 0.57154                  
 Total       24   8.7878 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 == Marginal (type III): substrate + sun aspect ==
 Permutation test for adonis under reduced model
@@ -679,7 +679,7 @@ sun_aspect  2   0.7531 0.08570 1.3676  0.081 .
 Residual   20   5.5065 0.62661                  
 Total      24   8.7878 1.00000                  
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 == Sampling units per substrate x sun aspect ==
 (empty cells show where aspect is confounded with substrate)
@@ -815,4 +815,4 @@ Proportional composition of each substrate; the grey *Incertae sedis* slice show
 
 ---
 
-*Auto-generated on 2026-09-29 by `generate_readme.R`*
+*Auto-generated on 2026-10-06 by `generate_readme.R`*

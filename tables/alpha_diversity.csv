@@ -1,5 +1,5 @@
 "taxonomic_level","substrate","richness_S","abundance_N","shannon_H","simpson_1mD","inv_simpson","pielou_J"
-"its_taxon","Lauraceae leaves",106,219,4.2745,0.9779,45.289,0.9166
+"its_taxon","Lauraceae leaves",106,219,4.2813,0.9781,45.7207,0.9181
 "its_taxon","Ficus leaves",135,264,4.4705,0.9791,47.8681,0.9114
 "its_taxon","Ficus wood",81,167,4.0073,0.9722,35.9858,0.9119
 "phylum","Lauraceae leaves",1,219,0,0,1,NA

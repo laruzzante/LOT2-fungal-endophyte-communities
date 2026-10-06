@@ -10,7 +10,7 @@ Response: Distances
 Groups     2 0.27313 0.136565 21.658    999  0.001 ***
 Residuals 27 0.17025 0.006306                         
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 Group mean distances to centroid:
                             group  n mean_dist
