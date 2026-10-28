@@ -1,0 +1,19 @@
+"unit_set","index","group1","group2","p_adj"
+"ITS100","richness_S","Ficus wood","Ficus leaves",0.0002513
+"ITS100","richness_S","Lauraceae leaves","Ficus leaves",0.9642
+"ITS100","richness_S","Lauraceae leaves","Ficus wood",0.000482
+"ITS100","shannon_H","Ficus wood","Ficus leaves",0.0003438
+"ITS100","shannon_H","Lauraceae leaves","Ficus leaves",0.8242
+"ITS100","shannon_H","Lauraceae leaves","Ficus wood",0.0004952
+"ITS99","richness_S","Ficus wood","Ficus leaves",0.0002817
+"ITS99","richness_S","Lauraceae leaves","Ficus leaves",0.08953
+"ITS99","richness_S","Lauraceae leaves","Ficus wood",0.002247
+"ITS99","shannon_H","Ficus wood","Ficus leaves",0.000262
+"ITS99","shannon_H","Lauraceae leaves","Ficus leaves",0.07541
+"ITS99","shannon_H","Lauraceae leaves","Ficus wood",0.005949
+"OTU97","richness_S","Ficus wood","Ficus leaves",0.0004728
+"OTU97","richness_S","Lauraceae leaves","Ficus leaves",0.06469
+"OTU97","richness_S","Lauraceae leaves","Ficus wood",0.02882
+"OTU97","shannon_H","Ficus wood","Ficus leaves",0.0009745
+"OTU97","shannon_H","Lauraceae leaves","Ficus leaves",0.04694
+"OTU97","shannon_H","Lauraceae leaves","Ficus wood",0.04694

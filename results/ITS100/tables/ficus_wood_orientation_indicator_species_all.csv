@@ -1,0 +1,55 @@
+"s.E","s.N","s.S","s.W","index","stat","p.value","taxon","q.value"
+0,1,0,0,2,1,0.144,"Aspergillus cf. hongkongensis",1
+0,1,0,0,2,1,0.144,"Mucor sp.",1
+0,1,0,0,2,1,0.144,"Sordariomycetes sp. 1",1
+0,1,0,0,2,1,0.144,"Trichoderma anisohamatum or T. insigne",1
+0,1,1,0,8,0.816496580927726,0.414,"Penicillium goetzii, P. rubens",1
+1,0,0,1,7,0.866025403784439,0.421,"Pestalotiopsis cf. diversiseta",1
+0,1,0,1,9,0.816496580927726,0.442,"Tolypocladium sp.",1
+1,1,0,0,5,0.816496580927726,0.448,"Epicoccum italicum",1
+1,1,0,1,12,0.894427190999916,0.451,"Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.)",1
+1,1,0,1,12,0.774596669241483,0.792,"Ophiocordycipitaceae sp. 1",1
+0,0,0,1,4,0.707106781186548,1,"Diaporthe crousii",1
+0,0,0,1,4,0.707106781186548,1,"Nemania aff. abortiva",1
+0,0,1,0,3,0.707106781186548,1,"Colletotrichum cf. brassicicola gen 1",1
+1,0,0,0,1,0.707106781186548,1,"Coniochaetaceae sp. 1",1
+0,0,1,0,3,0.707106781186548,1,"Diaporthe sp. 13",1
+0,0,0,1,4,0.707106781186548,1,"Hypocreomycetidae sp.",1
+1,0,0,0,1,0.707106781186548,1,"Amphisphaeriaceae sp.",1
+0,0,1,0,3,0.707106781186548,1,"Neopestalotiopsis sichuanensis; N. phyllostachydis, N. fidjiensis (15 spp.)",1
+1,0,0,0,1,0.707106781186548,1,"Pestalotiopsis telopae, P. kenyana, P. australasiae (4 spp.)",1
+0,0,0,1,4,0.707106781186548,1,"Chaetothyriales sp.",1
+0,0,0,1,4,0.707106781186548,1,"Cladosporium subuliforme or C. xylophilum etc (26 spp.) gen 1",1
+0,0,0,1,4,0.707106781186548,1,"Diaporthe sp. 25",1
+0,0,0,1,4,0.707106781186548,1,"Linnemannia sp.",1
+0,0,1,1,10,0.707106781186548,1,"Penicillium vancouverens",1
+0,0,0,1,4,0.707106781186548,1,"Pleosporales sp. 1",1
+0,0,0,1,4,0.707106781186548,1,"Thelonectria stemmata",1
+0,0,0,1,4,0.707106781186548,1,"Aspergillus versicolor or A. amoenus or A. protuberus",1
+0,0,0,1,4,0.707106781186548,1,"Cystofilobasidiales sp.",1
+0,0,0,1,4,0.707106781186548,1,"Didymosphaeriaceae sp. 1",1
+0,0,0,1,4,0.707106781186548,1,"Mortierellales sp.",1
+0,0,0,1,4,0.707106781186548,1,"Myxospora sp.",1
+0,0,0,1,4,0.707106781186548,1,"Ophiocordycipitaceae sp. 2",1
+0,0,0,1,4,0.707106781186548,1,"Paraphaeosphaeria aff. neglecta",1
+0,0,0,1,4,0.707106781186548,1,"Penicillium verhagenii",1
+0,0,0,1,4,0.707106781186548,1,"Xylariaceae sp. 5",1
+0,0,0,1,4,0.707106781186548,1,"Xylariales cf. sp 8",1
+1,0,0,0,1,0.707106781186548,1,"Acremonium cf. mycoparasiticum",1
+1,0,0,0,1,0.707106781186548,1,"Paraphaeosphaeria cf. neglecta",1
+1,0,0,0,1,0.707106781186548,1,"Pleosporales sp. 2",1
+1,0,0,0,1,0.707106781186548,1,"Stereaceae sp. 2",1
+1,0,0,0,1,0.707106781186548,1,"Trichoderma paraviride or T. viride",1
+1,0,0,0,1,0.707106781186548,1,"Xylaria aff. adscendens 1",1
+1,0,0,0,1,0.707106781186548,1,"Xylariaceae cf. sp 9",1
+0,0,1,0,3,0.707106781186548,1,"Penicillium bialowiezense",1
+0,0,1,0,3,0.707106781186548,1,"Pleosporales sp. 3",1
+0,0,1,0,3,0.707106781186548,1,"Stereaceae sp. 1",1
+0,0,1,0,3,0.707106781186548,1,"Penicillium aff. rubens or P. aff. goetzii",1
+1,0,0,0,1,0.707106781186548,1,"Beauveria pseudobassiana",1
+1,0,0,0,1,0.707106781186548,1,"Clonostachys cf. farinosa",1
+1,0,0,0,1,0.707106781186548,1,"Clonostachys cf. solani f. nigrovirens",1
+1,0,0,0,1,0.707106781186548,1,"Metapochonia cf. suchlasporia",1
+1,0,0,0,1,0.707106781186548,1,"Penicillium cf. spathulatum",1
+1,0,0,0,1,0.707106781186548,1,"Phaeoacremonium sp.",1
+1,0,0,0,1,0.707106781186548,1,"Saccharomycotina sp.",1

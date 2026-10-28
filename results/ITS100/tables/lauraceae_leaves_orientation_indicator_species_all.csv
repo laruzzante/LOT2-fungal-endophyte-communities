@@ -1,0 +1,105 @@
+"s.E","s.N","s.NW","index","stat","p.value","taxon","q.value"
+1,0,0,1,1,0.127,"Xylaria aff. adscendens 2",1
+0,1,1,6,1,0.127,"Nigrospora cf. gorlenkoana",1
+0,1,0,2,0.852802865422442,0.135,"Diaporthe sp. 29",1
+0,0,1,3,0.866025403784439,0.206,"Colletotrichum cf. mexicanum",1
+0,1,1,6,0.935414346693485,0.287,"Diaporthe sp. 20",1
+0,1,0,2,0.790569415042095,0.369,"Diaporthe sp. 23",1
+0,1,1,6,0.866025403784439,0.441,"Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2",1
+0,0,1,3,0.707106781186548,0.544,"Diaporthe sp. 15",1
+0,1,0,2,0.707106781186548,0.554,"Annulohypoxylon sp. 2",1
+0,1,0,2,0.707106781186548,0.554,"Xylariales sp. 18",1
+0,1,0,2,0.707106781186548,0.554,"Nigrospora guandongensis",1
+0,1,1,6,0.790569415042095,0.753,"Nigrospora hainanensis",1
+0,1,1,6,0.790569415042095,0.784,"Diaporthe crousii",1
+0,1,1,6,0.612372435695794,1,"Diaporthe sp. 16",1
+0,1,1,6,0.5,1,"Nigrospora gorlenkoana",1
+0,1,0,2,0.5,1,"Nigrospora macarangae",1
+0,0,1,3,0.5,1,"Xylariaceae sp. 10",1
+0,1,0,2,0.5,1,"Colletotrichum cf. brassicicola gen 1",1
+0,1,0,2,0.5,1,"Diaporthe aff. passiflorae 4",1
+0,1,1,6,0.5,1,"Diaporthe sp. 30",1
+0,1,1,6,0.5,1,"Colletotrichum arboricola",1
+0,0,1,3,0.5,1,"Diaporthe sp. 2",1
+0,0,1,3,0.5,1,"Xylariales aff. sp 17",1
+0,1,1,6,0.5,1,"Diaporthe sp. 14",1
+0,1,1,6,0.707106781186548,1,"Neopestalotiopsis sichuanensis; N. phyllostachydis, N. fidjiensis (15 spp.)",1
+0,0,1,3,0.5,1,"Annulohypoxylon cf sp. 1.",1
+0,1,1,6,0.5,1,"Nigrospora cf. musae 1",1
+0,1,0,2,0.5,1,"Xylariales sp. 15",1
+0,1,1,6,0.5,1,"Diaporthe sp. 17",1
+0,1,1,6,0.612372435695794,1,"Diaporthe sp. 27",1
+0,0,1,3,0.5,1,"Xylariaceae sp. 9",1
+0,1,1,6,0.5,1,"Diaporthe sp. 37",1
+0,1,1,6,0.5,1,"Nigrospora sp. 2",1
+0,1,0,2,0.5,1,"Paraphaeosphaeria cf. neglecta",1
+0,1,1,6,0.5,1,"Annulohypoxylon sp. 1",1
+0,0,1,3,0.5,1,"Diaportales sp. 1",1
+0,0,1,3,0.5,1,"Diaportales sp. 3",1
+0,0,1,3,0.5,1,"Diaporthe sp. 11",1
+0,0,1,3,0.5,1,"Diaporthe sp. 21",1
+0,0,1,3,0.5,1,"Diaporthe sp. 26",1
+0,0,1,3,0.5,1,"Diaporthe sp. 46",1
+0,0,1,3,0.5,1,"Diaporthe sp. 49",1
+0,0,1,3,0.5,1,"Helotiales sp.",1
+0,0,1,3,0.5,1,"Nigrospora cf. musae 2",1
+0,0,1,3,0.5,1,"Nigrospora sp. 3",1
+0,0,1,3,0.5,1,"Pyrenopolyporus cf. hunteri",1
+0,0,1,3,0.5,1,"Xylariaceae sp. 3",1
+0,1,1,6,0.5,1,"Xylariales sp. 6",1
+0,1,1,6,0.5,1,"Colletotrichum aff. johnstonii or C. aff. pyricola or C. aff. subsalicis",1
+0,1,0,2,0.5,1,"Diaportales cf. sp. 1",1
+0,1,0,2,0.5,1,"Diaporthe aff. araucanorum",1
+0,1,0,2,0.5,1,"Diaporthe aff. passiflorae 8",1
+0,1,0,2,0.5,1,"Diaporthe cf. passiflorae",1
+0,1,0,2,0.5,1,"Diaporthe sp. 12",1
+0,1,0,2,0.5,1,"Diaporthe sp. 24",1
+0,1,0,2,0.5,1,"Diaporthe sp. 28",1
+0,1,0,2,0.5,1,"Diaporthe sp. 6",1
+0,1,0,2,0.5,1,"Nigrospora pyriformis",1
+0,0,1,3,0.5,1,"Diaporthe aff. passiflorae 3",1
+0,0,1,3,0.5,1,"Diaporthe aff. terebenthifolii",1
+0,0,1,3,0.5,1,"Diaporthe sp. 3",1
+0,0,1,3,0.5,1,"Diaporthe sp. 8",1
+0,0,1,3,0.5,1,"Nemania sp. 2",1
+0,0,1,3,0.5,1,"Nigrospora aff. sacchari-officinarum",1
+0,0,1,3,0.5,1,"Nigrospora sp. 4",1
+0,0,1,3,0.5,1,"Xylariales cf. sp. 6",1
+0,0,1,3,0.5,1,"Cercophora sp.",1
+0,1,1,6,0.5,1,"Colletotrichum cigarro or C. kahawae",1
+0,0,1,3,0.5,1,"Diaporthe sp. 19",1
+0,0,1,3,0.5,1,"Diaporthe sp. 39",1
+0,0,1,3,0.5,1,"Nemania sp. 1",1
+0,0,1,3,0.5,1,"Nigrospora aff. tomentosae",1
+0,0,1,3,0.5,1,"Nigrospora rubi",1
+0,0,1,3,0.5,1,"Nigrospora sp. 6",1
+0,0,1,3,0.5,1,"Xylariaceae sp. 12",1
+0,0,1,3,0.5,1,"Xylariales sp. 17",1
+0,1,0,2,0.5,1,"Diaporthe cf. passiflorae 1",1
+0,1,0,2,0.5,1,"Diaporthe sp. 7",1
+0,1,0,2,0.5,1,"Diaporthe sp. 9",1
+0,1,0,2,0.5,1,"Glomerellaceae sp.",1
+0,1,0,2,0.5,1,"Lasiosphaeriaceae sp.",1
+0,1,1,6,0.612372435695794,1,"Nigrospora cf. vesicularifera",1
+0,1,0,2,0.5,1,"Xylaria sp. 2",1
+0,1,0,2,0.5,1,"Xylariales sp. 11",1
+0,1,0,2,0.5,1,"Xylariales sp. 14",1
+0,1,0,2,0.5,1,"Diaporthe kochmanii",1
+0,1,0,2,0.5,1,"Diaporthe sp. 34",1
+0,1,0,2,0.5,1,"Diaporthe sp. 4",1
+0,1,0,2,0.5,1,"Diaporthe sp. 40",1
+0,1,0,2,0.5,1,"Diaporthe sp. 5",1
+0,1,0,2,0.5,1,"Xylariales sp. 20",1
+0,1,0,2,0.5,1,"Aspergillus brunneus or A. niveoglaucus etc (4 spp.)",1
+0,1,1,6,0.5,1,"Diaporthe sp. 22",1
+0,1,0,2,0.5,1,"Diaporthe sp. 31",1
+0,1,0,2,0.5,1,"Pestalotiopsis sp.",1
+0,1,0,2,0.5,1,"Rhytismataceae sp.",1
+0,1,0,2,0.5,1,"Xylariaceae sp. 6",1
+0,1,0,2,0.5,1,"Xylariales sp. 12",1
+0,0,1,3,0.5,1,"Diaporthales sp. 2",1
+0,0,1,3,0.5,1,"Diaporthe sp. 32",1
+0,0,1,3,0.5,1,"Diaporthe sp. 45",1
+0,0,1,3,0.5,1,"Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 1",1
+0,0,1,3,0.5,1,"Nigrospora cf. aurantiaca gen 1",1
+0,0,1,3,0.5,1,"Nigrospora cf. aurantiaca gen 2",1

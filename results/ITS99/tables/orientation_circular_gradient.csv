@@ -1,0 +1,5 @@
+"analysis","n_units","n_orientations","NS_axis_R2","NS_axis_p","EW_axis_R2","EW_axis_p","joint_R2","joint_p"
+"All substrates",25,5,0.0553,0.085,0.0418,0.393,0.1003,0.109
+"Ficus leaves",9,4,0.1563,0.111,0.1262,0.435,0.2824,0.144
+"Ficus wood",7,4,0.191,0.364,0.1195,0.91,0.3105,0.693
+"Lauraceae leaves",9,3,0.1668,0.108,0.1115,0.395,0.3737,0.112

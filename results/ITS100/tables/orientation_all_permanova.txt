@@ -1,0 +1,32 @@
+PERMANOVA — Bray-Curtis distance
+Formula: community ~ orientation 
+Permutations: 999
+Analytical unit: ITS 100% BLAST name 
+Replication: 5 groups, sizes 7, 5, 5, 4, 4
+
+Permutation test for adonis under reduced model
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = form, data = meta, permutations = 999, method = "bray")
+         Df SumOfSqs      R2      F Pr(>F)
+Model     4   1.9910 0.18727 1.1521  0.102
+Residual 20   8.6411 0.81273              
+Total    24  10.6321 1.00000              
+
+== Adjusted for sampling depth (marginal / type III) ==
+Isolates per sampling unit: min 1, median 25, max 30
+
+Permutation test for adonis under reduced model
+Marginal effects of terms
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = comm_mat ~ depth + grp, data = data.frame(depth = depth, grp = groups), permutations = 999, method = "bray", by = "margin")
+         Df SumOfSqs      R2      F Pr(>F)    
+depth     1   0.8685 0.08169 2.1231  0.001 ***
+grp       4   1.8563 0.17460 1.1345  0.130    
+Residual 19   7.7726 0.73104                  
+Total    24  10.6321 1.00000                  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

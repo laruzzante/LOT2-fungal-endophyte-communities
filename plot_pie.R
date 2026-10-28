@@ -1,9 +1,6 @@
 piedir <- "plots/pie_charts"
 dir.create(piedir, recursive = TRUE, showWarnings = FALSE)
 
-tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
-                   "subclass", "order", "family", "genus", "species")
-
 uncertain_values <- c("?", "NO", "incertae sedis")
 incertae_label   <- "Incertae sedis"
 # Unresolved isolates are drawn in a neutral grey that no taxon uses,
@@ -69,8 +66,10 @@ for (level in c("its_taxon", tax_hierarchy)) {
   } else {
 
   idx <- which(tax_hierarchy == level)
-  group_cols  <- tax_hierarchy[1:idx]
-  parent_cols <- if (idx >= 2) tax_hierarchy[1:(idx - 1)] else character(0)
+  # A rank is aggregated on its own value: e.g. all Leotiomycetes form one
+  # slice, whatever their (inconsistently filled) higher ranks
+  group_cols  <- level
+  parent_cols <- character(0)
 
   agg <- dat_pie %>%
     group_by(across(all_of(group_cols))) %>%

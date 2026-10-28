@@ -1,0 +1,48 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 121
+ Selected number of species: 7 
+ Number of species associated to 1 group: 2 
+ Number of species associated to 2 groups: 0 
+ Number of species associated to 3 groups: 0 
+ Number of species associated to 4 groups: 4 
+ Number of species associated to 5 groups: 0 
+ Number of species associated to 6 groups: 1 
+ Number of species associated to 7 groups: 0 
+ Number of species associated to 8 groups: 0 
+ Number of species associated to 9 groups: 0 
+ Number of species associated to 10 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group Ficus leaves - E  #sps.  1 
+                                      A      B  stat p.value  
+OTU_048 (Pseudocercospora sp. 1) 0.8182 1.0000 0.905   0.041 *
+
+ Group Ficus leaves - S  #sps.  1 
+                                   A B stat p.value  
+OTU_079 (Cytospora aff. eucalypti) 1 1    1   0.021 *
+
+ Group Ficus leaves - E+Ficus leaves - N+Ficus leaves - S+Ficus leaves - W  #sps.  1 
+                                               A      B  stat p.value  
+OTU_045 (Pseudocercospora aff. quetri +4) 1.0000 0.7778 0.882   0.028 *
+
+ Group Ficus leaves - N+Ficus leaves - S+Lauraceae leaves - N+Lauraceae leaves - NW  #sps.  2 
+                                             A      B  stat p.value   
+OTU_001 (Nigrospora cf. gorlenkoana +7) 0.9176 1.0000 0.958   0.003 **
+OTU_005 (Diaporthe crousii +15)         0.9652 0.9167 0.941   0.014 * 
+
+ Group Ficus leaves - S+Ficus wood - W+Lauraceae leaves - N+Lauraceae leaves - NW  #sps.  1 
+                                   A      B  stat p.value  
+OTU_002 (Diaporthe sp. 20 +8) 1.0000 0.8333 0.913   0.019 *
+
+ Group Ficus leaves - E+Ficus leaves - N+Ficus leaves - S+Ficus leaves - W+Lauraceae leaves - N+Lauraceae leaves - NW  #sps.  1 
+                                    A      B  stat p.value   
+OTU_008 (Diaporthe sp. 16 +30) 0.9718 1.0000 0.986   0.002 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

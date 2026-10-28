@@ -1,0 +1,241 @@
+"s.E","s.N","s.NW","s.S","s.W","index","stat","p.value","taxon","q.value"
+0,1,1,0,0,10,0.852802865422442,0.003,"Nigrospora cf. gorlenkoana",0.72
+0,0,1,0,0,3,0.804084401128346,0.007,"Colletotrichum cf. mexicanum",0.84
+0,1,1,0,0,10,0.738548945875996,0.018,"Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2",1
+0,1,1,0,0,10,0.769864677786549,0.02,"Diaporthe sp. 20",1
+0,0,0,1,0,4,0.707106781186548,0.043,"Cytospora aff. eucalypti",1
+1,0,0,0,1,9,0.632455532033676,0.069,"Pestalotiopsis cf. diversiseta",1
+0,0,1,1,0,13,0.612372435695794,0.083,"Diaporthe sp. 15",1
+0,0,0,0,1,5,0.632455532033676,0.11,"Hypocreomycetidae sp.",1
+0,1,1,0,1,23,0.724568837309472,0.116,"Diaporthe crousii",1
+0,0,0,0,1,5,0.632455532033676,0.119,"Nemania aff. abortiva",1
+0,1,1,1,0,22,0.632455532033676,0.132,"Neopestalotiopsis sichuanensis; N. phyllostachydis, N. fidjiensis (15 spp.)",1
+0,0,0,1,0,4,0.597614304667197,0.135,"Xylaria sp. 1",1
+0,1,1,1,0,22,0.632455532033676,0.146,"Nigrospora hainanensis",1
+0,1,1,0,0,10,0.603022689155527,0.151,"Diaporthe sp. 23",1
+0,1,0,0,0,2,0.534522483824849,0.172,"Xylariales sp. 18",1
+0,1,0,0,0,2,0.534522483824849,0.193,"Nigrospora cf. sacchari-officinarum",1
+0,1,0,0,0,2,0.534522483824849,0.199,"Nigrospora guandongensis",1
+0,1,0,0,1,12,0.577350269189626,0.217,"Annulohypoxylon sp. 2",1
+0,0,1,1,0,13,0.5,0.241,"Xylariaceae sp. 9",1
+1,0,0,0,0,1,0.547722557505166,0.283,"Pseudocercospora sp. 1",1
+0,0,1,0,0,3,0.5,0.306,"Diaporthe aff. passiflorae 3",1
+0,0,1,0,0,3,0.5,0.306,"Diaporthe aff. terebenthifolii",1
+0,0,1,0,0,3,0.5,0.306,"Diaporthe sp. 3",1
+0,0,1,0,0,3,0.5,0.306,"Diaporthe sp. 8",1
+0,0,1,0,0,3,0.5,0.306,"Nemania sp. 2",1
+0,0,1,0,0,3,0.5,0.306,"Nigrospora aff. sacchari-officinarum",1
+0,0,1,0,0,3,0.5,0.306,"Nigrospora sp. 4",1
+0,0,1,0,0,3,0.5,0.306,"Xylariales cf. sp. 6",1
+0,0,0,1,0,4,0.5,0.312,"Penicillium aff. rubens or P. aff. goetzii",1
+0,0,1,0,0,3,0.5,0.323,"Cercophora sp.",1
+0,0,1,0,0,3,0.5,0.323,"Diaporthe sp. 19",1
+0,0,1,0,0,3,0.5,0.323,"Diaporthe sp. 39",1
+0,0,1,0,0,3,0.5,0.323,"Nemania sp. 1",1
+0,0,1,0,0,3,0.5,0.323,"Nigrospora aff. tomentosae",1
+0,0,1,0,0,3,0.5,0.323,"Nigrospora rubi",1
+0,0,1,0,0,3,0.5,0.323,"Nigrospora sp. 6",1
+0,0,1,0,0,3,0.5,0.323,"Xylariaceae sp. 12",1
+0,0,1,0,0,3,0.5,0.323,"Xylariales sp. 17",1
+0,0,0,1,0,4,0.5,0.325,"Diaporthaceae sp. 2",1
+0,0,0,1,0,4,0.5,0.325,"Diaporthe aff. passiflorae 5",1
+0,0,0,1,0,4,0.5,0.325,"Diaporthe sp. 35",1
+0,0,0,1,0,4,0.5,0.325,"Diaporthe sp. 38",1
+0,0,0,1,0,4,0.5,0.325,"Diaporthe sp. 42",1
+0,0,0,1,0,4,0.5,0.325,"Diaporthe sp. 52",1
+0,0,0,1,0,4,0.5,0.325,"Xylariaceae sp. 7",1
+0,0,0,1,0,4,0.5,0.325,"Xylariales sp. 1",1
+0,0,0,1,0,4,0.5,0.325,"Xylariales sp. 16",1
+0,0,0,1,0,4,0.5,0.325,"Xylariales sp. 7",1
+0,0,0,1,0,4,0.5,0.326,"Penicillium bialowiezense",1
+0,0,0,1,0,4,0.5,0.326,"Pleosporales sp. 3",1
+0,0,0,1,0,4,0.5,0.326,"Stereaceae sp. 1",1
+0,0,1,0,0,3,0.5,0.337,"Diaporthales sp. 2",1
+0,0,1,0,0,3,0.5,0.337,"Diaporthe sp. 32",1
+0,0,1,0,0,3,0.5,0.337,"Diaporthe sp. 45",1
+0,0,1,0,0,3,0.5,0.337,"Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 1",1
+0,0,1,0,0,3,0.5,0.337,"Nigrospora cf. aurantiaca gen 1",1
+0,0,1,0,0,3,0.5,0.337,"Nigrospora cf. aurantiaca gen 2",1
+0,0,1,0,0,3,0.5,0.341,"Diaportales sp. 1",1
+0,0,1,0,0,3,0.5,0.341,"Diaportales sp. 3",1
+0,0,1,0,0,3,0.5,0.341,"Diaporthe sp. 11",1
+0,0,1,0,0,3,0.5,0.341,"Diaporthe sp. 21",1
+0,0,1,0,0,3,0.5,0.341,"Diaporthe sp. 26",1
+0,0,1,0,0,3,0.5,0.341,"Diaporthe sp. 46",1
+0,0,1,0,0,3,0.5,0.341,"Diaporthe sp. 49",1
+0,0,1,0,0,3,0.5,0.341,"Helotiales sp.",1
+0,0,1,0,0,3,0.5,0.341,"Nigrospora cf. musae 2",1
+0,0,1,0,0,3,0.5,0.341,"Nigrospora sp. 3",1
+0,0,1,0,0,3,0.5,0.341,"Pyrenopolyporus cf. hunteri",1
+0,0,1,0,0,3,0.5,0.341,"Xylariaceae sp. 3",1
+0,0,0,1,0,4,0.5,0.347,"Cladosporium herbarum, C. iridis (23 spp.)",1
+0,0,0,1,0,4,0.5,0.347,"Colletotrichum cf. scovillei or C. cf. melonis or C. cf. speciosum",1
+0,0,0,1,0,4,0.5,0.347,"Colletotrichum tengchongense or C. gracile",1
+0,0,0,1,0,4,0.5,0.347,"Diaporthe sp. 10",1
+0,0,0,1,0,4,0.5,0.347,"Diaporthe sp. 43",1
+0,0,0,1,0,4,0.5,0.347,"Diaporthe sp. 47",1
+0,0,0,1,0,4,0.5,0.347,"Nodulisporium aff. verrucosum gen 2",1
+0,0,0,1,0,4,0.5,0.347,"Xylariaceae sp. 13",1
+1,0,1,1,0,19,0.554700196225229,0.35,"Annulohypoxylon cf sp. 1.",1
+0,1,1,0,0,10,0.522232967867094,0.369,"Diaporthe sp. 14",1
+0,1,1,0,0,10,0.522232967867094,0.412,"Nigrospora cf. vesicularifera",1
+1,1,1,1,0,26,0.632455532033676,0.437,"Diaporthe sp. 29",1
+0,1,0,0,1,12,0.5,0.472,"Xylaria sp. 3",1
+1,0,0,0,1,9,0.521749194749951,0.488,"Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.)",1
+0,0,0,1,1,15,0.471404520791032,0.496,"Colletotrichum cymbidiicola",1
+0,0,0,1,1,15,0.471404520791032,0.503,"Xylaria sp. 4",1
+0,1,1,1,0,22,0.516397779494322,0.506,"Diaporthe sp. 27",1
+0,0,0,1,1,15,0.471404520791032,0.513,"Penicillium vancouverens",1
+0,0,0,1,1,15,0.471404520791032,0.515,"Diaporthe sp. 13",1
+1,0,0,1,0,8,0.471404520791032,0.518,"Nodulisporium aff. verrucosum gen 1",1
+1,0,0,1,0,8,0.471404520791032,0.518,"Sordariomycetes sp. 3",1
+1,0,0,1,0,8,0.471404520791032,0.526,"Pestalotiopsis telopae, P. kenyana, P. australasiae (4 spp.)",1
+1,1,1,1,0,26,0.591607978309962,0.527,"Colletotrichum arboricola",1
+0,0,1,1,1,25,0.480384461415261,0.528,"Xylariaceae sp. 10",1
+1,0,0,0,1,9,0.447213595499958,0.555,"Coniochaetaceae sp. 1",1
+0,0,0,1,0,4,0.440958551844098,0.635,"Penicillium goetzii, P. rubens",1
+0,1,1,1,1,30,0.547722557505166,0.647,"Diaporthe sp. 16",1
+0,1,1,1,0,22,0.447213595499958,0.652,"Diaporthe sp. 17",1
+0,1,0,1,1,24,0.5,0.66,"Colletotrichum cf. brassicicola gen 1",1
+0,1,1,1,0,22,0.447213595499958,0.682,"Diaporthe sp. 37",1
+1,0,0,0,0,1,0.447213595499958,0.691,"Beauveria pseudobassiana",1
+1,0,0,0,0,1,0.447213595499958,0.691,"Clonostachys cf. farinosa",1
+1,0,0,0,0,1,0.447213595499958,0.691,"Clonostachys cf. solani f. nigrovirens",1
+1,0,0,0,0,1,0.447213595499958,0.691,"Metapochonia cf. suchlasporia",1
+1,0,0,0,0,1,0.447213595499958,0.691,"Penicillium cf. spathulatum",1
+1,0,0,0,0,1,0.447213595499958,0.691,"Phaeoacremonium sp.",1
+1,0,0,0,0,1,0.447213595499958,0.691,"Saccharomycotina sp.",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Cladosporium marinisedimentum or C. cooksoniae or C. sphaerospermum",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Diaporthe aff. passiflorae 1",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Diaporthe sp. 1",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Diaporthe sp. 50",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Diaporthe sp. 53",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Neofusicoccum sp.",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Nigrospora sp. 1",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Sordariomycetes sp. 6",1
+0,0,0,0,1,5,0.447213595499958,0.692,"Xylariales sp. 5",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Aspergillus versicolor or A. amoenus or A. protuberus",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Cystofilobasidiales sp.",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Didymosphaeriaceae sp. 1",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Mortierellales sp.",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Myxospora sp.",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Ophiocordycipitaceae sp. 2",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Paraphaeosphaeria aff. neglecta",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Penicillium verhagenii",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Xylariaceae sp. 5",1
+0,0,0,0,1,5,0.447213595499958,0.696,"Xylariales cf. sp 8",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Amycosphaerella africana",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Coccomyces sp.",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Colletotrichum aff. colombiense",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Diaporthaceae sp. 5",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Diaporthaceae sp. 6",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Diaporthe aff. passiflorae 6",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Diaporthe sp. 33",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Diaporthe sp. 51",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Hypomontagnella aff. spongiphila",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Xylariales sp. 3",1
+1,0,0,0,0,1,0.447213595499958,0.702,"Xylariales sp. 8",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Diaporthaceae sp. 4",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Diaporthe aff. passiflorae 2",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Diaporthe aff. passiflorae 7",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Pseudocercospora sp. 3",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Sordariomycetes sp. 2",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Sordariomycetes sp. 4",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Sordariomycetes sp. 5",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Sordariomycetes sp. 7",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Xylariaceae sp 8",1
+0,0,0,0,1,5,0.447213595499958,0.705,"Xylariales sp. 2",1
+0,1,1,1,0,22,0.447213595499958,0.706,"Nigrospora sp. 2",1
+0,1,0,1,1,24,0.5,0.713,"Colletotrichum cf. godetiae",1
+0,0,0,0,1,5,0.447213595499958,0.719,"Diaporthaceae sp. 1",1
+0,0,0,0,1,5,0.447213595499958,0.719,"Diaporthaceae sp. 3",1
+0,0,0,0,1,5,0.447213595499958,0.719,"Diaporthe sp. 18",1
+1,0,0,0,0,1,0.447213595499958,0.72,"Acremonium cf. mycoparasiticum",1
+1,0,0,0,0,1,0.447213595499958,0.72,"Pleosporales sp. 2",1
+1,0,0,0,0,1,0.447213595499958,0.72,"Stereaceae sp. 2",1
+1,0,0,0,0,1,0.447213595499958,0.72,"Trichoderma paraviride or T. viride",1
+1,0,0,0,0,1,0.447213595499958,0.72,"Xylaria aff. adscendens 1",1
+1,0,0,0,0,1,0.447213595499958,0.72,"Xylariaceae cf. sp 9",1
+1,1,0,1,1,28,0.577350269189626,0.733,"Pseudocercospora aff. quetri",1
+0,0,0,0,1,5,0.447213595499958,0.752,"Chaetothyriales sp.",1
+0,0,0,0,1,5,0.447213595499958,0.752,"Cladosporium subuliforme or C. xylophilum etc (26 spp.) gen 1",1
+0,0,0,0,1,5,0.447213595499958,0.752,"Diaporthe sp. 25",1
+0,0,0,0,1,5,0.447213595499958,0.752,"Linnemannia sp.",1
+0,0,0,0,1,5,0.447213595499958,0.752,"Pleosporales sp. 1",1
+0,0,0,0,1,5,0.447213595499958,0.752,"Thelonectria stemmata",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Annulohypoxylon sp. 4",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Diaporthe cf. passiflorae 2",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Diaporthe sp. 48",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Marthamycetales sp. 1",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Mycosphaerellaceae sp. 1",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Pseudocercospora sp. 2",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Sordariomycetes sp. 10",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Tremellales sp.",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Xylariales aff. sp. 11",1
+1,0,0,0,0,1,0.447213595499958,0.753,"Xylariales sp. 4",1
+0,1,1,0,0,10,0.426401432711221,0.766,"Xylariales aff. sp 17",1
+0,1,1,0,0,10,0.426401432711221,0.769,"Annulohypoxylon sp. 1",1
+0,1,1,0,0,10,0.426401432711221,0.769,"Xylariales sp. 6",1
+0,1,1,0,0,10,0.426401432711221,0.78,"Colletotrichum cigarro or C. kahawae",1
+0,1,1,0,0,10,0.426401432711221,0.783,"Diaporthe sp. 22",1
+0,1,1,0,0,10,0.426401432711221,0.789,"Colletotrichum aff. johnstonii or C. aff. pyricola or C. aff. subsalicis",1
+0,1,1,1,1,30,0.5,0.79,"Nigrospora gorlenkoana",1
+1,0,0,1,1,21,0.440204389240067,0.905,"Colletotrichum cf. brassicicola gen 2",1
+1,1,1,0,0,16,0.433012701892219,0.922,"Diaporthe sp. 2",1
+1,1,1,0,0,16,0.433012701892219,0.925,"Nigrospora cf. musae 1",1
+0,1,0,1,1,24,0.433012701892219,0.927,"Diaporthe aff. passiflorae 4",1
+0,1,0,0,1,12,0.408248290463863,1,"Nigrospora macarangae",1
+1,1,1,0,1,27,0.436435780471985,1,"Diaporthe sp. 30",1
+1,1,0,0,0,6,0.408248290463863,1,"Amphisphaeriaceae sp.",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 36",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 44",1
+0,1,0,0,0,2,0.377964473009227,1,"Neofusicoccum cf. ningerense",1
+0,1,0,0,0,2,0.377964473009227,1,"Pseudocercospora basitruncata",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylaria sp. 5",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariaceae sp. 1",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariaceae sp. 4",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariales sp. 13",1
+0,1,0,0,0,2,0.377964473009227,1,"Colletotrichum aff. godetiae",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 41",1
+0,1,0,0,0,2,0.377964473009227,1,"Neofabraea aff. brasiliensis",1
+1,1,0,0,0,6,0.408248290463863,1,"Xylaria aff. adscendens 2",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariaceae sp. 2",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariales sp. 19",1
+1,1,0,0,0,6,0.408248290463863,1,"Xylariales sp. 15",1
+0,1,0,0,1,12,0.408248290463863,1,"Tolypocladium sp.",1
+1,1,0,0,1,18,0.420084025208403,1,"Ophiocordycipitaceae sp. 1",1
+0,1,0,0,0,2,0.377964473009227,1,"Aspergillus cf. hongkongensis",1
+1,1,0,0,0,6,0.408248290463863,1,"Epicoccum italicum",1
+0,1,0,0,0,2,0.377964473009227,1,"Mucor sp.",1
+0,1,0,0,0,2,0.377964473009227,1,"Sordariomycetes sp. 1",1
+0,1,0,0,0,2,0.377964473009227,1,"Trichoderma anisohamatum or T. insigne",1
+1,1,0,0,0,6,0.408248290463863,1,"Paraphaeosphaeria cf. neglecta",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaportales cf. sp. 1",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe aff. araucanorum",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe aff. passiflorae 8",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe cf. passiflorae",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 12",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 24",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 28",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 6",1
+0,1,0,0,0,2,0.377964473009227,1,"Nigrospora pyriformis",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe cf. passiflorae 1",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 7",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 9",1
+0,1,0,0,0,2,0.377964473009227,1,"Glomerellaceae sp.",1
+0,1,0,0,0,2,0.377964473009227,1,"Lasiosphaeriaceae sp.",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylaria sp. 2",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariales sp. 11",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariales sp. 14",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe kochmanii",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 34",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 4",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 40",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 5",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariales sp. 20",1
+0,1,0,0,0,2,0.377964473009227,1,"Aspergillus brunneus or A. niveoglaucus etc (4 spp.)",1
+0,1,0,0,0,2,0.377964473009227,1,"Diaporthe sp. 31",1
+0,1,0,0,0,2,0.377964473009227,1,"Pestalotiopsis sp.",1
+0,1,0,0,0,2,0.377964473009227,1,"Rhytismataceae sp.",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariaceae sp. 6",1
+0,1,0,0,0,2,0.377964473009227,1,"Xylariales sp. 12",1

@@ -1,0 +1,14 @@
+"analysis","n_units","n_taxa","n_groups","permanova_F","permanova_R2","permanova_p","depth_adjusted_R2","depth_adjusted_p","anosim_R","anosim_p","betadisper_p","nmds_stress_tie_aware","n_indicators_fdr"
+"Substrate (3 substrates)",30,281,3,3.9761,0.2275,0.001,0.1649,0.001,0.6703,0.001,0.002,0.2072,6
+"Ficus leaves vs Lauraceae leaves",18,211,2,3.6388,0.1853,0.001,0.1822,0.001,0.7767,0.001,0.086,0.1666,0
+"Substrate at zone 6 (top canopy)",25,254,3,3.3915,0.2357,0.001,0.1858,0.001,0.7366,0.001,0.026,0.2289,0
+"Ficus wood zones 1-6",12,82,6,0.935,0.4379,0.726,0.4621,0.348,-0.1291,0.72,NA,0.1981,0
+"Orientation - all substrates",25,240,5,1.1521,0.1873,0.102,0.1746,0.13,0.0741,0.131,0.114,0.236,0
+"Orientation - Ficus leaves",9,121,4,1.0699,0.391,0.284,0.3712,0.172,-0.0611,0.613,NA,1e-04,0
+"Orientation - Ficus wood",7,54,4,0.8833,0.469,0.795,0.4659,0.567,-0.2222,0.816,NA,0.1864,0
+"Orientation - Lauraceae leaves",9,104,3,1.447,0.3254,0.115,0.2132,0.617,0.2361,0.145,NA,1e-04,0
+"Substrate x orientation",25,240,11,1.5087,0.5187,0.001,0.4718,0.001,0.58,0.001,NA,0.236,0
+"Sun aspect - all substrates",25,240,3,1.4993,0.12,0.008,0.1064,0.014,0.2159,0.004,0.157,0.236,0
+"Sun aspect - Ficus leaves",9,121,3,1.0403,0.2575,0.378,0.2505,0.223,-0.1424,0.684,NA,1e-04,NA
+"Sun aspect - Ficus wood",7,54,3,0.9908,0.3313,0.487,0.3282,0.335,0.102,0.35,NA,0.1864,NA
+"Sun aspect - Lauraceae leaves",9,104,2,2.1398,0.2341,0.126,0.1219,0.262,1,0.126,NA,1e-04,NA

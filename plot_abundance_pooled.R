@@ -1,9 +1,6 @@
 outdir <- "plots/abundance_pooled_incertae_sedis"
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
-tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
-                   "subclass", "order", "family", "genus", "species")
-
 uncertain_values <- c("?", "NO", "incertae sedis")
 incertae_label   <- "Incertae sedis"
 
@@ -44,8 +41,10 @@ for (level in levels_to_plot) {
       mutate(label = as.character(.data[[level]]))
   } else {
     idx <- which(tax_hierarchy == level)
-    group_cols  <- tax_hierarchy[1:idx]
-    parent_cols <- if (idx >= 2) tax_hierarchy[1:(idx - 1)] else character(0)
+    # A rank is aggregated on its own value, so a taxon is never split
+    # by inconsistent higher-rank entries
+    group_cols  <- level
+    parent_cols <- character(0)
 
     agg <- dat %>%
       group_by(across(all_of(group_cols))) %>%

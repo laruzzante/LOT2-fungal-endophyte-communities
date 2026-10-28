@@ -1,0 +1,17 @@
+Beta-dispersion test (betadisper + permutest)
+
+
+Permutation test for homogeneity of multivariate dispersions
+Permutation: free
+Number of permutations: 999
+
+Response: Distances
+          Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)
+Groups     2 0.020512 0.0102559 2.1138    999  0.157
+Residuals 22 0.106740 0.0048518                     
+
+Group mean distances to centroid:
+                        group  n mean_dist
+Lateral (E/W)   Lateral (E/W) 10    0.6422
+Shaded (S)         Shaded (S)  4    0.6007
+Sun-facing (N) Sun-facing (N) 11    0.5801

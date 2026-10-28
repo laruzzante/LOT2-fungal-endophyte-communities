@@ -1,0 +1,45 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 240
+ Selected number of species: 5 
+ Number of species associated to 1 group: 5 
+ Number of species associated to 2 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group Lateral (E/W)  #sps.  1 
+                                 A   B  stat p.value  
+Pestalotiopsis cf. diversiseta 1.0 0.4 0.632   0.021 *
+
+ Group Shaded (S)  #sps.  1 
+                           A   B  stat p.value  
+Cytospora aff. eucalypti 1.0 0.5 0.707   0.025 *
+
+ Group Sun-facing (N)  #sps.  3 
+                                                                                                   A
+Nigrospora cf. gorlenkoana                                                                    1.0000
+Diaporthe sp. 20                                                                              0.8608
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 1.0000
+                                                                                                   B
+Nigrospora cf. gorlenkoana                                                                    0.7273
+Diaporthe sp. 20                                                                              0.6364
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.5455
+                                                                                               stat
+Nigrospora cf. gorlenkoana                                                                    0.853
+Diaporthe sp. 20                                                                              0.740
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.739
+                                                                                              p.value
+Nigrospora cf. gorlenkoana                                                                      0.004
+Diaporthe sp. 20                                                                                0.016
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2   0.022
+                                                                                                
+Nigrospora cf. gorlenkoana                                                                    **
+Diaporthe sp. 20                                                                              * 
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 * 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

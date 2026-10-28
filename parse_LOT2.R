@@ -1,53 +1,112 @@
 # =============================================================
 # Parse LOT2 input data
+#
+# Inputs (first sheet of each workbook is authoritative):
+#   LOT2_samples.xlsx              one row per isolate, with the ITS name
+#                                  at 100% AND at 99% BLAST similarity
+#   LOT2_pooled_counts_ITS100.xlsx per-taxon counts + taxonomy, 100% names
+#   LOT2_pooled_counts_ITS99.xlsx  per-taxon counts + taxonomy, 99% names
+#                                  (in production - V. Hofstetter)
+#   LOT2_otu_map.csv               isolate -> 97% OTU (cluster_otus.sh)
 # =============================================================
 
-# --- Pooled genotype counts (first sheet only) ---
-pooled <- read_excel("LOT2_pooled_counts.xlsx", sheet = 1) %>%
-  rename(
-    culture_code      = `Hofstetter-culture code (CTAB 1x)`,
-    its_taxon         = `ITS sequences named after GenBank BLAST top score(s) result(s) and taxon current names (Mycobank/Index Fungorum)`,
-    n_fungi_laur_leaf = `Number of fungi isolated from the Lauraceae leaves`,
-    n_fungi_fic_leaf  = `Number of fungi isolated from the Ficus leaves`,
-    n_fungi_fic_wood  = `Number of fungi isolated from from theFicus wood`,
-    phylum            = Phylum,
-    subphylum         = Subphylum,
-    superclass        = `Superclass (Fungi are sometimes reported under both Leotiomycetes and Sordariomycetes due to historical classification errors, overlapping physical traits, and updates from modern DNA sequencing.`,
-    class             = Class,
-    subclass          = Subclass,
-    order             = Order,
-    family            = Family,
-    genus             = Genus,
-    species           = Species
-  )
+# Superclass and subclass are deliberately not used: the superclass
+# column is inconsistently filled (one class ends up under 2-3
+# superclasses) and neither rank is needed.
+tax_hierarchy    <- c("phylum", "subphylum", "class", "order",
+                      "family", "genus", "species")
+uncertain_values <- c("?", "NO", "incertae sedis", "")
+incertae_label   <- "Incertae sedis"
 
-# The workbook ends with a spreadsheet TOTALS row: no culture code, no
-# taxon name, just the column sums. Read as a genotype it becomes a
-# phantom taxon carrying an entire substrate's isolate count, which the
-# pie and abundance charts then draw as a giant "Incertae sedis" slice.
-# Drop every row that carries neither an identifier nor a name.
-pooled_raw_rows <- nrow(pooled)
-pooled <- pooled %>% filter(!(is.na(culture_code) & is.na(its_taxon)))
-if (pooled_raw_rows > nrow(pooled))
-  cat("Dropped", pooled_raw_rows - nrow(pooled),
-      "unidentified/total row(s) from the pooled counts\n")
+squish    <- function(x) trimws(gsub("\\s+", " ", as.character(x)))
+clean_tax <- function(x) { x <- squish(x); ifelse(is.na(x) | x %in% uncertain_values, NA_character_, x) }
+majority  <- function(x) {
+  x <- clean_tax(x); x <- x[!is.na(x)]
+  if (!length(x)) NA_character_ else names(sort(table(x), decreasing = TRUE))[1]
+}
+# Spelling-insensitive key: "A, or B" == "A or B" == "A B"
+name_key <- function(x) gsub("[^a-z0-9]", "", gsub("\\bor\\b", "", tolower(squish(x))))
+# Same, ignoring a trailing "(...)" comment, e.g. "Diaporthe sp. 7 (>99% similarity with sp. 30)"
+name_key_stripped <- function(x) name_key(sub("\\s*\\([^()]*\\)\\s*$", "", squish(x)))
+
+dir.create("results/data_checks", recursive = TRUE, showWarnings = FALSE)
+
+# --- Pooled per-taxon workbooks -------------------------------
+read_pooled <- function(path) {
+  p <- read_excel(path, sheet = 1)
+  ls_col <- grep("^\\s*life\\s*style", names(p), ignore.case = TRUE)
+  out <- tibble(
+    culture_code      = squish(p[[1]]),
+    its_taxon         = squish(p[[2]]),
+    n_fungi_laur_leaf = as.numeric(p[[3]]),
+    n_fungi_fic_leaf  = as.numeric(p[[4]]),
+    n_fungi_fic_wood  = as.numeric(p[[5]]),
+    phylum = p$Phylum, subphylum = p$Subphylum, class = p$Class,
+    order = p$Order, family = p$Family, genus = p$Genus,
+    species_epithet = p$Species,
+    lifestyle = if (length(ls_col)) squish(p[[ls_col[1]]]) else NA_character_)
+  # The sheet ends with a TOTALS row (no code, no name); read as a taxon
+  # it would become a phantom slice holding a whole substrate's isolates.
+  n0 <- nrow(out)
+  out <- out %>% filter(!(is.na(culture_code) & is.na(its_taxon)))
+  if (n0 > nrow(out)) cat(basename(path), ": dropped", n0 - nrow(out), "total row(s)\n")
+  out %>% mutate(
+    across(c(phylum, subphylum, class, order, family, genus), clean_tax),
+    species = ifelse(!is.na(genus) & !is.na(clean_tax(species_epithet)),
+                     paste(genus, clean_tax(species_epithet)), NA_character_),
+    lifestyle = clean_tax(lifestyle)) %>%
+    select(-species_epithet)
+}
+
+# Higher ranks are made consistent with the class (majority vote), so a
+# class is never split by a mis-typed phylum/subphylum (e.g. one
+# Mortierellomycetes row with phylum "incertae sedis").
+harmonise_lineage <- function(p, set_name) {
+  changes <- list()
+  for (parent in c("phylum", "subphylum")) {
+    ref <- p %>% filter(!is.na(class)) %>% group_by(class) %>%
+      summarise(ref = majority(.data[[parent]]), .groups = "drop")
+    new <- ref$ref[match(p$class, ref$class)]
+    chg <- !is.na(new) & (is.na(p[[parent]]) | p[[parent]] != new)
+    if (any(chg))
+      changes[[parent]] <- data.frame(unit_set = set_name, its_taxon = p$its_taxon[chg],
+                                      class = p$class[chg], rank = parent,
+                                      original = p[[parent]][chg], harmonised = new[chg])
+    p[[parent]][chg] <- new[chg]
+  }
+  list(data = p, changes = bind_rows(changes))
+}
+
+pooled_wb <- list()
+lineage_changes <- list()
+for (s in c("ITS100", "ITS99")) {
+  h <- harmonise_lineage(read_pooled(paste0("LOT2_pooled_counts_", s, ".xlsx")), s)
+  pooled_wb[[s]] <- h$data
+  lineage_changes[[s]] <- h$changes
+}
+lineage_changes <- bind_rows(lineage_changes)
+write.csv(lineage_changes, "results/data_checks/lineage_harmonisation.csv", row.names = FALSE)
+if (nrow(lineage_changes))
+  cat("Lineage harmonisation:", nrow(lineage_changes), "phylum/subphylum value(s) aligned with their class\n")
 
 # --- Sample-level isolate records (first sheet only) ---
-# The samples workbook was re-issued by the field team with the
-# reconciled branch numbering / colour codes, which finally makes the
-# branch & trunk sampling ORIENTATION usable. Layout (12 columns):
-#   1 substrate            5 branch colour (project database)   9  ITS taxon
-#   2 tree zone            6 orientation (pre-reconciliation)  10  GenBank hit
-#   3 sampling unit        7 orientation (reconciled - USE)    11  culture code (dup)
-#   4 branch colour (field) 8 culture code                     12  field notes
-# Columns 4-6 and 12 are the reconciliation working columns kept for
-# traceability; only column 7 is authoritative for orientation.
-samples_raw <- read_excel("LOT2_samples.xlsx", sheet = 1)
+# Layout (12 columns):
+#   1 substrate              5 branch colour (project database)   9 ITS name, 100% similarity
+#   2 tree zone              6 orientation (pre-reconciliation)  10 ITS name, 99% similarity
+#   3 sampling unit          7 orientation (reconciled - USE)    11 GenBank hit
+#   4 branch colour (field)  8 culture code                      12 culture code (dup)
+# Columns 4-6 are reconciliation working columns kept for traceability;
+# only column 7 is authoritative for orientation.
+samples_raw <- read_excel("LOT2_samples.xlsx", sheet = 1, .name_repair = "minimal")
+iso_ls_col  <- grep("^\\s*life\\s*style", names(samples_raw), ignore.case = TRUE)
+lifestyle_isolate <- if (length(iso_ls_col)) clean_tax(samples_raw[[iso_ls_col[1]]]) else NA_character_
+samples_raw <- samples_raw[, 1:12]
 names(samples_raw) <- c("substrate", "zone", "unit",
                         "branch_colour_field", "branch_colour_db",
                         "orientation_old", "orientation_raw",
-                        "culture_code1", "its_taxon", "genbank",
-                        "culture_code2", "field_note")
+                        "culture_code1", "its100_raw", "its99_raw", "genbank",
+                        "culture_code2")
+samples_raw$lifestyle_isolate <- lifestyle_isolate
 
 # Drop any fully empty trailing rows
 samples_raw <- samples_raw[!is.na(samples_raw$substrate), ]
@@ -142,25 +201,20 @@ samples_raw <- samples_raw %>%
       paste(substrate, paste0("Z", zone), unit, orientation, sep = "__"))
   )
 
-# --- Sequence-based OTUs -------------------------------------
-# `its_taxon` is a BLAST-derived name string, not a clustered unit: it
-# over-splits (near-identical sequences under two spellings) and
-# over-lumps (single labels covering "26 spp."). `cluster_otus.sh`
-# clusters the ITS sequences themselves; the mapping is committed so the
-# pipeline runs without vsearch.
+# --- 97% OTUs (automatic, sequence-based) ---------------------
+# Produced by cluster_otus.sh (vsearch greedy centroid clustering of the
+# ITS sequences in sheet Feuil2 at 97% identity); the mapping is
+# committed so the pipeline runs without vsearch.
 otu_map_file <- "LOT2_otu_map.csv"
+samples_raw <- samples_raw %>% mutate(culture_code1 = squish(culture_code1))
 if (file.exists(otu_map_file)) {
   otu_map <- read.csv(otu_map_file, colClasses = "character")
   samples_raw <- samples_raw %>%
-    mutate(culture_code1 = trimws(as.character(culture_code1))) %>%
     left_join(otu_map, by = c("culture_code1" = "culture_code"))
   n_missing_otu <- sum(is.na(samples_raw$otu_97))
   if (n_missing_otu > 0)
     warning(n_missing_otu, " isolates have no OTU assignment; ",
             "re-run cluster_otus.sh after changing the input sequences.")
-  cat("OTUs (97% ITS identity):", n_distinct(na.omit(samples_raw$otu_97)),
-      "from", nrow(samples_raw), "isolates",
-      sprintf("(%d name-based labels)\n", n_distinct(samples_raw$its_taxon)))
   have_otus <- TRUE
 } else {
   samples_raw$otu_97 <- NA_character_
@@ -199,29 +253,29 @@ design_units <- sampling_design %>%
             .groups = "drop")
 
 # --- Cross-file integrity checks -----------------------------
-# The two workbooks are maintained separately and have drifted before
+# The workbooks are maintained separately and have drifted before
 # (a totals row read as a taxon, genotype names spelled two ways).
 # Fail loudly rather than silently analysing inconsistent inputs.
 check_inputs <- function() {
-  pooled_tot <- c(
-    `Lauraceae leaves` = sum(pooled$n_fungi_laur_leaf, na.rm = TRUE),
-    `Ficus leaves`     = sum(pooled$n_fungi_fic_leaf,  na.rm = TRUE),
-    `Ficus wood`       = sum(pooled$n_fungi_fic_wood,  na.rm = TRUE))
-  sample_tot <- table(samples_raw$substrate)[names(pooled_tot)]
-  diffs <- pooled_tot - as.integer(sample_tot)
-  if (any(diffs != 0)) {
-    cat("WARNING: pooled and sample-level totals disagree\n")
-    print(data.frame(substrate = names(pooled_tot),
-                     pooled = as.integer(pooled_tot),
-                     samples = as.integer(sample_tot),
-                     difference = as.integer(diffs)))
-  } else {
-    cat("Integrity check: pooled and sample-level totals agree",
-        paste0("(", sum(pooled_tot), " isolates)\n"))
+  for (s in names(pooled_wb)) {
+    pw <- pooled_wb[[s]]
+    pooled_tot <- c(
+      `Lauraceae leaves` = sum(pw$n_fungi_laur_leaf, na.rm = TRUE),
+      `Ficus leaves`     = sum(pw$n_fungi_fic_leaf,  na.rm = TRUE),
+      `Ficus wood`       = sum(pw$n_fungi_fic_wood,  na.rm = TRUE))
+    sample_tot <- table(samples_raw$substrate)[names(pooled_tot)]
+    diffs <- pooled_tot - as.integer(sample_tot)
+    if (any(diffs != 0)) {
+      cat("WARNING:", s, "workbook and sample-level totals disagree\n")
+      print(data.frame(substrate = names(pooled_tot), pooled = as.integer(pooled_tot),
+                       samples = as.integer(sample_tot), difference = as.integer(diffs)))
+    } else {
+      cat("Integrity check:", s, "workbook and sample-level totals agree",
+          paste0("(", sum(pooled_tot), " isolates)\n"))
+    }
   }
   # Same culture code = subsamples of one colony, so repeated codes would
-  # have to be collapsed before abundances mean anything. They are all
-  # distinct here, so every row is an independent isolate.
+  # have to be collapsed before abundances mean anything.
   n_codes <- n_distinct(samples_raw$culture_code1)
   if (n_codes < nrow(samples_raw)) {
     cat("WARNING:", nrow(samples_raw) - n_codes, "repeated culture codes -",
@@ -241,17 +295,127 @@ check_inputs <- function() {
   if (length(units_no_isolates) > 0)
     cat("Note: no isolates recorded for designed unit(s):",
         paste(units_no_isolates, collapse = ", "), "\n")
-
-  unmatched <- setdiff(unique(samples_raw$its_taxon), unique(pooled$its_taxon))
-  if (length(unmatched) > 0)
-    cat("Note:", length(unmatched), "sample genotype names are spelled",
-        "differently in the pooled file\n     (lineage is resolved per OTU,",
-        "so these are rescued by their OTU-mates).\n")
   invisible(NULL)
 }
 check_inputs()
 
-cat("Pooled counts:", nrow(pooled), "genotypes\n")
+# =============================================================
+# Taxonomic unit sets
+# Every analysis is run in parallel on three definitions of the unit:
+#   ITS100  ITS name from the GenBank BLAST top score at 100% similarity
+#           (V. Hofstetter) - the reference set
+#   ITS99   same at 99% similarity (V. Hofstetter, in production)
+#   OTU97   97% ITS OTUs clustered automatically by cluster_otus.sh
+# =============================================================
+pool_isolates <- function(s) s %>%
+  group_by(its_taxon) %>%
+  summarise(culture_code      = sort(culture_code1)[1],
+            n_fungi_laur_leaf = sum(substrate == "Lauraceae leaves"),
+            n_fungi_fic_leaf  = sum(substrate == "Ficus leaves"),
+            n_fungi_fic_wood  = sum(substrate == "Ficus wood"),
+            across(all_of(tax_hierarchy), majority),
+            lifestyle = majority(lifestyle),
+            .groups = "drop")
+
+# Isolate names are mapped onto the curated workbook names, tolerating
+# spelling variants and trailing "(...)" comments.
+map_to_workbook <- function(iso_names, wb) {
+  pk   <- name_key(wb$its_taxon)
+  idx  <- match(name_key(iso_names), pk)
+  miss <- is.na(idx)
+  idx[miss] <- match(name_key_stripped(iso_names[miss]), pk)
+  idx
+}
+
+build_name_set <- function(set, raw_col) {
+  wb  <- pooled_wb[[set]]
+  s   <- samples_raw
+  raw <- squish(s[[raw_col]])
+  idx <- map_to_workbook(raw, wb)
+  s$its_taxon <- ifelse(is.na(idx), raw, wb$its_taxon[idx])
+  for (r in tax_hierarchy) s[[r]] <- wb[[r]][idx]
+  s$lifestyle <- wb$lifestyle[idx]
+  s$lineage_source <- ifelse(is.na(idx), NA_character_, "workbook")
+
+  # Unmatched names: lineage from their 97%-OTU mates, else from the
+  # leading genus token
+  um <- is.na(idx)
+  if (any(um) && have_otus) {
+    otu_lin <- s[!um, ] %>% filter(!is.na(otu_97)) %>% group_by(otu_97) %>%
+      summarise(across(all_of(tax_hierarchy), majority), .groups = "drop")
+    i <- match(s$otu_97, otu_lin$otu_97)
+    take <- um & !is.na(i)
+    for (r in tax_hierarchy) s[[r]][take] <- otu_lin[[r]][i[take]]
+    s$lineage_source[take] <- "97% OTU mates"
+  }
+  left <- is.na(s$lineage_source)
+  if (any(left)) {
+    gen_lin <- wb %>% filter(!is.na(genus)) %>% group_by(genus) %>%
+      summarise(across(c(phylum, subphylum, class, order, family), majority), .groups = "drop")
+    tok <- sub(" .*", "", raw)
+    j <- match(tok, gen_lin$genus)
+    take <- left & !is.na(j)
+    for (r in c("phylum", "subphylum", "class", "order", "family"))
+      s[[r]][take] <- gen_lin[[r]][j[take]]
+    s$genus[take] <- tok[take]
+    s$lineage_source[take] <- "genus name"
+  }
+  s$lineage_source[is.na(s$lineage_source)] <- "none"
+
+  write.csv(s[um, ] %>% count(isolate_name = raw[um], unit = its_taxon, lineage_source, name = "n_isolates"),
+            file.path("results/data_checks", paste0(set, "_names_not_in_workbook.csv")), row.names = FALSE)
+
+  # Per-taxon counts: workbook vs isolate records
+  cmp <- full_join(
+    wb %>% group_by(its_taxon) %>%
+      summarise(wb_lauraceae = sum(n_fungi_laur_leaf), wb_ficus_leaves = sum(n_fungi_fic_leaf),
+                wb_ficus_wood = sum(n_fungi_fic_wood), .groups = "drop"),
+    pool_isolates(s) %>% select(its_taxon, iso_lauraceae = n_fungi_laur_leaf,
+                                iso_ficus_leaves = n_fungi_fic_leaf, iso_ficus_wood = n_fungi_fic_wood),
+    by = "its_taxon") %>%
+    mutate(across(-its_taxon, ~ replace_na(., 0))) %>%
+    filter(wb_lauraceae != iso_lauraceae | wb_ficus_leaves != iso_ficus_leaves |
+             wb_ficus_wood != iso_ficus_wood)
+  write.csv(cmp, file.path("results/data_checks", paste0(set, "_workbook_vs_isolate_counts.csv")),
+            row.names = FALSE)
+  cat(set, ":", n_distinct(s$its_taxon), "taxa;", sum(um), "isolates with a name not in the workbook;",
+      nrow(cmp), "taxa whose workbook counts differ from the isolate records\n")
+  s
+}
+
+unit_sets <- list(
+  ITS100 = list(label = "ITS 100% BLAST name",
+                samples = build_name_set("ITS100", "its100_raw")),
+  ITS99  = list(label = "ITS 99% BLAST name (in production)",
+                samples = build_name_set("ITS99", "its99_raw")))
+
+if (have_otus) {
+  s100 <- unit_sets$ITS100$samples
+  otu_info <- s100 %>% group_by(otu_97) %>%
+    summarise(top = names(sort(table(its_taxon), decreasing = TRUE))[1],
+              n_names = n_distinct(its_taxon),
+              across(all_of(tax_hierarchy), majority), .groups = "drop") %>%
+    mutate(otu_label = paste0(otu_97, " (", substr(top, 1, 40),
+                              ifelse(n_names > 1, paste0(" +", n_names - 1), ""), ")"))
+  s <- s100 %>% select(-all_of(tax_hierarchy)) %>%
+    left_join(otu_info %>% select(otu_97, otu_label, all_of(tax_hierarchy)), by = "otu_97") %>%
+    mutate(its_taxon = otu_label, lineage_source = "majority of ITS100 names in the OTU") %>%
+    select(-otu_label)
+  unit_sets$OTU97 <- list(label = "97% ITS OTU (vsearch)", samples = s)
+  cat("OTU97 :", n_distinct(s$its_taxon), "OTUs\n")
+}
+
+for (u in names(unit_sets)) {
+  s <- unit_sets[[u]]$samples
+  # A Lifestyle column in the samples workbook overrides the per-taxon one
+  s$lifestyle <- dplyr::coalesce(s$lifestyle_isolate, s$lifestyle)
+  unit_sets[[u]]$samples <- s
+  unit_sets[[u]]$pooled  <- pool_isolates(s)
+}
+have_lifestyle <- any(!is.na(unit_sets$ITS100$samples$lifestyle))
+cat("Lifestyle column:", if (have_lifestyle) "found" else
+      "not found in any workbook - lifestyle analyses will be skipped", "\n")
+
 cat("Sample records:", nrow(samples_raw), "isolates\n")
 cat("Substrates:", paste(sort(unique(samples_raw$substrate)), collapse = ", "), "\n")
 cat("Zones:", paste(sort(unique(samples_raw$zone)), collapse = ", "), "\n")

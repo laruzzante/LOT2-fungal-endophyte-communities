@@ -1,0 +1,46 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 180
+ Selected number of species: 5 
+ Number of species associated to 1 group: 2 
+ Number of species associated to 2 groups: 2 
+ Number of species associated to 3 groups: 1 
+ Number of species associated to 4 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group NW  #sps.  1 
+                              A      B  stat p.value   
+Colletotrichum mexicanum 0.8621 0.7500 0.804   0.007 **
+
+ Group S  #sps.  1 
+                      A   B  stat p.value  
+Cytospora eucalypti 1.0 0.5 0.707   0.044 *
+
+ Group N+NW  #sps.  2 
+                                                                           A
+Neopestalotiopsis sichuanensis or N. phyllostachydis or N. fidjiensis 0.9195
+Nigrospora gorlenkoana                                                0.7987
+                                                                           B
+Neopestalotiopsis sichuanensis or N. phyllostachydis or N. fidjiensis 0.7273
+Nigrospora gorlenkoana                                                0.8182
+                                                                       stat
+Neopestalotiopsis sichuanensis or N. phyllostachydis or N. fidjiensis 0.818
+Nigrospora gorlenkoana                                                0.808
+                                                                      p.value
+Neopestalotiopsis sichuanensis or N. phyllostachydis or N. fidjiensis   0.004
+Nigrospora gorlenkoana                                                  0.013
+                                                                        
+Neopestalotiopsis sichuanensis or N. phyllostachydis or N. fidjiensis **
+Nigrospora gorlenkoana                                                * 
+
+ Group N+NW+S  #sps.  1 
+                    A   B  stat p.value  
+Diaporthe ocoteae 1.0 0.6 0.775   0.029 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

@@ -1,0 +1,4 @@
+"unit_set","definition","isolates","taxa","singleton_taxa","pct_singleton_taxa","taxa_Lauraceae_leaves","taxa_Ficus_leaves","taxa_Ficus_wood"
+"ITS100","ITS 100% BLAST name",650,281,177,63,104,135,82
+"ITS99","ITS 99% BLAST name (in production)",650,215,125,58.1,70,112,76
+"OTU97","97% ITS OTU (vsearch)",650,142,74,52.1,45,74,64

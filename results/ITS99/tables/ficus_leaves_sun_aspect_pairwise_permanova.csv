@@ -1,0 +1,4 @@
+"pair","F_stat","R2","p_value","p_adj"
+"Lateral (E/W) vs Sun-facing (N)",1.3157,0.2083,0.206,0.618
+"Lateral (E/W) vs Shaded (S)",1.0306,0.1709,0.45,0.666666666666667
+"Sun-facing (N) vs Shaded (S)",1.8401,0.4792,0.333333333333333,0.666666666666667

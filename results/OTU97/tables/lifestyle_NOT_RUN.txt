@@ -1,0 +1,3 @@
+Lifestyle analyses NOT RUN.
+No 'Lifestyle' column was found in LOT2_samples.xlsx or in the ITS100/ITS99 workbooks.
+Add one (one value per isolate, or per taxon) and re-run main.R.

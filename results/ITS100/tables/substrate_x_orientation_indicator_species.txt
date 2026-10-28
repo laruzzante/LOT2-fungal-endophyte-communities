@@ -1,0 +1,80 @@
+
+ Multilevel pattern analysis
+ ---------------------------
+
+ Association function: IndVal.g
+ Significance level (alpha): 0.05
+
+ Total number of species: 240
+ Selected number of species: 10 
+ Number of species associated to 1 group: 3 
+ Number of species associated to 2 groups: 3 
+ Number of species associated to 3 groups: 3 
+ Number of species associated to 4 groups: 1 
+ Number of species associated to 5 groups: 0 
+ Number of species associated to 6 groups: 0 
+ Number of species associated to 7 groups: 0 
+ Number of species associated to 8 groups: 0 
+ Number of species associated to 9 groups: 0 
+ Number of species associated to 10 groups: 0 
+
+ List of species associated to each combination: 
+
+ Group Ficus leaves - E  #sps.  1 
+                            A      B  stat p.value  
+Pseudocercospora sp. 1 0.8182 1.0000 0.905   0.042 *
+
+ Group Ficus leaves - N  #sps.  1 
+                                    A B stat p.value  
+Nigrospora cf. sacchari-officinarum 1 1    1   0.022 *
+
+ Group Ficus leaves - S  #sps.  1 
+                         A B stat p.value  
+Cytospora aff. eucalypti 1 1    1   0.021 *
+
+ Group Ficus leaves - E+Ficus leaves - N  #sps.  1 
+                             A    B  stat p.value  
+Colletotrichum arboricola 0.75 1.00 0.866   0.042 *
+
+ Group Lauraceae leaves - N+Lauraceae leaves - NW  #sps.  2 
+                                                                                                 A
+Nigrospora cf. gorlenkoana                                                                    1.00
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 1.00
+                                                                                                 B
+Nigrospora cf. gorlenkoana                                                                    1.00
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.75
+                                                                                               stat
+Nigrospora cf. gorlenkoana                                                                    1.000
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 0.866
+                                                                                              p.value
+Nigrospora cf. gorlenkoana                                                                      0.001
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2   0.039
+                                                                                                 
+Nigrospora cf. gorlenkoana                                                                    ***
+Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2 *  
+
+ Group Ficus leaves - E+Ficus leaves - S+Lauraceae leaves - N  #sps.  1 
+                      A      B  stat p.value  
+Diaporthe sp. 29 0.8421 0.8750 0.858   0.038 *
+
+ Group Ficus leaves - S+Lauraceae leaves - N+Lauraceae leaves - NW  #sps.  1 
+                   A   B  stat p.value  
+Diaporthe sp. 20 1.0 0.8 0.894   0.031 *
+
+ Group Ficus wood - E+Ficus wood - N+Ficus wood - W  #sps.  1 
+                                                                           A
+Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 1.0
+                                                                           B
+Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 0.8
+                                                                          stat
+Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 0.894
+                                                                         p.value
+Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.)   0.048
+                                                                          
+Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) *
+
+ Group Ficus leaves - E+Ficus leaves - N+Ficus leaves - S+Ficus leaves - W  #sps.  1 
+                                  A      B  stat p.value  
+Pseudocercospora aff. quetri 1.0000 0.7778 0.882   0.027 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 

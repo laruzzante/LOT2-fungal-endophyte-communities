@@ -5,11 +5,6 @@ library(ggVennDiagram)
 dir.create("plots/community",   recursive = TRUE, showWarnings = FALSE)
 dir.create("tables",            recursive = TRUE, showWarnings = FALSE)
 
-tax_hierarchy <- c("phylum", "subphylum", "superclass", "class",
-                   "subclass", "order", "family", "genus", "species")
-uncertain_values <- c("?", "NO", "incertae sedis")
-incertae_label   <- "Incertae sedis"
-
 substrate_colours_3 <- c("Ficus leaves"     = "#A23B72",
                           "Ficus wood"       = "#F18F01",
                           "Lauraceae leaves" = "#2E86AB")
@@ -23,87 +18,12 @@ dat_agg <- pooled %>%
          across(c(n_fungi_laur_leaf, n_fungi_fic_leaf, n_fungi_fic_wood),
                 ~ replace_na(., 0)))
 
-# ------------------------------------------------------------
-# Per-isolate lineage: link each sample isolate to its full
-# taxonomy so that community analyses can be repeated at every
-# taxonomic rank (an isolate that is Incertae sedis at species
-# level may still carry a defined genus / family / order ...).
-# Incertae sedis / unresolved values are set to NA at the rank
-# where they are unresolved, so they are simply dropped from
-# every rank-specific analysis (they are kept only in the
-# dedicated abundance bar charts and pie charts).
-# ------------------------------------------------------------
-clean_tax <- function(x) ifelse(is.na(x) | x %in% uncertain_values, NA_character_, x)
-
-# One lineage row per ITS genotype (from the pooled taxonomy table)
-lineage_its <- pooled %>%
-  distinct(its_taxon, .keep_all = TRUE) %>%
-  transmute(its_taxon, across(all_of(tax_hierarchy), clean_tax))
-
-# Genus -> higher-rank lineage (majority vote); used as a fallback
-# for the few sample ITS names that do not match the pooled list.
-lineage_genus <- pooled %>%
-  mutate(genus = clean_tax(genus)) %>%
-  filter(!is.na(genus)) %>%
-  group_by(genus) %>%
-  summarise(across(c(phylum, subphylum, superclass, class, subclass, order, family),
-                   ~ { v <- clean_tax(.x); v <- v[!is.na(v)]
-                       if (length(v)) names(sort(table(v), decreasing = TRUE))[1] else NA_character_ }),
-            .groups = "drop")
-
-samples_lineage <- samples_raw %>% left_join(lineage_its, by = "its_taxon")
-
-# Fill lineage from the leading genus token where the exact ITS
-# name was not found in the pooled taxonomy (name variants).
-need_fix <- is.na(samples_lineage$phylum) & is.na(samples_lineage$genus)
-if (any(need_fix)) {
-  token <- sub(" .*", "", samples_lineage$its_taxon[need_fix])
-  fb <- lineage_genus[match(token, lineage_genus$genus), ]
-  for (col in c("phylum","subphylum","superclass","class","subclass","order","family")) {
-    samples_lineage[[col]][need_fix] <- fb[[col]]
-  }
-  samples_lineage$genus[need_fix] <- ifelse(token %in% lineage_genus$genus, token, NA_character_)
-}
-
-# ------------------------------------------------------------
-# OTU-level lineage rescue.
-# The two workbooks spell ~18 genotype names differently, so those
-# isolates fail the join above. Because sequence-based OTUs group
-# isolates independently of their labels, an unmatched isolate can
-# inherit the majority lineage of its OTU-mates.
-# ------------------------------------------------------------
-if (have_otus) {
-  rank_cols <- c("phylum","subphylum","superclass","class","subclass",
-                 "order","family","genus","species")
-  majority <- function(x) {
-    x <- clean_tax(x); x <- x[!is.na(x)]
-    if (!length(x)) NA_character_ else names(sort(table(x), decreasing = TRUE))[1]
-  }
-  otu_lineage <- samples_lineage %>%
-    filter(!is.na(otu_97)) %>%
-    group_by(otu_97) %>%
-    summarise(across(all_of(rank_cols), majority), .groups = "drop")
-
-  rescued <- 0L
-  idx <- match(samples_lineage$otu_97, otu_lineage$otu_97)
-  for (col in rank_cols) {
-    gap <- is.na(clean_tax(samples_lineage[[col]])) & !is.na(idx)
-    fill <- otu_lineage[[col]][idx]
-    take <- gap & !is.na(fill)
-    rescued <- rescued + sum(take)
-    samples_lineage[[col]][take] <- fill[take]
-  }
-  cat("OTU-level lineage rescue: filled", rescued, "rank values\n")
-}
-
-# The analytical unit for the fine-scale community analyses. Sequence
-# OTUs are preferred over BLAST name strings; `its_taxon` is retained
-# as a sweep level so the two can be compared directly.
-primary_unit <- if (have_otus) "otu_97" else "its_taxon"
-unit_label   <- if (have_otus) "97% ITS OTU" else "ITS genotype"
-
-lineage_levels <- c("phylum", "class", "order", "family", "genus", "species",
-                    if (have_otus) "otu_97", "its_taxon")
+# Per-isolate lineage is attached by parse_LOT2.R (unresolved ranks are
+# NA), and `its_taxon` holds the analytical unit of the current unit
+# set (ITS100 name, ITS99 name or 97% OTU) - see main.R.
+samples_lineage <- samples_raw
+primary_unit    <- "its_taxon"
+lineage_levels  <- c("phylum", "class", "order", "family", "genus", "species", "its_taxon")
 
 cat("Isolate lineage coverage per rank:\n")
 lineage_coverage <- sapply(lineage_levels, function(lv) {
@@ -133,9 +53,8 @@ for (level in c("its_taxon", tax_hierarchy)) {
                 Ficus_leaves     = sum(n_fungi_fic_leaf),
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop")
   } else {
-    idx <- which(tax_hierarchy == level)
     agg <- dat_agg %>%
-      group_by(across(all_of(tax_hierarchy[1:idx]))) %>%
+      group_by(across(all_of(level))) %>%
       summarise(Lauraceae_leaves = sum(n_fungi_laur_leaf),
                 Ficus_leaves     = sum(n_fungi_fic_leaf),
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop")
@@ -203,9 +122,8 @@ for (level in c("genus", "species", "its_taxon")) {
                 Ficus_leaves     = sum(n_fungi_fic_leaf),
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop")
   } else {
-    idx <- which(tax_hierarchy == level)
     agg <- dat_agg %>%
-      group_by(across(all_of(tax_hierarchy[1:idx]))) %>%
+      group_by(across(all_of(level))) %>%
       summarise(Lauraceae_leaves = sum(n_fungi_laur_leaf),
                 Ficus_leaves     = sum(n_fungi_fic_leaf),
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop")
@@ -268,9 +186,8 @@ cat("Share of isolates that are Incertae sedis at each rank (%):\n")
 print(incertae_share)
 
 for (level in c("phylum", "class", "order", "family", "genus")) {
-  idx <- which(tax_hierarchy == level)
   agg <- dat_agg %>%
-    group_by(across(all_of(tax_hierarchy[1:idx]))) %>%
+    group_by(across(all_of(level))) %>%
     summarise(Lauraceae_leaves = sum(n_fungi_laur_leaf),
               Ficus_leaves     = sum(n_fungi_fic_leaf),
               Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop") %>%
@@ -350,9 +267,8 @@ for (level in c("genus", "species", "its_taxon")) {
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop") %>%
       rename(taxon = its_taxon)
   } else {
-    idx <- which(tax_hierarchy == level)
     agg <- dat_agg %>%
-      group_by(across(all_of(tax_hierarchy[1:idx]))) %>%
+      group_by(across(all_of(level))) %>%
       summarise(Lauraceae_leaves = sum(n_fungi_laur_leaf),
                 Ficus_leaves     = sum(n_fungi_fic_leaf),
                 Ficus_wood       = sum(n_fungi_fic_wood), .groups = "drop") %>%
@@ -982,7 +898,10 @@ cat("\n====== E. Zone-based analyses ======\n")
 
 zone_colours <- c("1" = "#440154", "2" = "#3B528B", "3" = "#21918C",
                    "4" = "#5EC962", "5" = "#ADDC30", "6" = "#FDE725")
-position_colours <- c("Trunk" = "#8B4513", "Branch" = "#228B22")
+
+# Ficus trunk and branch wood are ONE substrate: no analysis contrasts
+# them as groups. Only the height (zone 1-6) gradient within Ficus wood
+# and the zone-6 (top canopy) substrate comparison are kept.
 
 # ---- E1. Ficus wood: all zones ----
 cat("\n--- E1. Ficus wood across zones ---\n")
@@ -998,41 +917,7 @@ results_fw_zones <- run_multivariate(
   colours = zone_colours
 )
 
-# ---- E2. Ficus wood: trunk (zones 1-5) vs branch (zone 6) ----
-cat("\n--- E2. Ficus wood trunk vs branch ---\n")
-
-results_fw_trunkbranch <- run_multivariate(
-  comm_fw, meta_fw, "position",
-  label = "ficus_wood_trunk_vs_branch",
-  outdir = "tables",
-  colours = position_colours
-)
-
-# ---- E3. Trunk vs branch per substrate (where data permits) ----
-cat("\n--- E3. Trunk vs branch per substrate ---\n")
-
-subst_with_both <- meta_full %>%
-  group_by(substrate) %>%
-  summarise(has_trunk = any(position == "Trunk"),
-            has_branch = any(position == "Branch"), .groups = "drop") %>%
-  filter(has_trunk & has_branch) %>%
-  pull(substrate)
-
-results_trunk_branch_per_sub <- list()
-if (length(subst_with_both) > 0) {
-  for (sub in subst_with_both) {
-    sel_sub <- meta_full$substrate == sub
-    cat("\n  Trunk vs branch for:", sub, "\n")
-    results_trunk_branch_per_sub[[sub]] <- run_multivariate(
-      comm_mat_full[sel_sub, ], meta_full[sel_sub, ], "position",
-      label = paste0(gsub(" ", "_", tolower(sub)), "_trunk_vs_branch"),
-      outdir = "tables",
-      colours = position_colours
-    )
-  }
-}
-
-# ---- E4. All substrates at zone 6 (branch level only) ----
+# ---- E4. All substrates at zone 6 (top canopy) ----
 cat("\n--- E4. Substrate comparison at zone 6 (branch level) ---\n")
 sel_z6 <- meta_full$zone == 6
 results_z6 <- run_multivariate(
@@ -1040,22 +925,6 @@ results_z6 <- run_multivariate(
   label = "substrate_zone6_branch",
   outdir = "tables",
   colours = substrate_colours_3
-)
-
-# ---- E5. Substrate x position interaction (combined factor) ----
-cat("\n--- E5. Substrate x position interaction ---\n")
-meta_full$sub_pos <- paste(meta_full$substrate, meta_full$position, sep = " - ")
-n_combos <- length(unique(meta_full$sub_pos))
-combo_colours <- setNames(
-  scales::hue_pal()(n_combos),
-  sort(unique(meta_full$sub_pos))
-)
-
-results_subpos <- run_multivariate(
-  comm_mat_full, meta_full, "sub_pos",
-  label = "substrate_x_position",
-  outdir = "tables",
-  colours = combo_colours
 )
 
 # ============================================================
@@ -1126,13 +995,6 @@ sweep_zones <- run_level_sweep(
   zone_colours, plot_prefix = "ficus_wood_zones_bylevel")
 write.csv(sweep_zones, "tables/ficus_wood_zones_multilevel_summary.csv", row.names = FALSE)
 print(sweep_zones)
-
-cat("\n--- D3. Substrate x position across taxonomic ranks ---\n")
-sweep_subpos <- run_level_sweep(
-  rep(TRUE, nrow(meta_full)), "sub_pos",
-  combo_colours, plot_prefix = NULL)
-write.csv(sweep_subpos, "tables/substrate_x_position_multilevel_summary.csv", row.names = FALSE)
-print(sweep_subpos)
 
 # ============================================================
 # F. ZONE GRADIENT — FICUS WOOD
@@ -1584,6 +1446,38 @@ cat("\nOrientation analyses - headline summary:\n")
 print(orient_summary)
 
 }  # end of orientation section
+
+# ============================================================
+# Headline summary of every multivariate test (compared across
+# unit sets by compare_units.R)
+# ============================================================
+nz <- function(x) if (is.null(x)) NA else x
+mv_row <- function(res, name) {
+  if (is.null(res) || is.null(res$permanova)) return(NULL)
+  data.frame(analysis = name, n_units = res$n_samples, n_taxa = res$n_taxa,
+             n_groups = res$n_groups,
+             permanova_F  = round(res$permanova$F[1], 4),
+             permanova_R2 = round(res$permanova$R2[1], 4),
+             permanova_p  = res$permanova$`Pr(>F)`[1],
+             depth_adjusted_R2 = nz(res$adj_group_R2), depth_adjusted_p = nz(res$adj_group_p),
+             anosim_R = nz(res$anosim_R), anosim_p = nz(res$anosim_p),
+             betadisper_p = nz(res$betadisper_p),
+             nmds_stress_tie_aware = nz(res$nmds_stress_strong),
+             n_indicators_fdr = nz(res$n_indicators), stringsAsFactors = FALSE)
+}
+mv_summary <- bind_rows(
+  mv_row(results_substrate, "Substrate (3 substrates)"),
+  mv_row(results_leaves,    "Ficus leaves vs Lauraceae leaves"),
+  mv_row(results_z6,        "Substrate at zone 6 (top canopy)"),
+  mv_row(results_fw_zones,  "Ficus wood zones 1-6"),
+  if (exists("results_orient_all")) mv_row(results_orient_all, "Orientation - all substrates"),
+  if (exists("results_orient_sub")) bind_rows(lapply(names(results_orient_sub), function(s)
+    mv_row(results_orient_sub[[s]], paste0("Orientation - ", s)))),
+  if (exists("results_sub_ori")) mv_row(results_sub_ori, "Substrate x orientation"),
+  if (exists("results_aspect")) mv_row(results_aspect, "Sun aspect - all substrates"),
+  if (exists("results_aspect_sub")) bind_rows(lapply(names(results_aspect_sub), function(s)
+    mv_row(results_aspect_sub[[s]], paste0("Sun aspect - ", s)))))
+write.csv(mv_summary, "tables/multivariate_summary.csv", row.names = FALSE)
 
 # ============================================================
 # Copy key files for backward compatibility

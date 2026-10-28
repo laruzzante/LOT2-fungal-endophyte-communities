@@ -1,0 +1,10 @@
+"unit_set","substrate","n_units","n_isolates","observed_S","chao1","chao1_se","ace","pct_of_chao1","singletons","doubletons","goods_coverage"
+"ITS100","Ficus leaves",10,264,135,313.2,53.2,384.5,43,93,23,64.8
+"ITS100","Ficus wood",12,167,82,192.1,43.4,231.4,43,54,12,67.7
+"ITS100","Lauraceae leaves",8,219,104,214.6,37.8,266.9,48,67,19,69.4
+"ITS99","Ficus leaves",10,264,112,254,48.3,280.5,44,72,17,72.7
+"ITS99","Ficus wood",12,167,76,182.9,44.8,206.8,42,49,10,70.7
+"ITS99","Lauraceae leaves",8,219,70,116.9,20.5,141.1,60,38,14,82.6
+"OTU97","Ficus leaves",10,264,74,135.8,27.5,125.6,55,39,11,85.2
+"OTU97","Ficus wood",12,167,64,159.7,43.5,191.3,40,42,8,74.9
+"OTU97","Lauraceae leaves",8,219,45,82.5,20.6,90.9,55,25,7,88.6

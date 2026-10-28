@@ -1,0 +1,5 @@
+"index","test","statistic","df","p_value","p_adj"
+"richness_S","Kruskal-Wallis",21.0231,2,2.722e-05,0.0001089
+"shannon_H","Kruskal-Wallis",20.5369,2,3.471e-05,0.0001089
+"hill_q1","Kruskal-Wallis",20.5369,2,3.471e-05,0.0001089
+"pielou_J","Kruskal-Wallis",1.7245,2,0.4222,0.4222
