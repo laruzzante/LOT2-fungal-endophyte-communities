@@ -4,6 +4,8 @@
 
 **Inputs reviewed.** `LOT2_samples.xlsx` (650 isolates), `LOT2_pooled_counts.xlsx` (285 rows), and all 200+ generated tables and plots.
 
+**Note (2026-10-29).** The 97% OTUs (P9) have since been dropped: `cluster_otus.sh`, `LOT2_otu_map.csv` and every OTU97 analysis were removed. The analytical units are now the ITS100 and ITS99 BLAST names. Statements below about OTU results are historical.
+
 ---
 
 ## Verdict

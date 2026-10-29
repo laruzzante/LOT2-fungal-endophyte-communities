@@ -5,6 +5,9 @@
 "class","Ficus leaves vs Ficus wood",0.558,0.4537,0.001
 "class","Ficus leaves vs Lauraceae leaves",0.1829,0.5008,0.001
 "class","Ficus wood vs Lauraceae leaves",0.6531,0.5156,0.001
+"subclass","Ficus leaves vs Ficus wood",0.5769,0.4107,0.001
+"subclass","Ficus leaves vs Lauraceae leaves",0.2788,0.3769,0.001
+"subclass","Ficus wood vs Lauraceae leaves",0.6828,0.4851,0.001
 "order","Ficus leaves vs Ficus wood",0.731,0.4761,0.001
 "order","Ficus leaves vs Lauraceae leaves",0.3605,0.3901,0.001
 "order","Ficus wood vs Lauraceae leaves",0.7411,0.4805,0.001
@@ -14,9 +17,9 @@
 "genus","Ficus leaves vs Ficus wood",0.7212,0.3917,0.001
 "genus","Ficus leaves vs Lauraceae leaves",0.4265,0.3862,0.001
 "genus","Ficus wood vs Lauraceae leaves",0.7715,0.4293,0.001
-"species","Ficus leaves vs Ficus wood",0.5976,0.224,0.001
-"species","Ficus leaves vs Lauraceae leaves",0.5363,0.2778,0.001
-"species","Ficus wood vs Lauraceae leaves",0.6317,0.2371,0.001
-"its_taxon","Ficus leaves vs Ficus wood",0.5629,0.1937,0.001
+"species","Ficus leaves vs Ficus wood",0.5947,0.2213,0.001
+"species","Ficus leaves vs Lauraceae leaves",0.5358,0.2767,0.001
+"species","Ficus wood vs Lauraceae leaves",0.6281,0.2336,0.001
+"its_taxon","Ficus leaves vs Ficus wood",0.5636,0.1943,0.001
 "its_taxon","Ficus leaves vs Lauraceae leaves",0.4913,0.2013,0.001
-"its_taxon","Ficus wood vs Lauraceae leaves",0.6252,0.2327,0.001
+"its_taxon","Ficus wood vs Lauraceae leaves",0.6258,0.2333,0.001

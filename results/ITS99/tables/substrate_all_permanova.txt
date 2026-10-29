@@ -9,10 +9,10 @@ Permutation: free
 Number of permutations: 999
 
 adonis2(formula = form, data = meta, permutations = 999, method = "bray")
-         Df SumOfSqs      R2      F Pr(>F)    
-Model     2   3.1618 0.26395 4.8412  0.001 ***
-Residual 27   8.8170 0.73605                  
-Total    29  11.9788 1.00000                  
+         Df SumOfSqs     R2      F Pr(>F)    
+Model     2   3.1674 0.2645 4.8548  0.001 ***
+Residual 27   8.8077 0.7355                  
+Total    29  11.9751 1.0000                  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -26,9 +26,9 @@ Number of permutations: 999
 
 adonis2(formula = comm_mat ~ depth + grp, data = data.frame(depth = depth, grp = groups), permutations = 999, method = "bray", by = "margin")
          Df SumOfSqs      R2      F Pr(>F)    
-depth     1   0.4244 0.03543 1.3148  0.124    
-grp       2   2.1150 0.17656 3.2761  0.001 ***
-Residual 26   8.3925 0.70062                  
-Total    29  11.9788 1.00000                  
+depth     1   0.3962 0.03308 1.2245  0.181    
+grp       2   2.0974 0.17515 3.2415  0.001 ***
+Residual 26   8.4115 0.70242                  
+Total    29  11.9751 1.00000                  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

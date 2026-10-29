@@ -7,13 +7,11 @@
 #   LOT2_pooled_counts_ITS100.xlsx per-taxon counts + taxonomy, 100% names
 #   LOT2_pooled_counts_ITS99.xlsx  per-taxon counts + taxonomy, 99% names
 #                                  (in production - V. Hofstetter)
-#   LOT2_otu_map.csv               isolate -> 97% OTU (cluster_otus.sh)
 # =============================================================
 
-# Superclass and subclass are deliberately not used: the superclass
-# column is inconsistently filled (one class ends up under 2-3
-# superclasses) and neither rank is needed.
-tax_hierarchy    <- c("phylum", "subphylum", "class", "order",
+# The superclass column was removed from the workbooks (it was
+# inconsistently filled); subclass is consistent and is used.
+tax_hierarchy    <- c("phylum", "subphylum", "class", "subclass", "order",
                       "family", "genus", "species")
 uncertain_values <- c("?", "NO", "incertae sedis", "")
 incertae_label   <- "Incertae sedis"
@@ -42,7 +40,7 @@ read_pooled <- function(path) {
     n_fungi_fic_leaf  = as.numeric(p[[4]]),
     n_fungi_fic_wood  = as.numeric(p[[5]]),
     phylum = p$Phylum, subphylum = p$Subphylum, class = p$Class,
-    order = p$Order, family = p$Family, genus = p$Genus,
+    subclass = p$Subclass, order = p$Order, family = p$Family, genus = p$Genus,
     species_epithet = p$Species,
     lifestyle = if (length(ls_col)) squish(p[[ls_col[1]]]) else NA_character_)
   # The sheet ends with a TOTALS row (no code, no name); read as a taxon
@@ -51,7 +49,7 @@ read_pooled <- function(path) {
   out <- out %>% filter(!(is.na(culture_code) & is.na(its_taxon)))
   if (n0 > nrow(out)) cat(basename(path), ": dropped", n0 - nrow(out), "total row(s)\n")
   out %>% mutate(
-    across(c(phylum, subphylum, class, order, family, genus), clean_tax),
+    across(c(phylum, subphylum, class, subclass, order, family, genus), clean_tax),
     species = ifelse(!is.na(genus) & !is.na(clean_tax(species_epithet)),
                      paste(genus, clean_tax(species_epithet)), NA_character_),
     lifestyle = clean_tax(lifestyle)) %>%
@@ -201,28 +199,7 @@ samples_raw <- samples_raw %>%
       paste(substrate, paste0("Z", zone), unit, orientation, sep = "__"))
   )
 
-# --- 97% OTUs (automatic, sequence-based) ---------------------
-# Produced by cluster_otus.sh (vsearch greedy centroid clustering of the
-# ITS sequences in sheet Feuil2 at 97% identity); the mapping is
-# committed so the pipeline runs without vsearch.
-otu_map_file <- "LOT2_otu_map.csv"
 samples_raw <- samples_raw %>% mutate(culture_code1 = squish(culture_code1))
-if (file.exists(otu_map_file)) {
-  otu_map <- read.csv(otu_map_file, colClasses = "character")
-  samples_raw <- samples_raw %>%
-    left_join(otu_map, by = c("culture_code1" = "culture_code"))
-  n_missing_otu <- sum(is.na(samples_raw$otu_97))
-  if (n_missing_otu > 0)
-    warning(n_missing_otu, " isolates have no OTU assignment; ",
-            "re-run cluster_otus.sh after changing the input sequences.")
-  have_otus <- TRUE
-} else {
-  samples_raw$otu_97 <- NA_character_
-  samples_raw$otu_985 <- NA_character_
-  have_otus <- FALSE
-  cat("NOTE:", otu_map_file, "not found - falling back to name-based genotypes.\n",
-      "     Run `bash cluster_otus.sh` to enable sequence-based OTUs.\n")
-}
 
 # --- Sampling depth ------------------------------------------
 # Isolates recovered per sampling unit varies roughly two-fold between
@@ -301,11 +278,10 @@ check_inputs()
 
 # =============================================================
 # Taxonomic unit sets
-# Every analysis is run in parallel on three definitions of the unit:
+# Every analysis is run in parallel on two definitions of the unit:
 #   ITS100  ITS name from the GenBank BLAST top score at 100% similarity
 #           (V. Hofstetter) - the reference set
 #   ITS99   same at 99% similarity (V. Hofstetter, in production)
-#   OTU97   97% ITS OTUs clustered automatically by cluster_otus.sh
 # =============================================================
 pool_isolates <- function(s) s %>%
   group_by(its_taxon) %>%
@@ -337,25 +313,16 @@ build_name_set <- function(set, raw_col) {
   s$lifestyle <- wb$lifestyle[idx]
   s$lineage_source <- ifelse(is.na(idx), NA_character_, "workbook")
 
-  # Unmatched names: lineage from their 97%-OTU mates, else from the
-  # leading genus token
+  # Unmatched names: lineage from the leading genus token
   um <- is.na(idx)
-  if (any(um) && have_otus) {
-    otu_lin <- s[!um, ] %>% filter(!is.na(otu_97)) %>% group_by(otu_97) %>%
-      summarise(across(all_of(tax_hierarchy), majority), .groups = "drop")
-    i <- match(s$otu_97, otu_lin$otu_97)
-    take <- um & !is.na(i)
-    for (r in tax_hierarchy) s[[r]][take] <- otu_lin[[r]][i[take]]
-    s$lineage_source[take] <- "97% OTU mates"
-  }
   left <- is.na(s$lineage_source)
   if (any(left)) {
     gen_lin <- wb %>% filter(!is.na(genus)) %>% group_by(genus) %>%
-      summarise(across(c(phylum, subphylum, class, order, family), majority), .groups = "drop")
+      summarise(across(c(phylum, subphylum, class, subclass, order, family), majority), .groups = "drop")
     tok <- sub(" .*", "", raw)
     j <- match(tok, gen_lin$genus)
     take <- left & !is.na(j)
-    for (r in c("phylum", "subphylum", "class", "order", "family"))
+    for (r in c("phylum", "subphylum", "class", "subclass", "order", "family"))
       s[[r]][take] <- gen_lin[[r]][j[take]]
     s$genus[take] <- tok[take]
     s$lineage_source[take] <- "genus name"
@@ -388,22 +355,6 @@ unit_sets <- list(
                 samples = build_name_set("ITS100", "its100_raw")),
   ITS99  = list(label = "ITS 99% BLAST name (in production)",
                 samples = build_name_set("ITS99", "its99_raw")))
-
-if (have_otus) {
-  s100 <- unit_sets$ITS100$samples
-  otu_info <- s100 %>% group_by(otu_97) %>%
-    summarise(top = names(sort(table(its_taxon), decreasing = TRUE))[1],
-              n_names = n_distinct(its_taxon),
-              across(all_of(tax_hierarchy), majority), .groups = "drop") %>%
-    mutate(otu_label = paste0(otu_97, " (", substr(top, 1, 40),
-                              ifelse(n_names > 1, paste0(" +", n_names - 1), ""), ")"))
-  s <- s100 %>% select(-all_of(tax_hierarchy)) %>%
-    left_join(otu_info %>% select(otu_97, otu_label, all_of(tax_hierarchy)), by = "otu_97") %>%
-    mutate(its_taxon = otu_label, lineage_source = "majority of ITS100 names in the OTU") %>%
-    select(-otu_label)
-  unit_sets$OTU97 <- list(label = "97% ITS OTU (vsearch)", samples = s)
-  cat("OTU97 :", n_distinct(s$its_taxon), "OTUs\n")
-}
 
 for (u in names(unit_sets)) {
   s <- unit_sets[[u]]$samples

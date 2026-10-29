@@ -1,0 +1,9 @@
+"priority","check","rows"
+"High","Isolate name not found in the ITS100 workbook",54
+"High","Isolate name not found in the ITS99 workbook",33
+"High","Counts differ between the ITS100 workbook and the isolate records",29
+"High","Counts differ between the ITS99 workbook and the isolate records",12
+"High","Taxon listed more than once in the workbook",8
+"Medium","Species column disagrees with the name",1
+"Low","Orientation unresolved",131
+"Applied","Corrected in the workbook on 2026-10-29",61

@@ -1,6 +1,6 @@
 # =============================================================
-# Side-by-side comparison of the three taxonomic unit sets
-# (ITS100 reference, ITS99 in production, OTU97 automatic)
+# Side-by-side comparison of the two taxonomic unit sets
+# (ITS100 reference, ITS99 in production)
 # -> results/comparison/{tables,plots}
 # =============================================================
 cmp_dir <- "results/comparison"

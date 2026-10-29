@@ -20,14 +20,14 @@ dat_agg <- pooled %>%
 
 # Per-isolate lineage is attached by parse_LOT2.R (unresolved ranks are
 # NA), and `its_taxon` holds the analytical unit of the current unit
-# set (ITS100 name, ITS99 name or 97% OTU) - see main.R.
+# set (ITS100 name or ITS99 name) - see main.R.
 samples_lineage <- samples_raw
 primary_unit    <- "its_taxon"
-lineage_levels  <- c("phylum", "class", "order", "family", "genus", "species", "its_taxon")
+lineage_levels  <- c("phylum", "class", "subclass", "order", "family", "genus", "species", "its_taxon")
 
 cat("Isolate lineage coverage per rank:\n")
 lineage_coverage <- sapply(lineage_levels, function(lv) {
-  v <- if (lv %in% c("its_taxon", "otu_97", "otu_985")) samples_lineage[[lv]]
+  v <- if (lv == "its_taxon") samples_lineage[[lv]]
        else clean_tax(samples_lineage[[lv]])
   sum(!is.na(v))
 })
@@ -185,7 +185,7 @@ write.csv(incertae_share, "tables/incertae_sedis_share.csv", row.names = FALSE)
 cat("Share of isolates that are Incertae sedis at each rank (%):\n")
 print(incertae_share)
 
-for (level in c("phylum", "class", "order", "family", "genus")) {
+for (level in c("phylum", "class", "subclass", "order", "family", "genus")) {
   agg <- dat_agg %>%
     group_by(across(all_of(level))) %>%
     summarise(Lauraceae_leaves = sum(n_fungi_laur_leaf),
@@ -315,7 +315,7 @@ build_comm_matrix <- function(data, group_col = "sample_id",
 # unresolved (Incertae sedis) at the requested rank are dropped.
 # ============================================================
 build_comm_matrix_level <- function(data, level, group_col = "sample_id") {
-  val <- if (level %in% c("its_taxon", "otu_97", "otu_985")) data[[level]]
+  val <- if (level == "its_taxon") data[[level]]
          else clean_tax(data[[level]])
   d <- data.frame(grp = data[[group_col]], taxon = val, stringsAsFactors = FALSE)
   d <- d[!is.na(d$taxon), , drop = FALSE]

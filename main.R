@@ -11,6 +11,7 @@ ggsave <- function(filename, plot = ggplot2::last_plot(), ...) {
 }
 
 source("parse_LOT2.R")
+source("taxonomy_checks.R")
 
 # The whole analysis is run once per taxonomic unit set, each into its
 # own results/<set>/{tables,plots} folder

@@ -40,7 +40,7 @@
 0,0,1,3,0.522232967867094,0.195,"Nigrospora cf. vesicularifera",1
 1,0,1,5,0.690065559342354,0.197,"Diaporthe crousii",1
 0,1,1,6,0.516397779494322,0.228,"Diaporthe sp. 27",1
-1,0,0,1,0.515283651379811,0.275,"Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.)",1
+1,0,0,1,0.515283651379811,0.275,"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",1
 0,1,1,6,0.546573086023068,0.289,"Diaporthe sp. 16",1
 0,1,0,2,0.428174419288838,0.319,"Xylariaceae sp. 9",1
 0,1,1,6,0.447213595499958,0.33,"Diaporthe sp. 17",1
@@ -56,7 +56,7 @@
 0,0,1,3,0.426401432711221,0.491,"Xylariales sp. 6",1
 0,0,1,3,0.426401432711221,0.502,"Nigrospora cf. sacchari-officinarum",1
 0,1,1,6,0.567961834247065,0.504,"Diaporthe sp. 29",1
-0,0,1,3,0.426401432711221,0.515,"Nigrospora guandongensis",1
+0,0,1,3,0.426401432711221,0.515,"Nigrospora guangdongensis",1
 1,0,0,1,0.316227766016838,0.517,"Beauveria pseudobassiana",1
 1,0,0,1,0.316227766016838,0.517,"Clonostachys cf. farinosa",1
 1,0,0,1,0.316227766016838,0.517,"Clonostachys cf. solani f. nigrovirens",1

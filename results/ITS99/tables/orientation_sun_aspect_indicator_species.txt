@@ -5,7 +5,7 @@
  Association function: IndVal.g
  Significance level (alpha): 0.05
 
- Total number of species: 180
+ Total number of species: 179
  Selected number of species: 6 
  Number of species associated to 1 group: 3 
  Number of species associated to 2 groups: 3 

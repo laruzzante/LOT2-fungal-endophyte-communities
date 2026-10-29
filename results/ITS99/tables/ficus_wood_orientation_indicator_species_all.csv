@@ -3,13 +3,13 @@
 0,1,0,0,2,1,0.144,"Mucor sp.",1
 0,1,0,0,2,1,0.144,"Sordariomycetes sp. 1",1
 0,1,0,0,2,1,0.144,"Trichoderma anisohamatum or T. insigne",1
-0,1,1,0,8,0.816496580927726,0.414,"Penicillium goetzii or P. rubens",1
+0,1,1,0,8,0.816496580927726,0.414,"Penicillium rubens or P. goetzii",1
 1,0,0,1,7,0.866025403784439,0.421,"Pestalotiopsis diversiseta",1
 0,1,0,1,9,0.816496580927726,0.442,"Tolypocladium sp.",1
 1,1,0,0,5,0.816496580927726,0.448,"Epicoccum italicum",1
 1,1,0,1,12,0.894427190999916,0.451,"Pestalotiopsis telopae or P. kenyana or P. australasiae (4 spp.)",1
-1,1,0,1,12,0.774596669241483,0.792,"Ophiocordycipitaceae sp. 1",1
-0,0,0,1,4,0.707106781186548,1,"Diaporthe crousi",1
+1,1,0,1,12,0.774596669241483,0.791,"Ophiocordycipitaceae sp. 1",1
+0,0,0,1,4,0.707106781186548,1,"Diaporthe crousii",1
 0,0,1,0,3,0.707106781186548,1,"Diaporthe phaseolorum",1
 0,0,0,1,4,0.707106781186548,1,"Nemania abortiva",1
 0,0,1,0,3,0.707106781186548,1,"Colletotrichum brassicicola",1
@@ -43,7 +43,6 @@
 0,0,1,0,3,0.707106781186548,1,"Penicillium bialowiezense",1
 0,0,1,0,3,0.707106781186548,1,"Pleosporales sp. 3",1
 0,0,1,0,3,0.707106781186548,1,"Stereaceae sp. 1",1
-0,0,1,0,3,0.707106781186548,1,"Penicillium rubens or P. goetzii",1
 1,0,0,0,1,0.707106781186548,1,"Beauveria pseudobassiana",1
 1,0,0,0,1,0.707106781186548,1,"Clonostachys farinosa",1
 1,0,0,0,1,0.707106781186548,1,"Clonostachys solani f. nigrovirens",1

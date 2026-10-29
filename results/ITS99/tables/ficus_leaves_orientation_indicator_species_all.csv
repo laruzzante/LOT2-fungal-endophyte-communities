@@ -47,7 +47,7 @@
 0,1,0,0,2,0.707106781186548,0.677,"Xylariaceae sp. 4",1
 0,1,0,0,2,0.707106781186548,0.677,"Xylariales sp. 13",1
 0,1,0,0,2,0.707106781186548,0.677,"Xylariales sp. 17",1
-0,0,1,0,3,0.707106781186548,0.687,"Cladosporium herbarum or C. iridis etc (23 spp.)",1
+0,0,1,0,3,0.707106781186548,0.687,"Cladosporium herbarum, C. iridis (23 spp.)",1
 0,0,1,0,3,0.707106781186548,0.687,"Colletotrichum scovillei or C. melonis or C. speciosum",1
 0,0,1,0,3,0.707106781186548,0.687,"Colletotrichum tengchongense or C. gracile",1
 0,0,1,0,3,0.707106781186548,0.687,"Diaporthe sp. 13",1
@@ -69,7 +69,7 @@
 1,1,1,0,11,0.748331477354788,0.761,"Colletotrichum brassicicola",1
 1,1,0,1,12,0.755928946018454,0.798,"Diaporthe phaseolorum",1
 0,1,1,1,14,0.755928946018454,0.81,"Colletotrichum godetiae",1
-1,1,0,1,12,0.755928946018454,0.825,"Diaporthe crousi",1
+1,1,0,1,12,0.755928946018454,0.825,"Diaporthe crousii",1
 0,0,0,1,4,0.577350269189626,1,"Cladosporium marinisedimentum or C. cooksoniae or C. sphaerospermum",1
 0,0,0,1,4,0.577350269189626,1,"Colletotrichum mexicanum",1
 0,0,0,1,4,0.577350269189626,1,"Diaporthe sp. 18",1

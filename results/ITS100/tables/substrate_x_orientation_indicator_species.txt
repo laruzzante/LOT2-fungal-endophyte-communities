@@ -62,16 +62,10 @@ Diaporthe sp. 29 0.8421 0.8750 0.858   0.038 *
 Diaporthe sp. 20 1.0 0.8 0.894   0.031 *
 
  Group Ficus wood - E+Ficus wood - N+Ficus wood - W  #sps.  1 
-                                                                           A
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 1.0
-                                                                           B
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 0.8
-                                                                          stat
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 0.894
-                                                                         p.value
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.)   0.048
-                                                                          
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) *
+                                                                   A   B  stat
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) 1.0 0.8 0.894
+                                                                 p.value  
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)   0.048 *
 
  Group Ficus leaves - E+Ficus leaves - N+Ficus leaves - S+Ficus leaves - W  #sps.  1 
                                   A      B  stat p.value  

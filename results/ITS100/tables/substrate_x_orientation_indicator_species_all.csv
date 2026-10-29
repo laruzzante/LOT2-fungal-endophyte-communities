@@ -8,7 +8,7 @@
 0,0,0,0,0,0,0,0,0,1,1,66,0.866025403784439,0.039,"Neopestalotiopsis cf. sichuanensis; N. cf. phyllostachydis, N. cf. fidjiensis (15 spp.) gen 2",1
 1,0,0,0,0,0,0,0,0,0,0,1,0.904534033733291,0.042,"Pseudocercospora sp. 1",1
 1,1,0,0,0,0,0,0,0,0,0,12,0.866025403784439,0.042,"Colletotrichum arboricola",1
-0,0,0,0,1,1,0,1,0,0,0,198,0.894427190999916,0.048,"Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.)",1
+0,0,0,0,1,1,0,1,0,0,0,198,0.894427190999916,0.048,"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",1
 0,1,0,0,0,0,0,0,0,0,0,2,0.866025403784439,0.073,"Xylaria sp. 3",1
 0,0,1,0,0,0,0,0,0,0,0,3,0.866025403784439,0.085,"Xylaria sp. 1",1
 0,0,0,0,0,1,0,0,0,0,0,6,1,0.095,"Aspergillus cf. hongkongensis",1
@@ -30,7 +30,7 @@
 0,0,0,0,0,0,1,1,0,0,0,57,0.707106781186548,0.435,"Penicillium vancouverens",1
 0,1,0,0,1,0,0,0,0,0,0,24,0.707106781186548,0.44,"Amphisphaeriaceae sp.",1
 0,0,1,0,0,0,0,0,0,0,1,38,0.707106781186548,0.449,"Diaporthe sp. 15",1
-0,0,0,0,0,0,0,0,0,1,0,10,0.707106781186548,0.451,"Nigrospora guandongensis",1
+0,0,0,0,0,0,0,0,0,1,0,10,0.707106781186548,0.451,"Nigrospora guangdongensis",1
 0,0,1,0,1,0,0,0,0,0,0,32,0.707106781186548,0.455,"Pestalotiopsis telopae, P. kenyana, P. australasiae (4 spp.)",1
 1,0,1,0,0,0,0,0,0,0,0,13,0.707106781186548,0.462,"Nodulisporium aff. verrucosum gen 1",1
 1,0,1,0,0,0,0,0,0,0,0,13,0.707106781186548,0.462,"Sordariomycetes sp. 3",1

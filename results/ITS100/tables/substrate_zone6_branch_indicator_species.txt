@@ -21,21 +21,15 @@ Xylaria sp. 3                         1.0000 0.5000 0.707   0.009 **
 Colletotrichum cf. godetiae           1.0000 0.5000 0.707   0.013 *  
 
  Group Ficus wood  #sps.  2 
-                                                                              A
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 1.0000
-Ophiocordycipitaceae sp. 1                                               1.0000
-                                                                              B
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 0.5714
-Ophiocordycipitaceae sp. 1                                               0.4286
-                                                                          stat
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) 0.756
-Ophiocordycipitaceae sp. 1                                               0.655
-                                                                         p.value
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.)   0.003
-Ophiocordycipitaceae sp. 1                                                 0.024
-                                                                           
-Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.) **
-Ophiocordycipitaceae sp. 1                                               * 
+                                                                      A      B
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) 1.0000 0.5714
+Ophiocordycipitaceae sp. 1                                       1.0000 0.4286
+                                                                  stat p.value
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) 0.756   0.003
+Ophiocordycipitaceae sp. 1                                       0.655   0.024
+                                                                   
+Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.) **
+Ophiocordycipitaceae sp. 1                                       * 
 
  Group Lauraceae leaves  #sps.  6 
                                                                                                    A

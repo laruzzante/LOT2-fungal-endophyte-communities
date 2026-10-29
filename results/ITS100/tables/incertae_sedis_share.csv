@@ -1,9 +1,10 @@
 "rank","Lauraceae leaves","Ficus leaves","Ficus wood"
-"phylum",0,0,0
-"subphylum",0,0,0
-"class",0,0,0.6
-"order",0,5.3,2.4
-"family",7.8,12.1,8.4
-"genus",11.4,20.5,19.8
-"species",91.3,89,79.6
+"phylum",0,0.4,0.6
+"subphylum",0,0.4,0.6
+"class",0,0.4,1.2
+"subclass",0.9,9.8,11.4
+"order",0,5.7,3
+"family",7.8,12.5,9
+"genus",11.4,20.8,20.4
+"species",90.4,89.4,86.8
 "its_taxon",0,0,0

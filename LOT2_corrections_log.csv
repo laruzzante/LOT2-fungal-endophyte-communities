@@ -1,0 +1,62 @@
+date,workbook,sheet,cell,field,old_value,new_value,reason
+2026-10-29,LOT2_pooled_counts_ITS100.xlsx,ALL isolates,J204,Order,Togniniale,Togniniales,Spelling: order names end in -ales
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,J143,Order,Togniniale,Togniniales,Spelling: order names end in -ales
+2026-10-29,LOT2_pooled_counts_ITS100.xlsx,ALL isolates,column H,Superclass,(whole column),(column deleted),Superclass is not used; later columns shifted one to the left
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,column H,Superclass,(whole column),(column deleted),Superclass is not used; later columns shifted one to the left
+2026-10-29,LOT2_pooled_counts_ITS100.xlsx,ALL isolates,H148,Class,Mucoromycete,Mucoromycetes,Spelling: class names end in -mycetes
+2026-10-29,LOT2_pooled_counts_ITS100.xlsx,ALL isolates,G210,Subphylum,Mortierellomycota,Mortierellomycotina,Phylum name entered as subphylum; the subphylum is Mortierellomycotina
+2026-10-29,LOT2_pooled_counts_ITS100.xlsx,ALL isolates,F210,Phylum,incertae sedis,Mortierellomycota,Class Mortierellomycetes belongs to phylum Mortierellomycota (as on every other Mortierellomycetes row)
+2026-10-29,LOT2_pooled_counts_ITS100.xlsx,ALL isolates,K205,Family,Pleosporineae,Phaeosphaeriaceae,Pleosporineae is a suborder; Phaeosphaeria is the type genus of Phaeosphaeriaceae
+2026-10-29,LOT2_pooled_counts_ITS100.xlsx,ALL isolates,M27,Species,?,parahalotolerans,Species epithet missing although the name is a binomial (and the ITS99 workbook has it)
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,H99,Class,Mucoromycete,Mucoromycetes,Spelling: class names end in -mycetes
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,G149,Subphylum,Mortierellomycota,Mortierellomycotina,Phylum name entered as subphylum; the subphylum is Mortierellomycotina
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,F149,Phylum,incertae sedis,Mortierellomycota,Class Mortierellomycetes belongs to phylum Mortierellomycota (as on every other Mortierellomycetes row)
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,K144,Family,Pleosporineae,Phaeosphaeriaceae,Pleosporineae is a suborder; Phaeosphaeria is the type genus of Phaeosphaeriaceae
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,M125,Species,?,sphaerica,Species epithet missing although the name is a binomial
+2026-10-29,LOT2_pooled_counts_ITS99.xlsx,ALL isolates,B71,ITS name,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii (as in the Species column and the ITS100 names)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I411,ITS name 100%,Nigrospora guandongensis,Nigrospora guangdongensis,"Spelling, as in the ITS100 workbook"
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I412,ITS name 100%,Nigrospora guandongensis,Nigrospora guangdongensis,"Spelling, as in the ITS100 workbook"
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I506,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I507,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I508,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I509,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I510,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I511,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I512,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,I513,ITS name 100%,Pestalotiopsis cf. telopae or P. cf. kenyana or P. australasiae (4 spp.),"Pestalotiopsis cf. telopae, P. kenyana, P. australasiae (4 spp.)",Same taxon written as in the ITS100 workbook (counts match: 8 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J471,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J472,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J473,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J474,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J475,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J476,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J477,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J478,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J479,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J480,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J481,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J482,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J483,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J484,ITS name 99%,Penicillium goetzii or P. rubens,Penicillium rubens or P. goetzii,Same taxon written as in the ITS99 workbook (counts match: 15 Ficus wood)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J66,ITS name 99%,Cladosporium herbarum or C. iridis etc (23 spp.),"Cladosporium herbarum, C. iridis (23 spp.)",Same taxon written as in the ITS99 workbook (counts match: 1 Ficus leaves)
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J295,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J296,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J297,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J298,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J299,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J300,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J301,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J302,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J303,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J304,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J305,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J306,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J307,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J308,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J309,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J310,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J311,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,J312,ITS name 99%,Diaporthe crousi,Diaporthe crousii,Spelling: the epithet is crousii
+2026-10-29,LOT2_samples.xlsx,ALL isolates,C475,Sampling unit,S10,S12,"Ficus trunk units are S11-S15, one per zone (5 to 1), as confirmed by the data curator"
+2026-10-29,LOT2_samples.xlsx,ALL isolates,C486,Sampling unit,S10,S12,"Ficus trunk units are S11-S15, one per zone (5 to 1), as confirmed by the data curator"
+2026-10-29,LOT2_samples.xlsx,ALL isolates,C487,Sampling unit,S10,S12,"Ficus trunk units are S11-S15, one per zone (5 to 1), as confirmed by the data curator"

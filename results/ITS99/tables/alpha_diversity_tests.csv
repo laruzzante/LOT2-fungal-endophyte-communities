@@ -2,4 +2,4 @@
 "richness_S","Kruskal-Wallis",20.1966,2,4.115e-05,0.0001646
 "shannon_H","Kruskal-Wallis",19.4567,2,5.957e-05,0.0001787
 "hill_q1","Kruskal-Wallis",19.379,2,6.193e-05,0.0001787
-"pielou_J","Kruskal-Wallis",6.4432,2,0.03989,0.03989
+"pielou_J","Kruskal-Wallis",6.1092,2,0.04714,0.04714

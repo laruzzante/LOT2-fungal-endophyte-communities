@@ -129,10 +129,21 @@ for (level in c("its_taxon", tax_hierarchy)) {
   plot_data <- plot_data %>%
     mutate(pie_label = ifelse(pct >= 3, paste0(round(pct, 1), "%"), ""))
 
-  legend_cols <- min(4, ceiling(n_labels / 15))
-  legend_size <- if (n_labels > 50) 5 else if (n_labels > 25) 6 else 8
-  plot_w <- if (n_labels > 30) 18 else 14
-  plot_h <- max(7, 5 + ceiling(n_labels / legend_cols) * 0.22)
+  # Legend spread across the full width: as many columns as the longest
+  # label allows (key + text, ~0.5 em per character), so it stays short.
+  # Long names (some carry a curator comment) are wrapped, so one of them
+  # cannot force the whole legend into a single column.
+  wrap_chars  <- 40
+  wrap_label  <- function(x) vapply(strwrap(x, wrap_chars, simplify = FALSE),
+                                    paste, character(1), collapse = "\n")
+  label_lines <- vapply(strwrap(label_order, wrap_chars, simplify = FALSE), length, integer(1))
+  legend_size <- if (n_labels > 60) 10 else if (n_labels > 25) 11 else 13
+  plot_w <- if (n_labels > 30) 20 else 16
+  col_w  <- 0.5 + min(wrap_chars, max(nchar(label_order))) * legend_size * 0.5 / 72
+  legend_cols <- max(1, min(n_labels, floor((plot_w - 0.6) / col_w)))
+  legend_rows <- ceiling(n_labels / legend_cols) +
+    ceiling(sum(label_lines - 1) / legend_cols)
+  plot_h <- 6.5 + legend_rows * legend_size * 1.7 / 72
 
   p <- ggplot(plot_data, aes(x = "", y = count, fill = label)) +
     geom_col(width = 1, colour = "white", linewidth = 0.3) +
@@ -142,7 +153,7 @@ for (level in c("its_taxon", tax_hierarchy)) {
     facet_wrap(~ substrate, nrow = 1, scales = "free_y",
                labeller = as_labeller(strip_labels)) +
     scale_y_continuous(expand = c(0, 0)) +
-    scale_fill_manual(values = taxon_colours, name = level) +
+    scale_fill_manual(values = taxon_colours, name = level, labels = wrap_label) +
     labs(title = paste("Fungal isolate composition by", level),
          subtitle = paste0("Share of all isolates. Grey = ", incertae_label,
                            " (unknown or unresolved at this rank)")) +
@@ -152,15 +163,12 @@ for (level in c("its_taxon", tax_hierarchy)) {
           strip.text    = element_text(face = "bold", size = 12),
           legend.position = "bottom",
           legend.text   = element_text(size = legend_size),
-          legend.title  = element_text(face = "bold"),
-          legend.key.size = unit(0.35, "cm"),
-          plot.margin   = margin(10, 10, 10, 10))
-
-  if (n_labels > 60) {
-    p <- p + guides(fill = guide_legend(ncol = legend_cols, override.aes = list(size = 1)))
-  } else {
-    p <- p + guides(fill = guide_legend(ncol = legend_cols))
-  }
+          legend.title  = element_text(face = "bold", size = legend_size + 1),
+          legend.key.size = unit(legend_size * 0.04, "cm"),
+          legend.spacing.x = unit(0.2, "cm"),
+          plot.margin   = margin(10, 10, 10, 10)) +
+    guides(fill = guide_legend(ncol = legend_cols, byrow = TRUE,
+                               title.position = "top"))
 
   ggsave(file.path(piedir, paste0("pie_by_", level, ".pdf")),
          plot = p, width = plot_w, height = plot_h, limitsize = FALSE)

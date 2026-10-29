@@ -5,7 +5,7 @@
  Association function: IndVal.g
  Significance level (alpha): 0.05
 
- Total number of species: 180
+ Total number of species: 179
  Selected number of species: 9 
  Number of species associated to 1 group: 3 
  Number of species associated to 2 groups: 1 
@@ -34,7 +34,7 @@ Cytospora eucalypti 1 1    1   0.021 *
 
  Group Ficus leaves - E+Ficus leaves - N  #sps.  1 
                              A    B  stat p.value  
-Colletotrichum arboricola 0.75 1.00 0.866   0.042 *
+Colletotrichum arboricola 0.75 1.00 0.866   0.043 *
 
  Group Ficus leaves - E+Ficus leaves - S+Ficus leaves - W  #sps.  1 
                                          A      B  stat p.value  
@@ -42,7 +42,7 @@ Diaporthe passiflorae or D. malorum 0.8163 1.0000 0.904   0.014 *
 
  Group Ficus leaves - E+Ficus leaves - S+Lauraceae leaves - N  #sps.  1 
                      A      B  stat p.value  
-Diaporthe sp. 6 0.8421 0.8750 0.858   0.037 *
+Diaporthe sp. 6 0.8421 0.8750 0.858   0.038 *
 
  Group Ficus leaves - S+Lauraceae leaves - N+Lauraceae leaves - NW  #sps.  1 
                     A   B  stat p.value   
